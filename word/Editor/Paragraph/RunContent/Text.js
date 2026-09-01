@@ -119,6 +119,7 @@
 		this.Width    = 0x00000000 | 0;
 		this.Flags    = 0x00000000 | 0;
 		this.Grapheme = AscFonts.NO_GRAPHEME;
+		this.WordBreakAfter = false;
 
 		this.SetSpaceAfter(this.private_IsSpaceAfter());
 		this.updateRtlFlag();
@@ -134,6 +135,7 @@
 	CRunText.prototype.SetCharCode = function(CharCode)
 	{
 		this.Value = CharCode;
+		this.WordBreakAfter = false;
 		this.SetSpaceAfter(this.private_IsSpaceAfter());
 		this.updateRtlFlag();
 		
@@ -459,7 +461,7 @@
 	{
 		return (oElement.Type === this.Type
 			&& this.Value === oElement.Value
-			&& this.IsSpaceAfter() === oElement.IsSpaceAfter());
+			&& this.IsStaticSpaceAfter() === oElement.IsStaticSpaceAfter());
 	};
 	CRunText.prototype.IsNBSP = function()
 	{
@@ -475,8 +477,21 @@
 	};
 	CRunText.prototype.IsSpaceAfter = function(fontHint)
 	{
-		return ((this.Flags & FLAGS_SPACEAFTER)
+		return (this.WordBreakAfter
+			|| this.IsStaticSpaceAfter()
 			|| (AscWord.fonthint_EastAsia === fontHint && AscCommon.isAmbiguousCharacter(this.Value)));
+	};
+	CRunText.prototype.IsStaticSpaceAfter = function()
+	{
+		return !!(this.Flags & FLAGS_SPACEAFTER);
+	};
+	CRunText.prototype.IsWordBreakAfter = function()
+	{
+		return this.WordBreakAfter;
+	};
+	CRunText.prototype.SetWordBreakAfter = function(isBreakAfter)
+	{
+		this.WordBreakAfter = isBreakAfter;
 	};
 	CRunText.prototype.IsSpaceBefore = function(fontHint)
 	{
@@ -548,7 +563,7 @@
 	};
 	CRunText.prototype.IsNoBreakHyphen = function()
 	{
-		return (false === this.IsSpaceAfter() && this.Value === 0x002D);
+		return (!this.IsStaticSpaceAfter() && this.Value === 0x002D);
 	};
 	CRunText.prototype.Write_ToBinary = function(Writer)
 	{
@@ -558,7 +573,7 @@
 
 		Writer.WriteLong(para_Text);
 		Writer.WriteLong(this.Value);
-		Writer.WriteBool(this.IsSpaceAfter());
+		Writer.WriteBool(this.IsStaticSpaceAfter());
 	};
 	CRunText.prototype.Read_FromBinary = function(Reader)
 	{
@@ -640,7 +655,7 @@
 	};
 	CRunText.prototype.ToSearchElement = function(oProps)
 	{
-		if (0x2D === this.Value && !this.IsSpaceAfter())
+		if (0x2D === this.Value && !this.IsStaticSpaceAfter())
 			return new AscCommonWord.CSearchTextSpecialNonBreakingHyphen();
 
 		if (!oProps.IsMatchCase())
@@ -713,6 +728,7 @@
 			state.push(this.RGapFont);
 		}
 
+		state.push(this.WordBreakAfter);
 		return state;
 	};
 	CRunText.prototype.LoadRecalculateObject = function(oState)
@@ -750,6 +766,8 @@
 			this.RGapFontSlot  = oState[nPos++];
 			this.RGapFont      = oState[nPos++];
 		}
+
+		this.WordBreakAfter = !!oState[nPos];
 	};
 	CRunText.prototype.GetCombWidth = function()
 	{
@@ -851,7 +869,7 @@
 
 		Writer.WriteLong(para_PdfText);
 		Writer.WriteLong(this.Value);
-		Writer.WriteBool(this.IsSpaceAfter());
+		Writer.WriteBool(this.IsStaticSpaceAfter());
 		Writer.WriteLong(this.charGid);
 		Writer.WriteDouble(this.originWidth);
 		Writer.WriteDouble(this.originSize);

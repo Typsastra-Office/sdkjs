@@ -67,6 +67,37 @@ $(function () {
 		}
 	}
 
+	function getSegmentedWords()
+	{
+		let words = [];
+		let word  = "";
+		for (let index = 0; index < run.GetElementsCount(); ++index)
+		{
+			let item = run.GetElement(index);
+			word += String.fromCodePoint(item.GetCodePoint());
+			if (item.IsWordBreakAfter())
+			{
+				words.push(word);
+				word = "";
+			}
+		}
+
+		return words;
+	}
+
+	function getFirstWordWidth()
+	{
+		let width = 0;
+		for (let index = 0; index < run.GetElementsCount(); ++index)
+		{
+			let item = run.GetElement(index);
+			width += item.GetWidth();
+			if (item.IsWordBreakAfter())
+				break;
+		}
+		return width;
+	}
+
 	QUnit.module("Paragraph Lines");
 
 	QUnit.test("Test regular line break cases", function (assert)
@@ -86,6 +117,27 @@ $(function () {
 		]);
 	});
 	
+	QUnit.test("Test Unicode word boundaries", function (assert)
+	{
+		let testCases = [
+			["ភាសាខ្មែរមានអក្សរស្អាត", ["ភាសាខ្មែរ", "មាន", "អក្សរ", "ស្អាត"]],
+			["ภาษาไทยไม่มีช่องว่าง", ["ภาษา", "ไทย", "ไม่มี", "ช่อง", "ว่าง"]],
+			["ພາສາລາວບໍ່ມີ", ["ພາສາ", "ລາວ", "ບໍ່ມີ"]],
+			["你好世界欢迎使用编辑器", ["你好", "世界", "欢迎", "使用", "编辑", "器"]]
+		];
+
+		for (let testIndex = 0; testIndex < testCases.length; ++testIndex)
+		{
+			setText(testCases[testIndex][0]);
+			recalculate(1000 * charWidth);
+			assert.deepEqual(getSegmentedWords(), testCases[testIndex][1], "Check segmented words");
+
+			let firstWordWidth = getFirstWordWidth();
+			recalculate(firstWordWidth + 0.01);
+			assert.strictEqual(para.GetTextOnLine(0), testCases[testIndex][1][0], "Check line break after first word");
+		}
+	});
+
 	QUnit.test("Test line breaks for Asian text", function (assert)
 	{
 		setText("你好世界! 你好世界! 你好世界! 你好世界! ");

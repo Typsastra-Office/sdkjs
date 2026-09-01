@@ -55,6 +55,26 @@ $(function () {
 		sectPr.SetPageSize(PAGE_W, 1000);
 		sectPr.SetPageMargins(L_FIELD, 50, R_FIELD, 50);
 	}
+	function getSegmentedWords(paragraph) {
+		let words = [];
+		let word  = "";
+		paragraph.CheckRunContent(function(run, startPos, endPos) {
+			for (let pos = startPos; pos < endPos; ++pos) {
+				let item = run.GetElement(pos);
+				if (!item.IsText()) {
+					word = "";
+					continue;
+				}
+
+				word += String.fromCodePoint(item.GetCodePoint());
+				if (item.IsWordBreakAfter()) {
+					words.push(word);
+					word = "";
+				}
+			}
+		});
+		return words;
+	}
 	const oldPrepeare_recursive = AscCommon.PasteProcessor.prototype._Prepeare_recursive;
 
 	AscCommon.PasteProcessor.prototype._Prepeare_recursive = function () {};
@@ -76,6 +96,43 @@ $(function () {
 				done();
 			}
 		);
+	});
+
+	QUnit.test('Test: "recalculate Unicode word boundaries after pasting text"', function (assert) {
+		let done = assert.async();
+		let testCases = [
+			["ភាសាខ្", "មែរមានអក្សរស្អាត", ["ភាសាខ្មែរ", "មាន", "អក្សរ", "ស្អាត"]],
+			["ภาษาไ", "ทยไม่มีช่องว่าง", ["ภาษา", "ไทย", "ไม่มี", "ช่อง", "ว่าง"]],
+			["ພາສາລ", "າວບໍ່ມີ", ["ພາສາ", "ລາວ", "ບໍ່ມີ"]]
+		];
+		let testIndex = 0;
+
+		function runTest() {
+			if (testIndex >= testCases.length) {
+				done();
+				return;
+			}
+
+			let testCase = testCases[testIndex++];
+			initDocument();
+			logicDocument.AddTextWithPr(testCase[0]);
+			AscTest.Recalculate();
+			AscTest.Editor.asc_PasteData(
+				AscCommon.c_oAscClipboardDataFormat.Text,
+				testCase[1],
+				undefined,
+				undefined,
+				undefined,
+				function (success) {
+					assert.ok(success);
+					AscTest.Recalculate();
+					assert.deepEqual(getSegmentedWords(logicDocument.GetElement(0)), testCase[2]);
+					runTest();
+				}
+			);
+		}
+
+		runTest();
 	});
 
 	QUnit.test('Test: "callback tests paste HTML"', function (assert) {

@@ -41,6 +41,96 @@
 		COMBINING_MARK    : 3
 	};
 
+	let wordSegmenter;
+
+	function getWordSegmenter()
+	{
+		if (wordSegmenter)
+			return wordSegmenter;
+
+		if (!window.Intl || !window.Intl.Segmenter)
+			return null;
+
+		try
+		{
+			wordSegmenter = new window.Intl.Segmenter(undefined, {granularity : "word"});
+		}
+		catch (e)
+		{
+			return null;
+		}
+
+		return wordSegmenter;
+	}
+
+	function CParagraphWordBreaker()
+	{
+		this.Items = [];
+		this.Text  = "";
+	}
+	CParagraphWordBreaker.prototype.Update = function(paragraph)
+	{
+		this.Items.length = 0;
+		this.Text = "";
+
+		let wordBreaker = this;
+		paragraph.CheckRunContent(function(run, startPos, endPos)
+		{
+			for (let pos = startPos; pos < endPos; ++pos)
+			{
+				let item = run.GetElement(pos);
+				if (item.IsText())
+					item.SetWordBreakAfter(false);
+
+				if (item.IsText() && !item.IsPdfText() && !item.IsNBSP())
+				{
+					wordBreaker.Items.push(item);
+					wordBreaker.Text += String.fromCodePoint(item.GetCodePoint());
+				}
+				else
+				{
+					wordBreaker.Flush();
+				}
+			}
+		});
+		this.Flush();
+	};
+	CParagraphWordBreaker.prototype.Flush = function()
+	{
+		let segmenter = getWordSegmenter();
+		if (segmenter && this.Items.length)
+		{
+			let itemsByEnd = {};
+			let textOffset = 0;
+			for (let itemIndex = 0; itemIndex < this.Items.length; ++itemIndex)
+			{
+				let item = this.Items[itemIndex];
+				textOffset += String.fromCodePoint(item.GetCodePoint()).length;
+				itemsByEnd[textOffset] = item;
+			}
+
+			let segments = Array.from(segmenter.segment(this.Text));
+			for (let segmentIndex = 0; segmentIndex < segments.length; ++segmentIndex)
+			{
+				let segment = segments[segmentIndex];
+				if (!segment.isWordLike)
+					continue;
+
+				let segmentEnd = segment.index + segment.segment.length;
+				let nextSegment = segments[segmentIndex + 1];
+				if (nextSegment && (!nextSegment.isWordLike || nextSegment.index !== segmentEnd))
+					continue;
+
+				let item = itemsByEnd[segmentEnd];
+				if (item)
+					item.SetWordBreakAfter(true);
+			}
+		}
+
+		this.Items.length = 0;
+		this.Text = "";
+	};
+
 	/**
 	 *
 	 * @constructor
@@ -117,6 +207,7 @@
 	};
 	CParagraphTextShaper.prototype.Shape = function(oParagraph)
 	{
+		paragraphWordBreaker.Update(oParagraph);
 		this.Init(false);
 		let oThis = this;
 		oParagraph.CheckRunContent(function(oRun, nStartPos, nEndPos)
@@ -444,6 +535,7 @@
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};
 	window['AscWord'].CODEPOINT_TYPE      = CODEPOINT_TYPE;
+	let paragraphWordBreaker = new CParagraphWordBreaker();
 	window['AscWord'].ParagraphTextShaper = new CParagraphTextShaper();
 	window['AscWord'].stringShaper        = new AscFonts.StringShaper();
 

@@ -95,6 +95,8 @@
 	editor.GetCollaborativeMarksShowType = function(){return c_oAscCollaborativeMarksShowType.All;};
 	editor.asc_OnChangeContentControl = function(){};
 	editor.sync_OnAllRequiredFormsFilled = function(){};
+	editor.sync_OnDocumentOutlineUpdateAdd = function(){};
+	editor.sync_OnDocumentOutlineUpdateRemove = function(){};
 	editor.asc_OnFocusContentControl = function(){};
 	editor.asc_OnBlurContentControl = function(){};
 	editor.sync_CanUndoCallback = function(){};
