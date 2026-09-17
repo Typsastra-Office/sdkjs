@@ -115,6 +115,8 @@
 	{
 		settings = settings || {};
 		this.basePath = settings.basePath || DEFAULT_BASE_PATH;
+		this.profile = settings.profile || "typing";
+		this.accuracy = settings.accuracy || "visual";
 		this.engine = settings.engine || null;
 		this.ready = !!this.engine;
 		this.failed = false;
@@ -254,7 +256,9 @@
 
 		try
 		{
-			return this.engine.analyzeWithProfile(text, "typing");
+			if ("function" === typeof this.engine.analyzeWithOptions)
+				return this.engine.analyzeWithOptions(text, this.profile, this.accuracy);
+			return this.engine.analyzeWithProfile(text, this.profile);
 		}
 		catch (err)
 		{
