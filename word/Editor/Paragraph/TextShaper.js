@@ -359,6 +359,10 @@
 				if (oItem.IsSpace())
 					this.private_HandleSpace(oItem);
 			}
+			else if (oItem.IsZeroWidthBreak())
+			{
+				this.FlushWord();
+			}
 			else if (oItem.IsNBSP())
 			{
 				this.FlushWord();

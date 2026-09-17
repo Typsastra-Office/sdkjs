@@ -491,7 +491,12 @@
 	{
 		return (this.WordBreakAfter
 			|| this.IsStaticSpaceAfter()
+			|| this.IsZeroWidthBreak()
 			|| (AscWord.fonthint_EastAsia === fontHint && AscCommon.isAmbiguousCharacter(this.Value)));
+	};
+	CRunText.prototype.IsZeroWidthBreak = function()
+	{
+		return 0x200B === this.Value;
 	};
 	CRunText.prototype.IsStaticSpaceAfter = function()
 	{
