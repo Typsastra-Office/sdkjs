@@ -80,6 +80,8 @@
 		this.CurLcid  = -1;
 		this.bWord    = false;
 		this.sWord    = "";
+		this.wordStartPositions = [];
+		this.wordEndPositions = [];
 		
 		this.startRun      = null;
 		this.startInRunPos = 0;
@@ -176,15 +178,63 @@
 	{
 		if (this.bWord)
 		{
-			this.SpellChecker.Add(this.startRun, this.startInRunPos, this.endRun, this.endInRunPos, this.sWord, this.CurLcid, this.GetPrefix(), 0, this.apostrophe);
-
-			this.bWord = false;
-			this.sWord = "";
-			
-			this.apostrophe     = null;
-			this.lastApostrophe = null;
-			this.CurLcid        = -1;
+			this.AddCurrentWord(0);
+			this.ResetCurrentWord();
 		}
+	};
+	CParagraphSpellCheckerCollector.prototype.AppendToCurrentWord = function(text, run, inRunPos)
+	{
+		if (!text)
+			return;
+
+		let offset = this.sWord.length;
+		this.sWord += text;
+		for (let i = 0; i < text.length; ++i)
+		{
+			this.wordStartPositions[offset + i] = {"run" : run, "pos" : inRunPos};
+			this.wordEndPositions[offset + i + 1] = {"run" : run, "pos" : inRunPos + 1};
+		}
+	};
+	CParagraphSpellCheckerCollector.prototype.AddCurrentWord = function(ending)
+	{
+		let khmerSpellchecker = window["AscCommon"]["getKhmerSpellchecker"]
+			? window["AscCommon"]["getKhmerSpellchecker"]() : null;
+		let parts = null;
+		if (khmerSpellchecker && khmerSpellchecker.isKhmerLanguage(this.CurLcid)
+			&& this.wordStartPositions.length === this.sWord.length
+			&& this.wordEndPositions.length === this.sWord.length + 1)
+		{
+			parts = khmerSpellchecker.getWordParts(this.sWord);
+		}
+
+		if (!parts)
+		{
+			this.SpellChecker.Add(this.startRun, this.startInRunPos, this.endRun, this.endInRunPos,
+				this.sWord, this.CurLcid, this.GetPrefix(), ending, this.apostrophe);
+			return;
+		}
+
+		for (let i = 0; i < parts.length; ++i)
+		{
+			let part = parts[i];
+			let start = this.wordStartPositions[part.start];
+			let end = this.wordEndPositions[part.end];
+			if (!start || !end || !part.word)
+				continue;
+
+			this.SpellChecker.Add(start.run, start.pos, end.run, end.pos, part.word, this.CurLcid,
+				0 === i ? this.GetPrefix() : 0, i === parts.length - 1 ? ending : 0, null);
+		}
+	};
+	CParagraphSpellCheckerCollector.prototype.ResetCurrentWord = function()
+	{
+		this.bWord = false;
+		this.sWord = "";
+		this.wordStartPositions = [];
+		this.wordEndPositions = [];
+		this.apostrophe     = null;
+		this.lastApostrophe = null;
+		this.CurLcid        = -1;
 	};
 	/**
 	 * @param {AscWord.CRunElementBase} oElement
@@ -206,7 +256,7 @@
 				this.endInRunPos   = inRunPos + 1;
 				
 				this.bWord = true;
-				this.sWord = oElement.GetCharForSpellCheck(oTextPr.Caps);
+				this.AppendToCurrentWord(oElement.GetCharForSpellCheck(oTextPr.Caps), run, inRunPos);
 			}
 			else
 			{
@@ -217,7 +267,7 @@
 					this.lastApostrophe = null;
 				}
 				
-				this.sWord += oElement.GetCharForSpellCheck(oTextPr.Caps);
+				this.AppendToCurrentWord(oElement.GetCharForSpellCheck(oTextPr.Caps), run, inRunPos);
 				
 				this.endRun      = run;
 				this.endInRunPos = inRunPos + 1;
@@ -234,11 +284,8 @@
 		{
 			if (this.bWord)
 			{
-				this.SpellChecker.Add(this.startRun, this.startInRunPos, this.endRun, this.endInRunPos, this.sWord, this.CurLcid, this.GetPrefix(), oElement.IsDot() ? oElement.GetCharCode() : 0, this.apostrophe);
-				this.bWord = false;
-				this.sWord = "";
-				this.apostrophe     = null;
-				this.lastApostrophe = null;
+				this.AddCurrentWord(oElement.IsDot() ? oElement.GetCharCode() : 0);
+				this.ResetCurrentWord();
 				this.CheckPrefix(null);
 			}
 			else

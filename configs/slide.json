@@ -36,6 +36,7 @@
 			"slide/api.js",
 			"slide/api_plugins.js",
 			"common/spell/spell.js",
+			"common/spell/khmer.js",
 			"word/Editor/Table/TableLook.js",
 			"cell/utils/utils.js"
 		],

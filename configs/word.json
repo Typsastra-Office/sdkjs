@@ -37,6 +37,7 @@
 			"word/api.js",
 			"word/api_plugins.js",
 			"common/spell/spell.js",
+			"common/spell/khmer.js",
 			"common/zlib/zlib.js",
 			"word/Editor/Table/TableLook.js",
 			"cell/utils/utils.js",

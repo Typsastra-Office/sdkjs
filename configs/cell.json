@@ -38,6 +38,7 @@
 			"cell/api.js",
 			"cell/api_plugins.js",
 			"common/spell/spell.js",
+			"common/spell/khmer.js",
 			"word/Editor/Table/TableLook.js"
 		],
 		"common": [

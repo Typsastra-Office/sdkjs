@@ -2347,6 +2347,36 @@
 	baseEditorsApi.prototype._coSpellCheckInit                   = function()
 	{
 		var t = this;
+		var spellcheckLanguages = [];
+		function addKhmerSpellcheckLanguage(languages)
+		{
+			if (!Array.isArray(languages) || !window["AscCommon"]["getKhmerSpellchecker"])
+				return languages;
+
+			let result = languages.slice();
+			let khmerSpellchecker = window["AscCommon"]["getKhmerSpellchecker"]();
+			if (!khmerSpellchecker.isReady())
+				return result;
+
+			let khmerLcid = String(window["AscCommon"]["KHMER_SPELLCHECK_LCID"]);
+			if (-1 === result.indexOf(khmerLcid)
+				&& -1 === result.indexOf(window["AscCommon"]["KHMER_SPELLCHECK_LCID"]))
+			{
+				result.push(khmerLcid);
+			}
+			return result;
+		}
+		function sendSpellcheckLanguages(languages)
+		{
+			if (Array.isArray(languages))
+				spellcheckLanguages = languages.slice();
+			t.sendEvent('asc_onSpellCheckInit', addKhmerSpellcheckLanguage(spellcheckLanguages));
+		}
+		function onKhmerSpellcheckReady()
+		{
+			sendSpellcheckLanguages(spellcheckLanguages);
+			t.asc_restartCheckSpelling();
+		}
 
 		if (!this.SpellCheckApi)
 		{
@@ -2390,7 +2420,7 @@
 					langs_array.push(item);
 				}
 
-				this.sendEvent('asc_onSpellCheckInit', langs_array);
+				sendSpellcheckLanguages(langs_array);
 			}
 		} else {
 			if (!this.SpellCheckUrl && !window['NATIVE_EDITOR_ENJINE']) {
@@ -2419,7 +2449,7 @@
 						console.log("onSpellCheck:");
 						console.log(spellData);
 					}
-					t.SpellCheck_CallBack(spellData);
+					t.SpellCheckApi.onSpellCheck(spellData);
 				};
 				this.SpellCheckApi.disconnect = function ()
 				{
@@ -2427,8 +2457,16 @@
 				this.SpellCheckApi.restart = function() {
 					this.worker.restart();
 				};
+				this.SpellCheckApi.onSpellCheck = function(e) {
+					t.SpellCheck_CallBack(e);
+				};
+				if (window["AscCommon"]["getKhmerSpellchecker"])
+				{
+					window["AscCommon"]["getKhmerSpellchecker"]().wrapSpellCheckApi(this.SpellCheckApi,
+						onKhmerSpellcheckReady);
+				}
 
-				this.sendEvent('asc_onSpellCheckInit', this.SpellCheckApi.worker.getLanguages());
+				sendSpellcheckLanguages(this.SpellCheckApi.worker.getLanguages());
 				return;
 			}
 			
@@ -2439,25 +2477,40 @@
 		}
 
 		this.SpellCheckApi.onInit = function (e) {
-			t.sendEvent('asc_onSpellCheckInit', e);
+			sendSpellcheckLanguages(e);
 		};
 		this.SpellCheckApi.onSpellCheck = function (e) {
 			t.SpellCheck_CallBack(e);
 		};
+		if (window["AscDesktopEditor"] && window["AscCommon"]["getKhmerSpellchecker"])
+		{
+			window["AscCommon"]["getKhmerSpellchecker"]().wrapSpellCheckApi(this.SpellCheckApi,
+				onKhmerSpellcheckReady);
+		}
 		this.SpellCheckApi.init(this.documentId);
 	};
     baseEditorsApi.prototype.asc_spellCheckAddToDictionary       = function(SpellCheckProperty)
     {
 		var word = (typeof SpellCheckProperty === "string") ? SpellCheckProperty : SpellCheckProperty.Word;
+		var khmerSpellchecker = window["AscCommon"]["getKhmerSpellchecker"]
+			? window["AscCommon"]["getKhmerSpellchecker"]() : null;
+		var spellElement = (SpellCheckProperty && "string" !== typeof SpellCheckProperty)
+			? SpellCheckProperty.Element : null;
+		var spellLanguage = spellElement && spellElement.GetLang ? spellElement.GetLang() : -1;
+		if (khmerSpellchecker && (khmerSpellchecker.isKhmerLanguage(spellLanguage) || khmerSpellchecker.isKhmerText(word)))
+			khmerSpellchecker.addUserWord(word);
+
 		if (window["AscDesktopEditor"])
 		{
-			window["AscDesktopEditor"]["SpellCheck"]("{\"type\":\"add\",\"usrWords\":[\"" + word + "\"]}");
+			window["AscDesktopEditor"]["SpellCheck"](JSON.stringify({"type" : "add", "usrWords" : [word]}));
 
 			this._spellCheckRestart(word);
 		}
     };
     baseEditorsApi.prototype.asc_spellCheckClearDictionary       = function()
     {
+		if (window["AscCommon"]["getKhmerSpellchecker"])
+			window["AscCommon"]["getKhmerSpellchecker"]().clearUserWords();
     };
 	baseEditorsApi.prototype.asc_restartCheckSpelling            = function()
 	{

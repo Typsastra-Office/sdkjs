@@ -6799,6 +6799,8 @@ background-repeat: no-repeat;\
     };
     asc_docs_api.prototype.asc_spellCheckClearDictionary = function()
     {
+		if (window["AscCommon"]["getKhmerSpellchecker"])
+			window["AscCommon"]["getKhmerSpellchecker"]().clearUserWords();
         if (window["AscDesktopEditor"])
             window["AscDesktopEditor"]["SpellCheck"]("{\"type\":\"clear\"}");
     };
