@@ -1687,8 +1687,9 @@
 		// text
 		this.ctDrawText        = 80;
 		this.ctDrawTextEx      = 81;
-		this.ctDrawTextCode    = 82;
-		this.ctDrawTextCodeGid = 83;
+		this.ctDrawTextCode        = 82;
+		this.ctDrawTextCodeGid     = 83;
+		this.ctDrawTextLogicalUnit = 84;
 
 		// pathcommands
 		this.ctPathCommandMoveTo          = 91;
@@ -2611,6 +2612,10 @@
 			for (var i = 0; i < count; i++)
 				this.Memory.WriteLong(codepoints[i]);
 		},
+		DrawTextLogicalUnit : function(unit)
+		{
+			return AscCommon.LogicalUnitMetafile.Write(this.Memory, unit);
+		},
 		charspace    : function(space)
 		{
 		},
@@ -3129,9 +3134,11 @@
 
 		this.UseOriginImageUrl = false;
 
-        this.FontPicker = null;
+		this.FontPicker = null;
 
-        this.isPrintMode = false;
+		this.isPrintMode = false;
+		this.TextLogicalUnits = new AscCommon.LogicalUnitMetafile.Queue();
+		this.TextLogicalUnits.SetEnabled(AscCommon.IsEnhancedUnicodeEnabled());
 	}
 
 	CDocumentRenderer.prototype = Object.create(AscCommon.CGraphicsBase.prototype);
@@ -3172,7 +3179,52 @@
 	};
 	CDocumentRenderer.prototype.EndPage = function()
 	{
+		this.FlushTextLogicalUnits();
 		this.Memory.WriteByte(CommandType.ctPageEnd);
+	};
+	CDocumentRenderer.prototype.SetTextLogicalUnitsEnabled = function(enabled)
+	{
+		if (!enabled)
+			this.FlushTextLogicalUnits();
+		this.TextLogicalUnits.SetEnabled(enabled);
+	};
+	CDocumentRenderer.prototype.IsTextLogicalUnitsEnabled = function()
+	{
+		return this.TextLogicalUnits.IsEnabled();
+	};
+	CDocumentRenderer.prototype.DrawTextLogicalUnit = function(unit)
+	{
+		if (0 === this.m_lPagesCount)
+			return false;
+
+		let font = this.GetFont();
+		let color = this.m_oBrush ? this.m_oBrush.Color1 : null;
+		return this.TextLogicalUnits.Add(unit, font ? {
+			Name     : font.Name,
+			FontSize : font.FontSize,
+			Style    : font.Style
+		} : null, color ? {
+			R : color.R,
+			G : color.G,
+			B : color.B,
+			A : color.A
+		} : null);
+	};
+	CDocumentRenderer.prototype.FlushTextLogicalUnits = function()
+	{
+		if (0 === this.m_lPagesCount)
+			return;
+
+		let entries = this.TextLogicalUnits.Drain();
+		let page = this.m_arrayPages[this.m_lPagesCount - 1];
+		for (let index = 0; index < entries.length; ++index)
+		{
+			let entry = entries[index];
+			if (entry.Color)
+				page.b_color1(entry.Color.R, entry.Color.G, entry.Color.B, entry.Color.A);
+			page.SetFontInternal(entry.Font.Name, entry.Font.FontSize, entry.Font.Style);
+			page.DrawTextLogicalUnit(entry.Unit);
+		}
 	};
 
 	CDocumentRenderer.prototype.p_color = function(r, g, b, a)

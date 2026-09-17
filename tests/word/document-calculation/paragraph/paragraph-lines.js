@@ -100,6 +100,50 @@ $(function () {
 
 	QUnit.module("Paragraph Lines");
 
+	QUnit.test("Test native Unicode word boundaries fallback", function (assert)
+	{
+		let intlSegmenter = window.Intl.Segmenter;
+		let native = window.native;
+		let text = "😀ភាសាខ្មែរមាន";
+		let emojiEnd = "😀".length;
+		let firstWordEnd = emojiEnd + "ភាសាខ្មែរ".length;
+
+		window.Intl.Segmenter = undefined;
+		window.native = {
+			GetUnicodeWordSegments : function(actualText)
+			{
+				assert.strictEqual(actualText, text, "Pass text to native segmenter");
+				return [
+					0, emojiEnd, 0,
+					emojiEnd, firstWordEnd, 1,
+					firstWordEnd, text.length, 1
+				];
+			}
+		};
+
+		try
+		{
+			setText(text);
+			recalculate(1000 * charWidth);
+			assert.deepEqual(getSegmentedWords(), ["😀ភាសាខ្មែរ", "មាន"],
+				"Use native UTF-16 offsets for word boundaries");
+
+			window.native.GetUnicodeWordSegments = function()
+			{
+				return undefined;
+			};
+			run.GetElement(0).SetWordBreakAfter(true);
+			recalculate(1000 * charWidth);
+			assert.true(run.GetElement(0).IsWordBreakAfter(),
+				"Preserve word boundaries when native segmentation fails");
+		}
+		finally
+		{
+			window.Intl.Segmenter = intlSegmenter;
+			window.native = native;
+		}
+	});
+
 	QUnit.test("Test regular line break cases", function (assert)
 	{
 		setText("1234");

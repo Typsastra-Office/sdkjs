@@ -568,12 +568,19 @@ function onLoadFontsModule(window, undefined)
 			return;
 		
 		let isRtl = direction === AscFonts.HB_DIRECTION.HB_DIRECTION_RTL;
+		let isVertical = direction === AscFonts.HB_DIRECTION.HB_DIRECTION_TTB;
+		let isLogicalDirectionSupported = direction !== AscFonts.HB_DIRECTION.HB_DIRECTION_BTT;
 		
 		CODEPOINTS_CALCULATOR.start(isRtl ? CLUSTER_MAX : 0);
 		let prevCluster = -1;
 		let type, flags, gid, cluster, x_advance, y_advance, x_offset, y_offset;
 		let isLigature = false;
 		let nWidth     = 0;
+		let isLogicalUnits = isLogicalDirectionSupported
+			&& textShaper.IsLogicalUnitsEnabled && textShaper.IsLogicalUnitsEnabled();
+		let nVisualX = 0;
+		let nVisualY = 0;
+		let oLogicalVisual = null;
 		let reader = READER;
 		let glyphsCount = retObj.count;
 		for (let i = 0; i < glyphsCount; i++)
@@ -590,6 +597,8 @@ function onLoadFontsModule(window, undefined)
 			if (cluster !== prevCluster && -1 !== prevCluster)
 			{
 				CODEPOINTS_CALCULATOR.calculate(isRtl ? prevCluster : cluster);
+				if (isLogicalUnits)
+					textShaper.FlushLogicalUnit(oLogicalVisual, CODEPOINTS_CALCULATOR.getCount());
 				textShaper.FlushGrapheme(AscFonts.GetGrapheme(CODEPOINTS_CALCULATOR), nWidth, CODEPOINTS_CALCULATOR.getCount(), isLigature);
 				nWidth = 0;
 			}
@@ -599,13 +608,40 @@ function onLoadFontsModule(window, undefined)
 				prevCluster = cluster;
 				isLigature  = LIGATURE === type;
 				AscFonts.InitGrapheme(fontId, fontStyle);
+				if (isLogicalUnits)
+				{
+					oLogicalVisual = {
+						WritingMode     : isVertical ? 1 : 0,
+						FontId          : fontId,
+						FontStyle       : fontStyle,
+						LogicalAdvanceX : 0,
+						LogicalAdvanceY : 0,
+						VisualX         : nVisualX,
+						VisualY         : nVisualY,
+						Components      : []
+					};
+				}
 			}
 
 			AscFonts.AddGlyphToGrapheme(gid, x_advance, y_advance, x_offset, y_offset);
-			nWidth += x_advance * COEF;
+			if (isLogicalUnits)
+			{
+				oLogicalVisual.Components.push({
+					Gid : gid,
+					X   : oLogicalVisual.LogicalAdvanceX + x_offset,
+					Y   : oLogicalVisual.LogicalAdvanceY + y_offset
+				});
+				oLogicalVisual.LogicalAdvanceX += x_advance;
+				oLogicalVisual.LogicalAdvanceY += y_advance;
+				nVisualX += x_advance;
+				nVisualY += y_advance;
+			}
+			nWidth += textShaper.GetInlineAdvance(x_advance, y_advance) * COEF;
 		}
 		
 		CODEPOINTS_CALCULATOR.calculate(isRtl ? 0 : CLUSTER_MAX);
+		if (isLogicalUnits)
+			textShaper.FlushLogicalUnit(oLogicalVisual, CODEPOINTS_CALCULATOR.getCount());
 		textShaper.FlushGrapheme(AscFonts.GetGrapheme(CODEPOINTS_CALCULATOR), nWidth, CODEPOINTS_CALCULATOR.getCount(), isLigature);
 		
 		retObj["free"]();

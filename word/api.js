@@ -9388,8 +9388,12 @@ background-repeat: no-repeat;\
 	{
 		var t = this;
 		var fileType = options.fileType;
+		var isLocalDesktopPdfExport = window["AscDesktopEditor"]
+			&& c_oAscAsyncAction.DownloadAs === actionType
+			&& (c_oAscFileType.PDF === fileType || c_oAscFileType.PDFA === fileType);
 
-		if (this.WordControl.m_oLogicDocument && this.isCloudSaveAsLocalToDrawingFormat(actionType, fileType))
+		if (this.WordControl.m_oLogicDocument
+			&& (this.isCloudSaveAsLocalToDrawingFormat(actionType, fileType) || isLocalDesktopPdfExport))
 		{
 			if (this.isUseNativeViewer && this.isDocumentRenderer())
 			{
@@ -9399,7 +9403,16 @@ background-repeat: no-repeat;\
 			}
 			else
 			{
-				this.localSaveToDrawingFormat(this.WordControl.m_oDrawingDocument.ToRendererPart(false, options.isPdfPrint || ((fileType & 0x0400) === 0x0400)), fileType);
+				let pages;
+				let nativeOptions = options.advancedOptions instanceof Asc.asc_CAdjustPrint
+					? options.advancedOptions.asc_getNativeOptions() : null;
+				if (nativeOptions && typeof nativeOptions["pages"] === "string")
+				{
+					pages = AscCommon.getNativePrintRanges(nativeOptions["pages"], this.getCurrentPage() + 1,
+						this.WordControl.m_oDrawingDocument.m_lPagesCount);
+				}
+				this.localSaveToDrawingFormat(this.WordControl.m_oDrawingDocument.ToRendererPart(false,
+					options.isPdfPrint || ((fileType & 0x0400) === 0x0400), pages), fileType);
 			}
 			return true;
 		}
@@ -13412,6 +13425,7 @@ background-repeat: no-repeat;\
 	};
 	window["asc_docs_api"].prototype["asc_nativeCalculateFile"] = function(options)
 	{
+		AscCommon.ApplyEnhancedUnicodeOption(options);
 		if (null == this.WordControl.m_oLogicDocument)
 			return;
 

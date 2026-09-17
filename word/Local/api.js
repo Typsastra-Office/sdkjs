@@ -32,6 +32,10 @@
 
 "use strict";
 
+// Preserve source-to-glyph clusters while the desktop editor performs its
+// normal layout. Enhanced Unicode PDF can then reuse the exact page geometry.
+AscCommon.CaptureTextLogicalUnitsForExactLayout = true;
+
 // Import
 var c_oAscError = Asc.c_oAscError;
 
@@ -263,6 +267,34 @@ window["DesktopOfflineAppDocumentStartSave"] = function(isSaveAs, password, isFo
 		(options && options.fileType) ? options.fileType : 0,
 		JSON.stringify(jsonOptions), editor.currentPasswordOld ? editor.currentPasswordOld : "");
 };
+
+window["DesktopOfflineAppDocumentSavePdfFromCurrentLayout"] = function(fileType, outputPath, enhancedUnicode)
+{
+	if (!editor || !editor.WordControl || !editor.WordControl.m_oLogicDocument
+		|| !editor.WordControl.m_oDrawingDocument || !outputPath)
+	{
+		editor.onLocalSaveToDrawingFormat(1);
+		return;
+	}
+
+	window["AscDesktopEditor"]["emulateCloudPrinting"](true);
+	let documentUrl = editor.DocumentUrl || "";
+	let themesUrl = editor.ThemeLoader ? editor.ThemeLoader.ThemesUrl : "";
+	let previousEnhancedUnicode = AscCommon.IsEnhancedUnicodeEnabled();
+	let data;
+	try
+	{
+		AscCommon.SetEnhancedUnicodeEnabled(true === enhancedUnicode);
+		data = editor.WordControl.m_oDrawingDocument.ToRendererPart(false,
+			Asc.c_oAscFileType.PDFA === fileType);
+	}
+	finally
+	{
+		AscCommon.SetEnhancedUnicodeEnabled(previousEnhancedUnicode);
+	}
+	window["AscDesktopEditor"]["localSaveToDrawingFormat"](editor.documentTitle, documentUrl,
+		themesUrl, data, fileType, outputPath);
+};
 window["DesktopOfflineAppDocumentEndSave"] = function(error, hash, password)
 {
 	editor.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Save);
@@ -310,6 +342,8 @@ Asc['asc_docs_api'].prototype.asc_DownloadAsNatural = Asc['asc_docs_api'].protot
 Asc['asc_docs_api'].prototype.asc_DownloadAs = function(options)
 {
 	if (options && options.isNaturalDownload)
+		return this.asc_DownloadAsNatural(options);
+	if (options && (Asc.c_oAscFileType.PDF === options.fileType || Asc.c_oAscFileType.PDFA === options.fileType))
 		return this.asc_DownloadAsNatural(options);
 	this.asc_Save(false, true, undefined, options);
 };

@@ -128,6 +128,8 @@
 	ParagraphContentDrawState.prototype.endRange = function()
 	{
 		this.bidiFlow.end();
+		if (this.Graphics.FlushTextLogicalUnits)
+			this.Graphics.FlushTextLogicalUnits();
 		
 		let isRtl = this.Paragraph.isRtlDirection();
 		if (this.Paragraph.Numbering.checkRange(this.Range, this.Line) && isRtl)

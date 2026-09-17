@@ -41,26 +41,69 @@
 		COMBINING_MARK    : 3
 	};
 
-	let wordSegmenter;
+	let intlWordSegmenter;
 
-	function getWordSegmenter()
+	function getNativeWordSegments(text)
 	{
-		if (wordSegmenter)
-			return wordSegmenter;
-
-		if (!window.Intl || !window.Intl.Segmenter)
+		let native = window.native;
+		if (!native || !native.GetUnicodeWordSegments)
 			return null;
 
+		let nativeSegments;
 		try
 		{
-			wordSegmenter = new window.Intl.Segmenter(undefined, {granularity : "word"});
+			nativeSegments = native.GetUnicodeWordSegments(text);
 		}
 		catch (e)
 		{
 			return null;
 		}
 
-		return wordSegmenter;
+		if (!nativeSegments || 0 !== nativeSegments.length % 3)
+			return null;
+
+		let segments = [];
+		let previousEnd = 0;
+		for (let index = 0; index < nativeSegments.length; index += 3)
+		{
+			let start = nativeSegments[index];
+			let end = nativeSegments[index + 1];
+			if (!Number.isInteger(start) || !Number.isInteger(end)
+				|| start !== previousEnd || end <= start || end > text.length)
+				return null;
+
+			segments.push({
+				segment    : text.slice(start, end),
+				index      : start,
+				isWordLike : !!nativeSegments[index + 2]
+			});
+			previousEnd = end;
+		}
+
+		return previousEnd === text.length ? segments : null;
+	}
+
+	function getWordSegmenter()
+	{
+		if (intlWordSegmenter && window.Intl && window.Intl.Segmenter)
+			return intlWordSegmenter;
+
+		if (window.Intl && window.Intl.Segmenter)
+		{
+			try
+			{
+				intlWordSegmenter = new window.Intl.Segmenter(undefined, {granularity : "word"});
+				return intlWordSegmenter;
+			}
+			catch (e)
+			{
+			}
+		}
+
+		if (window.native && window.native.GetUnicodeWordSegments)
+			return {segment : getNativeWordSegments};
+
+		return null;
 	}
 
 	function CParagraphWordBreaker()
@@ -73,15 +116,15 @@
 		this.Items.length = 0;
 		this.Text = "";
 
+		if (!getWordSegmenter())
+			return;
+
 		let wordBreaker = this;
 		paragraph.CheckRunContent(function(run, startPos, endPos)
 		{
 			for (let pos = startPos; pos < endPos; ++pos)
 			{
 				let item = run.GetElement(pos);
-				if (item.IsText())
-					item.SetWordBreakAfter(false);
-
 				if (item.IsText() && !item.IsPdfText() && !item.IsNBSP())
 				{
 					wordBreaker.Items.push(item);
@@ -100,16 +143,25 @@
 		let segmenter = getWordSegmenter();
 		if (segmenter && this.Items.length)
 		{
+			let segmentedText = segmenter.segment(this.Text);
+			if (!segmentedText)
+			{
+				this.Items.length = 0;
+				this.Text = "";
+				return;
+			}
+
 			let itemsByEnd = {};
 			let textOffset = 0;
 			for (let itemIndex = 0; itemIndex < this.Items.length; ++itemIndex)
 			{
 				let item = this.Items[itemIndex];
+				item.SetWordBreakAfter(false);
 				textOffset += String.fromCodePoint(item.GetCodePoint()).length;
 				itemsByEnd[textOffset] = item;
 			}
 
-			let segments = Array.from(segmenter.segment(this.Text));
+			let segments = Array.from(segmentedText);
 			for (let segmentIndex = 0; segmentIndex < segments.length; ++segmentIndex)
 			{
 				let segment = segments[segmentIndex];
@@ -147,12 +199,13 @@
 		this.Spacing   = 0;
 		this.AscFont   = false; // Специальный случай, когда используемый шрифт ASCW3, а не тот, что задан в настройках
 		
-		this.MaskSymbol = null; // Символ, который используется для маскирования текста в полях ввода
+		this.MaskSymbol      = null; // Символ, который используется для маскирования текста в полях ввода
+		this.AutoLogicalUnits = false;
 	}
 	CParagraphTextShaper.prototype = Object.create(AscFonts.CTextShaper.prototype);
 	CParagraphTextShaper.prototype.constructor = CParagraphTextShaper;
 
-	CParagraphTextShaper.prototype.Init = function(isTemporary)
+	CParagraphTextShaper.prototype.Init = function(isTemporary, oParagraph)
 	{
 		this.Parent    = null;
 		this.Paragraph = null;
@@ -161,8 +214,40 @@
 		this.Ligatures = Asc.LigaturesType.None;
 		this.Spacing   = 0;
 		this.AscFont   = false;
-		
 		this.ClearBuffer();
+		this.SetWritingMode(this.private_GetParagraphWritingMode(oParagraph));
+		// The desktop exact-layout PDF path records the already calculated pages.
+		// Retain source-to-glyph clusters during normal layout so Enhanced Unicode
+		// can reuse those positions without reshaping or recalculating the document.
+		this.AutoLogicalUnits = !isTemporary && !this.IsLogicalUnitsEnabled()
+			&& ((AscCommon.IsEnhancedUnicodeEnabled && AscCommon.IsEnhancedUnicodeEnabled())
+				|| true === AscCommon.CaptureTextLogicalUnitsForExactLayout);
+		if (this.AutoLogicalUnits)
+			this.BeginLogicalUnits();
+	};
+	CParagraphTextShaper.prototype.private_GetParagraphWritingMode = function(oParagraph)
+	{
+		if (!oParagraph || "undefined" === typeof AscFormat)
+			return AscFonts.WRITING_MODE.Horizontal;
+
+		let oParent = oParagraph.GetParent ? oParagraph.GetParent() : oParagraph.Parent;
+		for (let nDepth = 0; oParent && nDepth < 16; ++nDepth)
+		{
+			if (oParent.getBodyPr)
+			{
+				let oBodyPr = oParent.getBodyPr();
+				if (oBodyPr && (oBodyPr.vert === AscFormat.nVertTTeaVert
+					|| oBodyPr.vert === AscFormat.nVertTTmongolianVert))
+					return AscFonts.WRITING_MODE.Vertical;
+				return AscFonts.WRITING_MODE.Horizontal;
+			}
+
+			let oNext = oParent.GetParent ? oParent.GetParent() : oParent.Parent;
+			if (!oNext || oNext === oParent)
+				break;
+			oParent = oNext;
+		}
+		return AscFonts.WRITING_MODE.Horizontal;
 	};
 	CParagraphTextShaper.prototype.GetCodePoint = function(oItem)
 	{
@@ -175,6 +260,11 @@
 			nCodePoint = (String.fromCharCode(nCodePoint).toUpperCase()).charCodeAt(0);
 
 		return nCodePoint;
+	};
+	CParagraphTextShaper.prototype.GetSourceCodePoint = function(oItem)
+	{
+		// Masked controls must not expose their underlying source text in export metadata.
+		return null !== this.MaskSymbol ? this.MaskSymbol : oItem.GetCodePoint();
 	};
 	CParagraphTextShaper.prototype.GetFontInfo = function(nFontSlot)
 	{
@@ -205,32 +295,48 @@
 		
 		return result;
 	};
+	CParagraphTextShaper.prototype.ShapeLogical = function(oParagraph, fDiagnostic)
+	{
+		this.BeginLogicalUnits(fDiagnostic);
+		this.Shape(oParagraph);
+		return this.EndLogicalUnits();
+	};
 	CParagraphTextShaper.prototype.Shape = function(oParagraph)
 	{
 		paragraphWordBreaker.Update(oParagraph);
-		this.Init(false);
+		this.Init(false, oParagraph);
 		let oThis = this;
 		oParagraph.CheckRunContent(function(oRun, nStartPos, nEndPos)
 		{
 			oThis.HandleRun(oRun, nStartPos, nEndPos);
 		});
 		this.FlushWord();
+		this.private_EndAutoLogicalUnits();
 	};
 	CParagraphTextShaper.prototype.ShapeRange = function(oParagraph, oStart, oEnd, isTemporary)
 	{
-		this.Init(isTemporary);
+		this.Init(isTemporary, oParagraph);
 		let oThis = this;
 		oParagraph.CheckRunContent(function(oRun, nStartPos, nEndPos)
 		{
 			oThis.HandleRun(oRun, nStartPos, nEndPos);
 		}, oStart, oEnd);
 		this.FlushWord();
+		this.private_EndAutoLogicalUnits();
 	};
 	CParagraphTextShaper.prototype.ShapeRun = function(run)
 	{
-		this.Init(false);
+		this.Init(false, run && run.GetParagraph ? run.GetParagraph() : null);
 		this.HandleRun(run, 0, run.GetElementsCount());
 		this.FlushWord();
+		this.private_EndAutoLogicalUnits();
+	};
+	CParagraphTextShaper.prototype.private_EndAutoLogicalUnits = function()
+	{
+		if (!this.AutoLogicalUnits)
+			return;
+		this.EndLogicalUnits();
+		this.AutoLogicalUnits = false;
 	};
 	CParagraphTextShaper.prototype.HandleRun = function(oRun, nStartPos, nEndPos)
 	{
@@ -239,6 +345,9 @@
 		for (let nPos = nStartPos; nPos < nEndPos; ++nPos)
 		{
 			let oItem = oRun.GetElement(nPos);
+			if (!this.Temporary && oItem.SetTextLogicalUnit
+				&& (this.IsLogicalUnitsEnabled() || oItem.GetTextLogicalUnit()))
+				oItem.SetTextLogicalUnit(null);
 			if (oItem.IsPdfText())
 			{
 				this.FlushWord();
@@ -268,6 +377,19 @@
 					this.FlushWord();
 			}
 		}
+	};
+	CParagraphTextShaper.prototype.FlushLogicalUnit = function(oVisualUnit, nCodePointsCount)
+	{
+		let oUnit = AscFonts.CTextShaper.prototype.FlushLogicalUnit.call(this, oVisualUnit, nCodePointsCount);
+		if (!oUnit || this.Temporary)
+			return oUnit;
+
+		let nBufferIndex = this.IsRtlDirection() ? this.BufferIndex - nCodePointsCount : this.BufferIndex;
+		let nDrawIndex = this.IsRtlDirection() ? nBufferIndex + nCodePointsCount - 1 : nBufferIndex;
+		let oItem = this.Buffer[nDrawIndex];
+		if (oItem && oItem.SetTextLogicalUnit)
+			oItem.SetTextLogicalUnit(oUnit);
+		return oUnit;
 	};
 	CParagraphTextShaper.prototype.FlushGrapheme = function(nGrapheme, nWidth, nCodePointsCount, isLigature)
 	{

@@ -44,6 +44,97 @@ $(function () {
 
 	QUnit.module("Test api for the document editor");
 
+	QUnit.test("Desktop local PDF export uses the calculated page renderer", function(assert)
+	{
+		let desktopEditor = window["AscDesktopEditor"];
+		let rendererArguments;
+		let savedData;
+		let api = {
+			WordControl : {
+				m_oLogicDocument : {},
+				m_oDrawingDocument : {
+					m_lPagesCount : 2,
+					ToRendererPart : function(noBase64, isPrint, pages)
+					{
+						rendererArguments = [noBase64, isPrint, pages];
+						return "calculated-pages";
+					}
+				}
+			},
+			isLocalMode : function() { return false; },
+			isCloudSaveAsLocalToDrawingFormat : function() { return false; },
+			isUseNativeViewer : false,
+			getCurrentPage : function() { return 0; },
+			localSaveToDrawingFormat : function(data, fileType) { savedData = [data, fileType]; }
+		};
+
+		window["AscDesktopEditor"] = {};
+		try
+		{
+			let result = Asc.asc_docs_api.prototype._downloadAs.call(api, Asc.c_oAscAsyncAction.DownloadAs,
+				{fileType : Asc.c_oAscFileType.PDF}, {}, {}, 0);
+			assert.true(result, "Handle PDF export in the desktop client");
+			assert.deepEqual(rendererArguments, [false, false, undefined], "Render the existing calculated pages");
+			assert.deepEqual(savedData, ["calculated-pages", Asc.c_oAscFileType.PDF], "Send page commands to the desktop PDF saver");
+		}
+		finally
+		{
+			window["AscDesktopEditor"] = desktopEditor;
+		}
+	});
+
+	QUnit.test("Desktop Save As PDF reuses the selected native path", function(assert)
+	{
+		let currentEditor = window.editor;
+		let desktopEditor = window["AscDesktopEditor"];
+		let rendererArguments;
+		let bridgeArguments;
+		let enhancedUnicodeDuringRender;
+		let previousEnhancedUnicode = AscCommon.IsEnhancedUnicodeEnabled();
+		AscCommon.SetEnhancedUnicodeEnabled(false);
+		window.editor = {
+			documentTitle : "input.docx",
+			DocumentUrl : "file:///input.docx",
+			ThemeLoader : {ThemesUrl : "themes/"},
+			WordControl : {
+				m_oLogicDocument : {},
+				m_oDrawingDocument : {
+					ToRendererPart : function(noBase64, isPrint)
+					{
+						rendererArguments = [noBase64, isPrint];
+						enhancedUnicodeDuringRender = AscCommon.IsEnhancedUnicodeEnabled();
+						return "calculated-pages";
+					}
+				}
+			}
+		};
+		window["AscDesktopEditor"] = {
+			emulateCloudPrinting : function() {},
+			localSaveToDrawingFormat : function()
+			{
+				bridgeArguments = Array.prototype.slice.call(arguments);
+			}
+		};
+
+		try
+		{
+			window["DesktopOfflineAppDocumentSavePdfFromCurrentLayout"](
+				Asc.c_oAscFileType.PDF, "C:\\output.pdf", true);
+			assert.deepEqual(rendererArguments, [false, false], "Render the live calculated pages");
+			assert.true(enhancedUnicodeDuringRender, "Enable logical text units while rendering");
+			assert.false(AscCommon.IsEnhancedUnicodeEnabled(), "Restore the editor's logical text unit setting");
+			assert.deepEqual(bridgeArguments, ["input.docx", "file:///input.docx", "themes/",
+				"calculated-pages", Asc.c_oAscFileType.PDF, "C:\\output.pdf"],
+				"Pass the native dialog path to the drawing-format saver");
+		}
+		finally
+		{
+			AscCommon.SetEnhancedUnicodeEnabled(previousEnhancedUnicode);
+			window.editor = currentEditor;
+			window["AscDesktopEditor"] = desktopEditor;
+		}
+	});
+
 
 	QUnit.test("Test AddText/RemoveSelection", function (assert)
 	{

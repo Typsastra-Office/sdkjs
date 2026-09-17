@@ -369,6 +369,14 @@
 
 		return (nWidth > 0 ? nWidth / (((this.Flags >> 16) & 0xFFFF) / 64) : 0);
 	};
+	CRunText.prototype.SetTextLogicalUnit = function(unit)
+	{
+		this.TextLogicalUnit = unit;
+	};
+	CRunText.prototype.GetTextLogicalUnit = function()
+	{
+		return this.TextLogicalUnit;
+	};
 	CRunText.prototype.Draw = function(X, Y, Context, PDSE, oTextPr, forceGrapheme)
 	{
 		if (Context.m_bIsTextDrawer === true)
@@ -385,17 +393,21 @@
 		}
 
 		let nFontSize = (((this.Flags >> 16) & 0xFFFF) / 64);
+		let isLogicalDrawn = false;
+		if (!(this.Flags & (FLAGS_TEMPORARY | FLAGS_GAPS | FLAGS_TEMPORARY_HYPHEN_AFTER))
+			&& !forceGrapheme && Context.m_bIsTextDrawer !== true && this.TextLogicalUnit)
+			isLogicalDrawn = AscFonts.DrawTextLogicalUnit(this.TextLogicalUnit, Context, X, Y, nFontSize);
 
-		if (this.IsNBSP())
+		if (!isLogicalDrawn && this.IsNBSP())
 		{
 			this.DrawNonBreakingSpace(Context, X, Y, nFontSize);
 		}
-		else if (this.Flags & FLAGS_TEMPORARY)
+		else if (!isLogicalDrawn && (this.Flags & FLAGS_TEMPORARY))
 		{
 			if (AscFonts.NO_GRAPHEME !== this.TempGrapheme)
 				AscFonts.DrawGrapheme(this.TempGrapheme, Context, X, Y, nFontSize);
 		}
-		else if (AscFonts.NO_GRAPHEME !== this.Grapheme)
+		else if (!isLogicalDrawn && AscFonts.NO_GRAPHEME !== this.Grapheme)
 		{
 			AscFonts.DrawGrapheme(forceGrapheme ? forceGrapheme : this.Grapheme, Context, X, Y, nFontSize);
 		}

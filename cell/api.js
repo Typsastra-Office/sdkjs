@@ -6973,7 +6973,8 @@ var editor;
 	  this.registerCustomFunctionsLibrary(undefined, true);
   };
 
-  spreadsheet_api.prototype.asc_nativeCalculateFile = function() {
+  spreadsheet_api.prototype.asc_nativeCalculateFile = function(options) {
+    AscCommon.ApplyEnhancedUnicodeOption(options);
     window['DoctRendererMode'] = true;
     this.wb._nativeCalculate();
   };

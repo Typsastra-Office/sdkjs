@@ -530,8 +530,9 @@
 		AscCommon.g_oIdCounter.Set_Load(false);
 	};
 
-	window["VisioEditorApi"].prototype["asc_nativeCalculateFile"] = function()
+	window["VisioEditorApi"].prototype["asc_nativeCalculateFile"] = function(options)
 	{
+		AscCommon.ApplyEnhancedUnicodeOption(options);
 		if (!this.WordControl)
 			return;
 		this.WordControl.m_oLogicDocument.AfterOpenDocument();

@@ -146,6 +146,44 @@ $(function () {
 
 	QUnit.module("Text shaper");
 
+	QUnit.test("Desktop layout retains Khmer logical units for exact PDF export", function(assert)
+	{
+		let previousEnhancedUnicode = AscCommon.IsEnhancedUnicodeEnabled();
+		let previousCapture = AscCommon.CaptureTextLogicalUnitsForExactLayout;
+		let textShaper = AscWord.ParagraphTextShaper;
+		let beginLogicalUnits = textShaper.BeginLogicalUnits;
+		let endLogicalUnits = textShaper.EndLogicalUnits;
+		let captureStarted = false;
+		let captureEnded = false;
+		let text = "ភាសាខ្មែរ";
+		try
+		{
+			AscCommon.CaptureTextLogicalUnitsForExactLayout = true;
+			AscCommon.SetEnhancedUnicodeEnabled(false);
+			textShaper.BeginLogicalUnits = function()
+			{
+				captureStarted = true;
+				return beginLogicalUnits.apply(this, arguments);
+			};
+			textShaper.EndLogicalUnits = function()
+			{
+				captureEnded = true;
+				return endLogicalUnits.apply(this, arguments);
+			};
+			SetText(text);
+			textShaper.Shape(para);
+			assert.true(captureStarted, "Start source-to-glyph cluster capture during desktop layout");
+			assert.true(captureEnded, "Finish source-to-glyph cluster capture during desktop layout");
+		}
+		finally
+		{
+			textShaper.BeginLogicalUnits = beginLogicalUnits;
+			textShaper.EndLogicalUnits = endLogicalUnits;
+			AscCommon.CaptureTextLogicalUnitsForExactLayout = previousCapture;
+			AscCommon.SetEnhancedUnicodeEnabled(previousEnhancedUnicode);
+		}
+	});
+
 	QUnit.test("Test: \"code point types\"", function (assert)
 	{
 		function Test(text, codePointTypes, moveCount, removeCount, deleteCount)
