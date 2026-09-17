@@ -439,13 +439,12 @@
 			return;
 
 		let nTop    = PDSE.LineTop;
-		let nHeight = PDSE.LineBottom - nTop;
-		if (!(nHeight > 0))
+		let nBottom = PDSE.LineBottom;
+		if (!(nBottom > nTop))
 			return;
 
-		Context.b_color1(0xB0, 0xB0, 0xB0, 255);
-		Context.rect(X, nTop, 0.5, nHeight);
-		Context.df();
+		Context.p_color(0xB0, 0xB0, 0xB0, 255);
+		Context.drawVerLine(1, X, nTop, nBottom, 0.5);
 	};
 	CRunText.prototype.DrawHyphenAfter = function(context, X, Y, fontSize, textPr)
 	{
