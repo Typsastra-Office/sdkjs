@@ -443,8 +443,8 @@
 		if (!(nHeight > 0))
 			return;
 
-		Context.p_color(0xB0, 0xB0, 0xB0, 255);
-		Context.rect(X, nTop, 1, nHeight);
+		Context.b_color1(0xB0, 0xB0, 0xB0, 255);
+		Context.rect(X, nTop, 0.5, nHeight);
 		Context.df();
 	};
 	CRunText.prototype.DrawHyphenAfter = function(context, X, Y, fontSize, textPr)
