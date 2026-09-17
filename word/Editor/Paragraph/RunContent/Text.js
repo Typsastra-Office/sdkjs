@@ -398,7 +398,11 @@
 			&& !forceGrapheme && Context.m_bIsTextDrawer !== true && this.TextLogicalUnit)
 			isLogicalDrawn = AscFonts.DrawTextLogicalUnit(this.TextLogicalUnit, Context, X, Y, nFontSize);
 
-		if (!isLogicalDrawn && this.IsNBSP())
+		if (!isLogicalDrawn && this.IsZeroWidthBreak())
+		{
+			this.DrawZeroWidthBreak(Context, X, PDSE);
+		}
+		else if (!isLogicalDrawn && this.IsNBSP())
 		{
 			this.DrawNonBreakingSpace(Context, X, Y, nFontSize);
 		}
@@ -428,6 +432,20 @@
 		let shift     = (width - nbspWidth) / 2;
 
 		AscFonts.DrawGrapheme(this.Grapheme, Context, X + shift, Y, nFontSize);
+	};
+	CRunText.prototype.DrawZeroWidthBreak = function(Context, X, PDSE)
+	{
+		if (undefined === editor || !editor.ShowParaMarks || !PDSE)
+			return;
+
+		let nTop    = PDSE.LineTop;
+		let nHeight = PDSE.LineBottom - nTop;
+		if (!(nHeight > 0))
+			return;
+
+		Context.p_color(0xB0, 0xB0, 0xB0, 255);
+		Context.rect(X, nTop, 1, nHeight);
+		Context.df();
 	};
 	CRunText.prototype.DrawHyphenAfter = function(context, X, Y, fontSize, textPr)
 	{
