@@ -1196,7 +1196,21 @@ void main() {\n\
                 else if (endChar == -1)
                     off2 = _lineWidth;
                 else
-                    off2 = _arrayGlyphOffsets[endChar];
+                {
+                    // Хвостовые codepoint кластера имеют тот же сдвиг, что и его глиф.
+                    // Доводим конец выделения до конца кластера (или до конца строки,
+                    // если кластер последний), чтобы символ под курсором попадал в выделение.
+                    let nEnd = endChar;
+                    while (nEnd < nChars - 1 && _arrayGlyphOffsets[nEnd + 1] === _arrayGlyphOffsets[nEnd])
+                        nEnd++;
+
+                    if (nEnd >= nChars - 1)
+                        off2 = _lineWidth;
+                    else if (nEnd > endChar)
+                        off2 = _arrayGlyphOffsets[nEnd + 1];
+                    else
+                        off2 = _arrayGlyphOffsets[endChar];
+                }
 
                 if (off2 <= off1)
                     continue;
