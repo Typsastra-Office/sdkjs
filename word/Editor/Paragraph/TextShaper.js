@@ -471,6 +471,17 @@
 	CParagraphTextShaper.prototype.private_HandlePdfText = function(item)
 	{
 		let fontInfo = this.TextPr.GetFontInfo(AscWord.fontslot_ASCII);
+
+		// A continuation codepoint of a synthesized glyph adds text only: the base run
+		// already draws the whole glyph, so it must not be drawn again.
+		if (item.IsLigatureContinue && item.IsLigatureContinue())
+		{
+			item.SetGrapheme(AscFonts.NO_GRAPHEME);
+			item.SetMetrics(fontInfo.Size, AscWord.fontslot_ASCII, this.TextPr);
+			item.SetWidth(0, this.TextPr, 0);
+			return;
+		}
+
 		let gid = item.GetGid();
 		
 		let grapheme;
@@ -485,7 +496,7 @@
 		item.SetMetrics(fontInfo.Size, AscWord.fontslot_ASCII, this.TextPr);
 		item.SetWidth(width, this.TextPr, width);
 		
-		if (item.IsText())
+		if (item.IsText() && !(item.IsLigature && item.IsLigature()))
 			item.SetCodePointType(AscWord.CODEPOINT_TYPE.BASE);
 	};
 	CParagraphTextShaper.prototype.private_HandleItem = function(oItem, nGrapheme, nWidth, nFontSize, nFontSlot, nCodePointType)

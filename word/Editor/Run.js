@@ -2141,20 +2141,66 @@ ParaRun.prototype.AddPdfOriginText = function(aGids, sString, aWidths, nFontSize
 	}
 	else
 	{
+		// Synthesized PDF glyphs: one drawn glyph can own several source codepoints.
+		// Emit it as the engine's ligature model - a base run that draws the glyph plus
+		// zero-width continuation runs that carry the remaining codepoints as text.
+		let aCodePoints = [];
 		for (let oIterator = sString.getUnicodeIterator(); oIterator.check(); oIterator.next())
+			aCodePoints.push({code : oIterator.value(), pos : oIterator.position()});
+
+		let nIndex = 0;
+		while (nIndex < aCodePoints.length)
 		{
-			let nCharCode = oIterator.value();
+			let nCharCode = aCodePoints[nIndex].code;
+			let nGid = aGids ? aGids[aCodePoints[nIndex].pos] : undefined;
 
 			if (9 === nCharCode) // \t
+			{
 				this.AddToContent(nCharPos++, new AscWord.CRunTab(), true);
-			else if (10 === nCharCode) // \n
-				this.AddToContent(nCharPos++, new AscWord.CRunBreak(AscWord.break_Line), true);
-			else if (13 === nCharCode) // \r
+				nIndex++;
 				continue;
-			else if (AscCommon.IsSpace(nCharCode)) // space
-				this.AddToContent(nCharPos++, new AscWord.CPdfRunSpace(aGids[oIterator.position()], nCharCode, aWidths[oIterator.position()], nFontSize), true);
-			else
-				this.AddToContent(nCharPos++, new AscWord.CPdfRunText(aGids[oIterator.position()], nCharCode, aWidths[oIterator.position()], nFontSize), true);
+			}
+			if (10 === nCharCode) // \n
+			{
+				this.AddToContent(nCharPos++, new AscWord.CRunBreak(AscWord.break_Line), true);
+				nIndex++;
+				continue;
+			}
+			if (13 === nCharCode) // \r
+			{
+				nIndex++;
+				continue;
+			}
+
+			if (!nGid || AscCommon.IsSpace(nCharCode))
+			{
+				// no synthesized glyph for this codepoint: keep it as a plain run
+				if (AscCommon.IsSpace(nCharCode))
+					this.AddToContent(nCharPos++, new AscWord.CRunSpace(nCharCode), true);
+				else
+					this.AddToContent(nCharPos++, new AscWord.CRunText(nCharCode), true);
+				nIndex++;
+				continue;
+			}
+
+			let nEnd = nIndex + 1;
+			while (nEnd < aCodePoints.length && !(aGids && aGids[aCodePoints[nEnd].pos]))
+				nEnd++;
+
+			let bCluster = (nEnd - nIndex) > 1;
+			let oBase = new AscWord.CPdfRunText(nGid, nCharCode, aWidths ? aWidths[aCodePoints[nIndex].pos] : 0, nFontSize);
+			if (bCluster)
+				oBase.SetCodePointType(AscWord.CODEPOINT_TYPE.LIGATURE);
+			this.AddToContent(nCharPos++, oBase, true);
+
+			for (let nMember = nIndex + 1; bCluster && nMember < nEnd; ++nMember)
+			{
+				let oMember = new AscWord.CPdfRunText(0, aCodePoints[nMember].code, 0, nFontSize);
+				oMember.SetCodePointType(AscWord.CODEPOINT_TYPE.LIGATURE_CONTINUE);
+				this.AddToContent(nCharPos++, oMember, true);
+			}
+
+			nIndex = nEnd;
 		}
 	}
 	return nCharPos;
