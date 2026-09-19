@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -172,7 +175,10 @@
 				let isNL = stringRenderer.codesHypNL[char];
 				let isSP = !isNL ? stringRenderer.codesHypSp[char] : false;
 
-				if (isNL || isSP) {
+				if (isNL) {
+					this.FlushWord();
+					this.private_HandleItem({idx: beginIndex + i, char: char}, AscFonts.NO_GRAPHEME, 0);
+				} else if (isSP) {
 					this.FlushWord();
 					this.AppendToString({idx: beginIndex + i, char: char});
 				} else {
@@ -396,9 +402,9 @@
 		};
 
 		/**
-		 * Применяем только трансформации поворота в области
+		 * Apply only rotation transformations in the area
 		 * @param {drawingCtx} drawingCtx
-		 * @param {type} angle Угол поворота в градусах
+		 * @param {type} angle Rotation angle in degrees
 		 * @param {Number} x
 		 * @param {Number} y
 		 * @param {Number} dx
@@ -449,11 +455,11 @@
 		StringRender.prototype.getTransformBound = function (angle, w, h, textW, alignHorizontal, alignVertical, maxWidth) {
 			var ctx = this.drawingCtx;
 
-			// TODO: добавить padding по сторонам
+			// TODO: add padding on sides
 
 			this.angle = 0;  //  angle;
 
-			var dx = 0, dy = 0, offsetX = 0,    // смещение BB
+			var dx = 0, dy = 0, offsetX = 0,    // BB offset
 
 				tm = this._doMeasure(maxWidth),
 
@@ -691,8 +697,11 @@
 		 * @param {Number} endPos
 		 * @return {Number}
 		 */
-		StringRender.prototype._calcLineWidth = function (startPos, endPos) {
-			var wrap = this.flags && (this.flags.wrapText || this.flags.wrapOnlyNL || this.flags.wrapOnlyCE);
+		StringRender.prototype._calcLineWidth = function (startPos, endPos, skipTrailingSpaces) {
+			if (startPos < 0 || startPos >= this.chars.length) {
+				return 0;
+			}
+			var shouldSkip = skipTrailingSpaces || (this.flags && (this.flags.wrapText || this.flags.wrapOnlyNL || this.flags.wrapOnlyCE));
 			var isAtEnd, j, chProp, tw;
 
 			if (endPos === undefined || endPos < 0) {
@@ -709,7 +718,7 @@
 			for (j = endPos, tw = 0, isAtEnd = true; j >= startPos; --j) {
 				if (isAtEnd) {
 					// skip space char at end of line
-					if ((wrap) && this.codesSpace[this.chars[j]]) {
+					if (shouldSkip && this.codesSpace[this.chars[j]]) {
 						continue;
 					}
 					isAtEnd = false;
@@ -886,7 +895,7 @@
 
 			function insertRepeatChars() {
 				if (0 === charProp.total)
-					return;	// Символ уже изначально лежит в строке и в списке
+					return;	// Character is already initially in the string and list
 				var repeatEnd = pos + charProp.total;
 				self.chars = [].concat(
 					self.chars.slice(0, repeatEnd),
@@ -1059,8 +1068,8 @@
 				fmt = fr.format.clone();
 				var va = fmt.getVerticalAlign();
 
-				//TODO пока не убрал эту регулярку, сначала перевожу в текст, потом обратно в сиволы
-				//TODO избавиться от регулярки!
+				//TODO haven't removed this regex yet, first convert to text, then back to symbols
+				//TODO get rid of regex!
 				if (fr.isInitCharCodes()) {
 					fr.initText();
 				}
@@ -1117,7 +1126,7 @@
 				}
 				measureFragment(chars, fmt);
 
-				// для italic текста прибавляем к концу строки разницу между charWidth и BBox
+				// for italic text add difference between charWidth and BBox to end of line
 				for (j = startCh; font.getItalic() && j < this.charWidths.length; ++j) {
 					if (this.charProps[j] && this.charProps[j].delta && j > 0) {
 						if (this.charWidths[j - 1] > 0) {
@@ -1132,7 +1141,7 @@
 			if (0 !== this.chars.length && this.charProps[this.chars.length] !== undefined) {
 				delete this.charProps[this.chars.length];
 			} else if (font.getItalic()) {
-				// для italic текста прибавляем к концу текста разницу между charWidth и BBox
+				// for italic text add difference between charWidth and BBox to end of text
 				this.charWidths[this.charWidths.length - 1] += delta;
 			}
 
@@ -1193,6 +1202,7 @@
 			ctx.setTextRotated(!!this.angle);
 			self.textColor = textColor;
 			drawState.justifyDx = dx;
+			if (l) l.justifyDx = dx;
 
 
 			function computeWordDeltaX() {
@@ -1278,6 +1288,7 @@
 						drawState.x = self.initStartX(i, l, x, maxWidth, false, la);
 						dx = computeWordDeltaX();
 						drawState.justifyDx = dx;
+						if (l) l.justifyDx = dx;
 						drawState.beginLine(l, drawState.x, y);
 					}
 				}
@@ -1290,17 +1301,18 @@
 		};
 		StringRender.prototype.initStartX = function (startPos, l, x, maxWidth, initAllLines, lineAlign) {
 			let align = lineAlign != null ? lineAlign : this.getEffectiveAlign();
+			let isRtl = this.drawState.getMainDirection() === AscBidi.DIRECTION_FLAG.RTL;
 
 			if (initAllLines) {
 				if (this.lines) {
 					for (let i = 0; i < this.lines.length; ++i) {
 						let la = this._getJustifyLastLineAlign(align, i === this.lines.length - 1);
-						let lineWidth = this._calcLineWidth(this.lines[i].beg);
+						let lineWidth = this._calcLineWidth(this.lines[i].beg, undefined, isRtl);
 						this.lines[i].initStartX(lineWidth, x, maxWidth, la);
 					}
 				}
 			} else {
-				return l.initStartX(this._calcLineWidth(startPos), x, maxWidth, align);
+				return l.initStartX(this._calcLineWidth(startPos, undefined, isRtl), x, maxWidth, align);
 			}
 		};
 		StringRender.prototype._getJustifyLastLineAlign = function (align, isLastLine) {
@@ -1360,6 +1372,48 @@
 		StringRender.prototype.removeClipRect = function() {
 			this.clipRect.use = false;
 		};
+
+		StringRender.prototype.isRtlLine = function() {
+			return this.drawState.getMainDirection() === AscBidi.DIRECTION_FLAG.RTL;
+		};
+
+		StringRender.prototype._forEachVisualChar = function(lineIndex, callback) {
+			let line = this.lines[lineIndex];
+			if (!line || line.beg < 0) return;
+
+			let drawState = this.drawState;
+			drawState.positionCallback = callback;
+			drawState.justifyDx = line.justifyDx || 0;
+
+			drawState.beginLine(line, line.startX, 0);
+
+			for (let i = line.beg; i <= line.end; ++i) {
+				let charProp = this.charProps[i];
+
+				if (charProp && charProp.skip > 0) {
+					let j = i + charProp.skip - 1;
+					drawState.x += this._calcCharsWidth(i, j);
+					i = j;
+					continue;
+				}
+
+				if (charProp && charProp.skip) {
+					continue;
+				}
+
+				if (charProp && (charProp.nl || charProp.hp) && i !== line.beg) {
+					break;
+				}
+
+				let char = this.chars[i];
+				let bidiType = drawState.getBidiType(char, charProp);
+				drawState.bidiFlow.add({charIndex: i, charProp: charProp}, bidiType);
+			}
+
+			drawState.bidiFlow.end();
+			drawState.positionCallback = null;
+		};
+
 		//------------------------------------------------------------export---------------------------------------------------
 		window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 		window["AscCommonExcel"].StringRender = StringRender;
@@ -1387,6 +1441,8 @@
 			this.afterSpaceInLine = false;
 			this.seenNonSpaceInLine = false;
 			this.trailingSpaceStart = Infinity;
+			this.trailingSpaceX = 0;
+			this.positionCallback = null;
 		}
 
 
@@ -1485,6 +1541,17 @@
 			let charIndex = data.charIndex;
 
 			if (charIndex >= this.trailingSpaceStart) {
+				if (this.positionCallback) {
+					let width = this.stringRender.charWidths[charIndex];
+					if (this.bidiFlow.direction === AscBidi.DIRECTION.R) {
+						this.positionCallback(charIndex, this.trailingSpaceX, width, direction);
+						this.trailingSpaceX += width;
+					} else {
+						this.positionCallback(charIndex, this.x, width, direction);
+						this.x += width;
+					}
+					this.afterSpaceInLine = true;
+				}
 				return;
 			}
 
@@ -1494,6 +1561,14 @@
 
 			if (!isSpace && this.afterSpaceInLine && this.seenNonSpaceInLine && this.justifyDx) {
 				this.x += this.justifyDx;
+			}
+
+			if (this.positionCallback) {
+				this.positionCallback(charIndex, this.x, width, direction);
+				this.x += width;
+				if (!isSpace) this.seenNonSpaceInLine = true;
+				this.afterSpaceInLine = isSpace;
+				return;
 			}
 
 			let cr = this.stringRender.clipRect;
@@ -1571,6 +1646,7 @@
 			this.seenNonSpaceInLine = false;
 
 			this.trailingSpaceStart = line ? line.end + 1 : Infinity;
+			this.trailingSpaceX = x;
 			if (line && line.beg >= 0) {
 				let endPos = line.end;
 				let endProp = this.stringRender.charProps[endPos];
@@ -1583,6 +1659,13 @@
 					} else {
 						break;
 					}
+				}
+				if (this.trailingSpaceStart <= endPos) {
+					let totalTrailingWidth = 0;
+					for (let j = this.trailingSpaceStart; j <= endPos; ++j) {
+						totalTrailingWidth += this.stringRender.charWidths[j];
+					}
+					this.trailingSpaceX = x - totalTrailingWidth;
 				}
 			}
 
@@ -1607,6 +1690,8 @@
 			this.afterSpaceInLine = false;
 			this.seenNonSpaceInLine = false;
 			this.trailingSpaceStart = Infinity;
+			this.trailingSpaceX = 0;
+			this.positionCallback = null;
 			this.textColor = textColor || null;
 			this.angle = angle || 0;
 			this.zoom = this.drawingCtx.getZoom();

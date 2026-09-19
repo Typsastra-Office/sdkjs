@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -55,22 +58,22 @@
 
 		var pHText = [];
 
-		pHText[AscFormat.phType_body] = "Slide text";             //"Текст слайда" ;                              ;
-		pHText[AscFormat.phType_chart] = "Chart";         // "Диаграмма" ;                                     ;
-		pHText[AscFormat.phType_clipArt] = "Clip Art";// "Текст слайда" ; //(Clip Art)                   ;
-		pHText[AscFormat.phType_ctrTitle] = "Slide title";// "Заголовок слайда" ; //(Centered Title)     ;
-		pHText[AscFormat.phType_dgm] = "Diagram";// "Диаграмма";// (Diagram)                        ;
-		pHText[AscFormat.phType_dt] = "Date and time";// "Дата и время";// (Date and Time)         ;
-		pHText[AscFormat.phType_ftr] = "Footer";// "Нижний колонтитул";// (Footer)                  ;
-		pHText[AscFormat.phType_hdr] = "Header";// "Верхний колонтитул"; //(Header)                 ;
-		pHText[AscFormat.phType_media] = "Media";// "Текст слайда"; //(Media)                         ;
-		pHText[AscFormat.phType_obj] = "Slide text";// "Текст слайда"; //(Object)                   ;
-		pHText[AscFormat.phType_pic] = "Picture";// "Вставка рисунка"; //(Picture)                  ;
-		pHText[AscFormat.phType_sldImg] = "Image";// "Вставка рисунка"; //(Slide Image)                ;
-		pHText[AscFormat.phType_sldNum] = "Slide number";// "Номер слайда"; //(Slide Number)           ;
-		pHText[AscFormat.phType_subTitle] = "Slide subtitle";// "Подзаголовок слайда"; //(Subtitle)      ;
-		pHText[AscFormat.phType_tbl] = "Table";// "Таблица"; //(Table)                              ;
-		pHText[AscFormat.phType_title] = "Slide title";// "Заголовок слайда" ;  //(Title)             ;
+		pHText[AscFormat.phType_body] = "Slide text";             //(Body)                              ;
+		pHText[AscFormat.phType_chart] = "Chart";         // (Chart)                                     ;
+		pHText[AscFormat.phType_clipArt] = "Clip Art";// (Clip Art)                   ;
+		pHText[AscFormat.phType_ctrTitle] = "Slide title";// (Centered Title)     ;
+		pHText[AscFormat.phType_dgm] = "Diagram";// (Diagram)                        ;
+		pHText[AscFormat.phType_dt] = "Date and time";// (Date and Time)         ;
+		pHText[AscFormat.phType_ftr] = "Footer";// (Footer)                  ;
+		pHText[AscFormat.phType_hdr] = "Header";// (Header)                 ;
+		pHText[AscFormat.phType_media] = "Media";// (Media)                         ;
+		pHText[AscFormat.phType_obj] = "Slide text";// (Object)                   ;
+		pHText[AscFormat.phType_pic] = "Picture";// (Picture)                  ;
+		pHText[AscFormat.phType_sldImg] = "Image";// (Slide Image)                ;
+		pHText[AscFormat.phType_sldNum] = "Slide number";// (Slide Number)           ;
+		pHText[AscFormat.phType_subTitle] = "Slide subtitle";// (Subtitle)      ;
+		pHText[AscFormat.phType_tbl] = "Table";// (Table)                              ;
+		pHText[AscFormat.phType_title] = "Slide title";// (Title)             ;
 
 		var c_oAscFill = Asc.c_oAscFill;
 
@@ -226,12 +229,12 @@
 				radius = global_mouseEvent.AscHitToHandlesEpsilon;
 			}
 
-			// чтобы не считать корни
+			// to avoid calculating square roots
 			radius *= radius;
 
-			// считаем ближайший маркер, так как окрестность может быть большой, и пересекаться.
+			// find the nearest marker, since the neighborhood can be large and overlap.
 
-			var _min_dist = 2 * radius; // главное что больше
+			var _min_dist = 2 * radius; // the main thing is that it's larger
 			var _ret_value = -1;
 
 			var check_line = CheckObjectLine(object);
@@ -315,7 +318,7 @@
 				}
 			}
 
-			// теперь смотрим расстояние до центра фигуры, чтобы можно было двигать маленькую
+			// now check the distance to the shape center, so that small shapes can be moved
 			dist_x = t_x - hc;
 			dist_y = t_y - vc;
 			_tmp_dist = dist_x * dist_x + dist_y * dist_y;
@@ -984,8 +987,8 @@
 			this.txBody = null;
 			this.bodyPr = null;
 			this.textBoxContent = null;
-			this.drawingBase = null;//DrawingBase в Excell'е
-			this.bWordShape = null;//если этот флаг стоит в true то автофигура имеет формат как в редакторе документов
+			this.drawingBase = null;//DrawingBase in Excel
+			this.bWordShape = null;//if this flag is true then the autoshape has the format as in the document editor
 			this.bCheckAutoFitFlag = false;
 			this.signatureLine = null;
 			this.txXfrm = null;
@@ -1134,6 +1137,9 @@
 			}
 			if (this.spPr) {
 				c.setSpPr(this.spPr.createDuplicate());
+				if (c.isHorizontalRule()) {
+					c.spPr.geometry.setHR(null);
+				}
 				c.spPr.setParent(c);
 			}
 			if (this.style) {
@@ -2052,10 +2058,12 @@
 					if (this.bWordShape) {
 						this.setBodyPr(new_body_pr);
 					} else {
-						if (this.txBody) {
-							this.txBody.setBodyPr(new_body_pr);
+						if (!this.txBody) {
+							this.createTextBody();
 						}
+						this.txBody.setBodyPr(new_body_pr);
 					}
+
 					if (this.isObjectInSmartArt() && !props.bNotCopyToPoints) {
 						this.copyTextInfoFromShapeToPoint(paddings);
 					}
@@ -2398,19 +2406,19 @@
 									break;
 								}
 								case 1:    //ctr
-								case 2:    //dist TODO: пока выравнивание  по центру. Переделать!
-								case 3:    //just TODO: пока выравнивание  по центру. Переделать!
+								case 2:    //dist TODO: currently center alignment. Needs to be reworked!
+								case 3:    //just TODO: currently center alignment. Needs to be reworked!
 									// (Text Anchor Enum ( Center ))
 									_vertical_shift = (_text_rect_height - _content_height) * 0.5;
 									break;
 
 								// case 2: //dist
-								// {// (Text Anchor Enum ( Distributed )) TODO: пока выравнивание  по центру. Переделать!
+								// {// (Text Anchor Enum ( Distributed )) TODO: currently center alignment. Needs to be reworked!
 								//     _vertical_shift = (_text_rect_height - _content_height) * 0.5;
 								//     break;
 								// }
 								// case 3: //just
-								// {// (Text Anchor Enum ( Justified )) TODO: пока выравнивание  по центру. Переделать!
+								// {// (Text Anchor Enum ( Justified )) TODO: currently center alignment. Needs to be reworked!
 								//     _vertical_shift = (_text_rect_height - _content_height) * 0.5;
 								//     break;
 								// }
@@ -2828,10 +2836,13 @@
 		};
 
 		CShape.prototype.canEditText = function () {
+			if (this.isHorizontalRule()) {
+				return false;
+			}
 			let form = this.isForm && this.isForm() ? this.getInnerForm() : null;
 			if (form && !form.CanPlaceCursorInside())
 				return false;
-			
+
 			return this.superclass.prototype.canEditText.call(this);
 		};
 		CShape.prototype.canEditTextInSmartArt = function () {
@@ -3461,6 +3472,30 @@
 									}
 								}
 							}
+							let oHR = this.getHorizontalRule();
+							if (oHR) {
+								this.m_oSectPr = null;
+								this.m_dHRColumnWidth = 0;
+								let oHRParagraph = oParaDrawing.Get_ParentParagraph();
+								if (oHRParagraph) {
+									let oHRSectPr = oHRParagraph.Get_SectPr();
+									if (oHRSectPr) {
+										//let hrColumnWidth = oHRParagraph.XLimit - oHRParagraph.X;
+										let hrColumnWidth = oHRSectPr.GetColumnWidth(oHRParagraph.GetAbsoluteColumn(0));
+										let paraInd = oHRParagraph.Get_CompiledPr2(true).ParaPr.Ind;
+										hrColumnWidth -= paraInd.Left + paraInd.Right;
+										hrColumnWidth = Math.max(0, hrColumnWidth);
+										let hrContentWidth = hrColumnWidth;
+										if (oHR.pct != null && oHR.pct > 0) {
+											hrContentWidth = Math.min(hrColumnWidth, hrColumnWidth * oHR.pct / 1000);
+										}
+										this.extX = hrContentWidth;
+										this.m_dHRColumnWidth = hrColumnWidth;
+										this.m_oSectPr = new AscWord.SectPr();
+										this.m_oSectPr.Copy(oHRSectPr);
+									}
+								}
+							}
 						}
 					} else {
 						if (this.isPlaceholder()) {
@@ -3758,8 +3793,8 @@
 						}
 					}
 
-					if (!this.bWordShape || this.group)//в презентациях и в таблицах изменям позицию: по горизонтали - в зависимости от выравнивания первого параграфа в контенте,
-						// по вертикали - в зависимости от вертикального выравнивания контента.
+					if (!this.bWordShape || this.group)//in presentations and tables we change position: horizontally - depending on the alignment of the first paragraph in the content,
+						// vertically - depending on the vertical alignment of the content.
 					{
 						var dSin = Math.sin(this.rot), dCos = Math.cos(this.rot);
 						var oContent = this.getDocContent();
@@ -3871,21 +3906,38 @@
 			var bRet = false;
 			var oParaDrawing = getParaDrawing(this);
 			var bSizRel = (oParaDrawing && (oParaDrawing.SizeRelH || oParaDrawing.SizeRelV));
-			if (this.checkAutofit() || bSizRel) {
+			let bHR = this.isHorizontalRule();
+			if (this.checkAutofit() || bSizRel || bHR) {
 				if (oSectPr) {
 					if (!this.m_oSectPr) {
 						this.recalcBounds();
 						this.recalcText();
 						this.recalcGeometry();
-						if (bSizRel) {
+						if (bSizRel || bHR) {
 							this.recalcTransform();
 						}
 						bRet = true;
 					} else {
-						Width = oSectPr.GetContentFrameWidth();
+						let nHRColIdx = 0;
+						let dHRColumnWidth = 0;
+						if (bHR && oParaDrawing) {
+							let oHRPara = oParaDrawing.Get_ParentParagraph && oParaDrawing.Get_ParentParagraph();
+							if (oHRPara) {
+								nHRColIdx = oHRPara.ColumnNum || 0;
+								dHRColumnWidth = oSectPr.GetColumnWidth(nHRColIdx);
+								let oInd = oHRPara.Get_CompiledPr2(true).ParaPr.Ind;
+								if (oInd) {
+									if (oInd.Left != null && oInd.Left > 0)
+										dHRColumnWidth -= oInd.Left;
+									if (oInd.Right != null && oInd.Right > 0)
+										dHRColumnWidth -= oInd.Right;
+								}
+							}
+						}
+						Width = bHR ? dHRColumnWidth : oSectPr.GetContentFrameWidth();
 						Height = oSectPr.GetContentFrameHeight();
 
-						Width2 = this.m_oSectPr.GetContentFrameWidth();
+						Width2 = bHR ? (this.m_dHRColumnWidth || 0) : this.m_oSectPr.GetContentFrameWidth();
 						Height2 = this.m_oSectPr.GetContentFrameHeight();
 
 						bRet = (Math.abs(Width - Width2) > 0.001 || Math.abs(Height - Height2) > 0.001);
@@ -3893,7 +3945,7 @@
 							this.recalcBounds();
 							this.recalcText();
 							this.recalcGeometry();
-							if (bSizRel) {
+							if (bSizRel || bHR) {
 								this.recalcTransform();
 							}
 						}
@@ -4761,7 +4813,7 @@
 			return widthOfContent > sizesOfTextRectContent.width;
 		};
 		CShape.prototype.checkFitContentForSmartArt = function () {
-			// почему-то у майков не подбирается шрифт для ширины, если вставлено только уравнение
+			// for some reason Microsoft doesn't select a font for width if only an equation is inserted
 			const oContent = this.getCurrentDocContentInSmartArt();
 			if (oContent) {
 				for (let i = 0; i < oContent.Content.length; i += 1) {
@@ -5380,16 +5432,16 @@
 					}
 					drawing_document.UpdateTargetTransform(oMatrix);
 					if (true === content.IsSelectionUse()) {
-						// Выделение нумерации
+						// Numbering selection
 						if (selectionflag_Numbering == content.Selection.Flag) {
 							drawing_document.TargetEnd();
 							drawing_document.SelectEnabled(true);
 							drawing_document.SelectClear();
 							drawing_document.SelectShow();
 						}
-						// Обрабатываем движение границы у таблиц
+						// Handle table border movement
 						else if (null != content.Selection.Data && true === content.Selection.Data.TableBorder && type_Table == content.Content[content.Selection.Data.Pos].GetType()) {
-							// Убираем курсор, если он был
+							// Remove cursor
 							drawing_document.TargetEnd();
 						} else {
 							if (false === content.IsSelectionEmpty()) {
@@ -5613,6 +5665,7 @@
 			}
 			this.drawShdw && this.drawShdw(graphics);
 			var _oldBrush = this.brush;
+			var _oldPen = this.pen;
 			if (this.signatureLine) {
 				var sSignatureUrl = null;
 
@@ -5622,6 +5675,30 @@
 				}
 				if (typeof sSignatureUrl === "string" && sSignatureUrl.length > 0) {
 					this.brush = AscFormat.CreateBlipFillUniFillFromUrl(sSignatureUrl);
+				}
+			}
+			var oHR = this.getHorizontalRule();
+			if (oHR) {
+				if (oHR.noshade) {
+					if (!this.brush || !this.brush.fill) {
+						this.brush = AscFormat.CreateSolidFillRGBA(160, 160, 160, 255);
+					}
+					if (!this.pen || !this.pen.Fill || !this.pen.Fill.fill) {
+						this.pen = null;
+					}
+				} else {
+					graphics.transform3(_transform, false);
+					graphics.SetIntegerGrid(true);
+					let hrExtX = this.extX;
+					let hrExtY = this.extY;
+					graphics.p_color(128, 128, 128, 255);
+					graphics.drawHorLine(0, 0, 0, hrExtX, 0);
+					graphics.drawVerLine(0, 0, 0, hrExtY, 0);
+					graphics.p_color(212, 208, 200, 255);
+					graphics.drawHorLine(2, hrExtY, 0, hrExtX, 0);
+					graphics.drawVerLine(2, hrExtX, 0, hrExtY, 0);
+					this.brush = null;
+					this.pen = null;
 				}
 			}
 
@@ -5635,6 +5712,7 @@
 			}
 
 			this.brush = _oldBrush;
+			this.pen = _oldPen;
 			var oController = this.getDrawingObjectsController && this.getDrawingObjectsController();
 
 			if (!this.cropObject) {
@@ -6430,6 +6508,9 @@
 		};
 
 		CShape.prototype.hit = function (x, y) {
+			if (this.isHorizontalRule()) {
+				return this.hitInRect(x, y);
+			}
 			return this.hitInInnerArea(x, y) || this.hitInPath(x, y) || this.hitInTextRect(x, y);
 		};
 
@@ -6559,6 +6640,9 @@
 			if (this.signatureLine) {
 				return false;
 			}
+			if (this.isHorizontalRule()) {
+				return false;
+			}
 			return AscFormat.CGraphicObjectBase.prototype.canRotate.call(this);
 		};
 
@@ -6571,6 +6655,9 @@
 				return false;
 			}
 			if (this.signatureLine) {
+				return false;
+			}
+			if (this.isHorizontalRule()) {
 				return false;
 			}
 			return AscFormat.CGraphicObjectBase.prototype.canGroup.call(this);
@@ -6711,7 +6798,7 @@
 			}
 		};
 
-		CShape.prototype.Refresh_RecalcData2 = function (pageIndex/*для текста*/) {
+		CShape.prototype.Refresh_RecalcData2 = function (pageIndex/*for text*/) {
 			this.recalcContent();
 			this.recalcContent2 && this.recalcContent2();
 			this.recalcTransformText();

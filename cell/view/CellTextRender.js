@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -67,6 +70,8 @@
 
 			/** @type RegExp */
 			this.reWordBegining = new XRegExp("[^\\p{L}\\p{N}\\'][\\p{L}\\p{N}]", "i");
+			this.reWordEnding = new XRegExp("[\\p{L}\\p{N}][^\\p{L}\\p{N}\\']", "i");
+			this.cursorAtTrailingEdge = undefined;
 
 			return this;
 		}
@@ -131,17 +136,23 @@
 		};
 
 		CellTextRender.prototype.getPrevWord = function (pos) {
-			//TODO регулярку не меняю, перегоняю в строку
+			//TODO not changing the regex, converting to string
 			let s = AscCommonExcel.convertUnicodeToSimpleString(this.chars);
 			let i = asc_lastindexof(s.slice(0, pos), this.reWordBegining);
 			return i >= 0 ? i + 1 : 0;
 		};
 
 		CellTextRender.prototype.getNextWord = function (pos) {
-			//TODO регулярку не меняю, перегоняю в строку
+			//TODO not changing the regex, converting to string
 			let s = AscCommonExcel.convertUnicodeToSimpleString(this.chars);
 			let i = s.slice(pos).search(this.reWordBegining);
 			return i >= 0 ? pos + (i + 1) : this.getEndOfLine(pos);
+		};
+
+		CellTextRender.prototype.getEndOfWord = function (pos) {
+			let s = AscCommonExcel.convertUnicodeToSimpleString(this.chars);
+			let i = s.slice(pos).search(this.reWordEnding);
+			return i >= 0 ? pos + i + 1 : this.chars.length;
 		};
 
 		CellTextRender.prototype.getBeginOfLine = function (pos) {
@@ -153,7 +164,7 @@
 				}
 			}
 
-			// pos - в конце текста
+			// pos - at the end of text
 			var lastLine = l.length - 1;
 			var lastChar = this.chars.length - 1;
 			return this.charWidths[lastChar] !== 0 ? l[lastLine].beg : pos;
@@ -170,7 +181,7 @@
 				}
 			}
 
-			// pos - на последней линии
+			// pos - on the last line
 			var lastChar = this.chars.length - 1;
 			return pos > lastChar ? pos : lastChar + (this.charWidths[lastChar] !== 0 ? 1 : 0);
 		};
@@ -192,7 +203,7 @@
 				}
 			}
 
-			// pos - в конце текста
+			// pos - at the end of text
 			var lastLine = l.length - 1;
 			var lastChar = this.chars.length - 1;
 			return this.charWidths[lastChar] === 0 || l.length < 2 ?
@@ -211,7 +222,7 @@
 				}
 			}
 
-			// pos - на последней линии
+			// pos - on the last line
 			return this.chars.length;
 		};
 
@@ -227,10 +238,40 @@
 		};
 
 		CellTextRender.prototype.charOffset = function (pos, lineIndex, h) {
-			var zoom = this.drawingCtx.getZoom();
-			var li = this.lines[lineIndex];
-			return new CharOffset(li.startX + (pos > 0 ? this._calcCharsWidth(li.beg, pos - 1) : 0), Asc.round(
-				h * zoom), Asc.round(li.th * zoom), lineIndex);
+			let zoom = this.drawingCtx.getZoom();
+			let li = this.lines[lineIndex];
+			let left;
+			let isRtl = this.isRtlLine();
+
+			if (pos <= li.beg) {
+				left = isRtl ? (li.startX + li.tw) : li.startX;
+			} else {
+				let atPos = null;
+				let beforePos = null;
+				let visibleEndX = li.startX;
+				this._forEachVisualChar(lineIndex, function (charIndex, visualX, width, direction) {
+					let right = visualX + width;
+					if (right > visibleEndX) visibleEndX = right;
+					if (charIndex === pos && atPos === null) {
+						atPos = (direction === AscBidi.DIRECTION.R) ? right : visualX;
+					}
+					if (charIndex === pos - 1 && beforePos === null) {
+						beforePos = (direction === AscBidi.DIRECTION.R) ? visualX : right;
+					}
+				});
+
+				if (atPos !== null && beforePos !== null && this.cursorAtTrailingEdge !== undefined && atPos !== beforePos) {
+					left = this.cursorAtTrailingEdge ? beforePos : atPos;
+				} else if (atPos !== null) {
+					left = atPos;
+				} else if (beforePos !== null) {
+					left = beforePos;
+				} else {
+					left = isRtl ? li.startX : visibleEndX;
+				}
+			}
+
+			return new CharOffset(left, Asc.round(h * zoom), Asc.round(li.th * zoom), lineIndex);
 		};
 
 		CellTextRender.prototype.calcCharOffset = function (pos, lineIndex) {
@@ -276,68 +317,43 @@
 		};
 		
 		CellTextRender.prototype.getCharPosByXY = function(x, y, topLine, zoom) {
-			
-			let line = this.getLineByY(y, topLine, zoom);
-			if (line < 0) {
-				return -1;
-			}
-			
-			let lineInfo = this.getLineInfo(line);
-			let _x = lineInfo.startX;
-			let dist = Math.abs(x - _x);
-			let resultPos = lineInfo.beg;
-			
-			for (let charPos = lineInfo.beg; charPos <= lineInfo.end; ++charPos) {
-				
-				if (!this._isCombinedChar(charPos) && dist > Math.abs(x - _x)) {
-					dist = Math.abs(x - _x);
-					resultPos = charPos;
-				}
-				
-				_x += this.getCharWidth(charPos);
-			}
-			
-			if (Math.abs(x - _x) < dist)
-				resultPos = line === this.getLinesCount() - 1 ?  lineInfo.end + 1 : lineInfo.end;
-			
-			return resultPos;
-		};
-
-		CellTextRender.prototype.getCharPosByXY = function(x, y, topLine, zoom) {
 			let line = this.getLineByY(y, topLine, zoom);
 			if (line < 0) {
 				return -1;
 			}
 
 			let lineInfo = this.getLineInfo(line);
-			let _x = lineInfo.startX;
-			let dist = Math.abs(x - _x);
-			let resultPos = lineInfo.beg;
+			let bestPos = lineInfo.beg;
+			let bestDist = Infinity;
+			let isTrailing = false;
+			let self = this;
 
-			for (let charPos = lineInfo.beg; charPos <= lineInfo.end; ++charPos) {
+			this._forEachVisualChar(line, function(charIndex, visualX, width, direction) {
+				if (self._isCombinedChar(charIndex)) return;
 
-				if (!this._isCombinedChar(charPos) && dist > Math.abs(x - _x)) {
-					dist = Math.abs(x - _x);
-					resultPos = charPos;
+				let leftEdge = visualX;
+				let rightEdge = visualX + width;
+
+				if (direction === AscBidi.DIRECTION.R) {
+					let distRight = Math.abs(x - rightEdge);
+					let distLeft = Math.abs(x - leftEdge);
+					if (distRight < bestDist) { bestDist = distRight; bestPos = charIndex; isTrailing = false; }
+					if (distLeft < bestDist) { bestDist = distLeft; bestPos = charIndex + 1; isTrailing = true; }
+				} else {
+					let distLeft = Math.abs(x - leftEdge);
+					let distRight = Math.abs(x - rightEdge);
+					if (distLeft < bestDist) { bestDist = distLeft; bestPos = charIndex; isTrailing = false; }
+					if (distRight < bestDist) { bestDist = distRight; bestPos = charIndex + 1; isTrailing = true; }
 				}
+			});
 
-				_x += this.getCharWidth(charPos);
-			}
+			this.cursorAtTrailingEdge = isTrailing;
 
-			if (Math.abs(x - _x) < dist)
-				resultPos = line === this.getLinesCount() - 1 ?  lineInfo.end + 1 : lineInfo.end;
+			let maxPos = line === this.getLinesCount() - 1 ? lineInfo.end + 1 : lineInfo.end;
+			if (bestPos > maxPos) bestPos = maxPos;
+			if (bestPos < lineInfo.beg) bestPos = lineInfo.beg;
 
-			// Если текст обрабатывался как bidi, корректируем позицию
-			if (this.bidiProcessed && this.baseDirection === AscFonts.HB_DIRECTION.HB_DIRECTION_RTL) {
-				let line = this.getLineByY(y, topLine, zoom);
-				if (line >= 0) {
-					let lineInfo = this.getLineInfo(line);
-					// Для RTL строк логика поиска позиции может быть скорректирована
-					// Пока оставляем базовую логику, но это место для дальнейших улучшений
-				}
-			}
-
-			return resultPos;
+			return bestPos;
 		};
 		
 		CellTextRender.prototype.getLineByY = function(y, topLine, zoom) {

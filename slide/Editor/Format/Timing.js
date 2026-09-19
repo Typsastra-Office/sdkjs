@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -2469,7 +2472,7 @@
             nPositions = 1;
         }
 
-        // Получаем последовательности и выбранные интервалы
+        // Get sequences and selected intervals
         const aSeqs = this.getEffectsSequences();
         const aRanges = this.getSelectionRanges(aSeqs);
 
@@ -2485,7 +2488,7 @@
         const aStart = aRange[0];
         const aEnd = aRange[1];
 
-        // Вычисляем максимальное разрешенное количество перемещений
+        // Calculate the maximum allowed number of movements
         let nAllowedMovements;
         if (bEarlier) {
             let nOuterPossibleMovements = aStart[0];
@@ -2511,7 +2514,7 @@
             return null;
         }
 
-        // Вычисляем целевую последовательность и позицию в ней
+        // Calculate the target sequence and position in it
         let newStart = [].concat(aStart);
         let newEnd = [].concat(aEnd);
         if (bEarlier) {
@@ -2540,7 +2543,7 @@
         let aSeqToInsert = bEarlier ? aSeqs[newStart[0]] : aSeqs[newEnd[0]];
         let nPosToInsert = bEarlier ? newStart[1] : newEnd[1];
 
-        // Забираем из последовательностей все выбранные эффекты и складываем их в aEffectsToInsert
+        // Take all selected effects from sequences and put them into aEffectsToInsert
         let aEffectsToInsert = [];
         for (let nSeq = aStart[0]; nSeq <= aEnd[0]; nSeq++) {
             let aSeq = aSeqs[nSeq];

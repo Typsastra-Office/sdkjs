@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -2283,144 +2286,59 @@ function (window, undefined) {
 		return this.oVarIndexByCellName;
 	};
 	/**
+	 * Converts a Cell object to a Range object
+	 * @memberof CSimplexTableau
+	 * @param {Cell} oCell
+	 * @return {Range}
+	 */
+	CSimplexTableau.prototype.convertToRange = function (oCell) {
+		return new AscCommonExcel.Range(oCell.ws, oCell.nRow, oCell.nCol, oCell.nRow, oCell.nCol);
+	}
+	/**
 	 * Fills matrix's rows.
 	 * Logic for finding the variable coefficient and the variable object.
 	 * @memberof CSimplexTableau
-	 * @param {Function} fAction - Callback function for filling row. Takes a coefficient, a variable object and argument index as arguments.
+	 * @param {Function} fAction - Callback function for filling row. Takes a coefficient, a variable object, and argument index as arguments.
 	 * @param {parserFormula} oParserFormula
 	 */
 	CSimplexTableau.prototype.fillMatrixRows = function (fAction, oParserFormula) {
+		const PERTURBATION_VALUE = 1;
 		const aArgsFormula = getArgsFormula(oParserFormula.outStack, true);
+		const oThis = this;
 		const oModel = this.getModel();
-		const oVarsBbox = this.getVariables().getBBox0();
-		const nMainFuncIndex = findLastOperandId(oParserFormula.outStack, function (oElement) {
-			return oElement.type && (oElement.type === cElementType.func || oElement.type === cElementType.operator);
-		});
-		const oCalcType = oParserFormula.outStack[nMainFuncIndex];
-		/** @type {Cell[]} */
-		const aArgs = [];
-		const aConnectedCells = [];
-		/** @type {number[]}*/
-		const aCoefficients = [];
+		const oVariables = this.getVariables();
+		const oVarsBbox = oVariables.getBBox0();
+		const aVariables = [];
+		const aSimplexVariables = [];
 
-		/** @type {Cell[]} */
-		let aSortedFormulaArgs;
-		let nCoefficient = 1;
-		let bHasOnlyVarCells = true;
-		let bHasVariableCell = false;
-		let sOperand = '';
-		let bVarCellIsDividend = false;
-
-		if (oCalcType.type === cElementType.operator) {
-			sOperand = oCalcType.name;
-		}
-		if (sOperand === '/') {
-			bVarCellIsDividend = oVarsBbox.contains(aArgsFormula[0].nCol, aArgsFormula[0].nRow);
-		}
-
-		aArgsFormula.forEach(function (oArgCell) { // Sorts formula args. Cells from variables must be first in array.
+		aArgsFormula.forEach(function (oArgCell) { // Extract variable cells
 			if (oVarsBbox.contains(oArgCell.nCol, oArgCell.nRow)) {
-				if (!bHasVariableCell) {
-					bHasVariableCell = true;
-				}
-				aArgs.push(oArgCell);
-			} else {
-				bHasOnlyVarCells = false;
-				aConnectedCells.push(oArgCell);
+				aVariables.push(oArgCell);
+			} else if (oArgCell.isFormula()) {
+				const oVariableCell = findCell(oArgCell, oVariables);
+				oVariableCell && aVariables.push(oVariableCell);
 			}
 		});
-		aSortedFormulaArgs = aArgs.concat(aConnectedCells);
-		if (bHasVariableCell && !bHasOnlyVarCells && oCalcType.type === cElementType.func) {
-			const oVariablesCache = {};
-			let bHorizontal = false;
-			let bDirectionFound = false;
-			let oNextCell;
-			let sCellKey;
-			let nDirectionCoord;
-			let nVarIndex = 0;
-			for (let i = 0, length = aSortedFormulaArgs.length; i < length; i++) {
-				const oCell = aSortedFormulaArgs[i];
-				const nNextIndex = i + 1;
-				if (nNextIndex < length) {
-					oNextCell = aSortedFormulaArgs[nNextIndex];
-				}
-				if (oVarsBbox.contains(oCell.nCol, oCell.nRow)) {
-					if (!bDirectionFound && oVarsBbox.contains(oNextCell.nCol, oNextCell.nRow)) {
-						bDirectionFound = true;
-						bHorizontal = oCell.nRow === oNextCell.nRow;
-						nDirectionCoord = bHorizontal ? oCell.nRow : oCell.nCol;
-					}
-					sCellKey =  bHorizontal ? nDirectionCoord + "_" + oCell.nCol : nDirectionCoord + "_" + oCell.nRow;
-					oVariablesCache[sCellKey] = oCell;
-				} else {
-					bDirectionFound = false;
-					if (!bDirectionFound) {
-						bHorizontal = oCell.nRow === oNextCell.nRow;
-						bDirectionFound = true;
-					}
-					sCellKey =  bHorizontal ? nDirectionCoord + "_" + oCell.nCol : nDirectionCoord + "_" + oCell.nRow;
-					if (oCell.isFormula()) {
-						nCoefficient = oModel.calculateFormula(NaN, null, oCell.getFormulaParsed());
-					} else if (oCell.getNumberValue()) {
-						nCoefficient = oCell.getNumberValue();
-					}
-					fAction(nCoefficient, oVariablesCache[sCellKey], nVarIndex);
-					nVarIndex++;
-				}
+		AscCommon.History.TurnOff();
+		aVariables.forEach(function (oVariableCell) {
+			const oTempCell = oVariableCell.clone();
+			const oVariable = {
+				variableCell: oTempCell
+			};
+			// Creates a Range object from a Cell object for calculateFormula method.
+			const oVariableRange = oThis.convertToRange(oTempCell);
+			const nCoefficient = oModel.calculateFormula(PERTURBATION_VALUE, oVariableRange, oParserFormula);
+			if (nCoefficient !== null) {
+				oVariable.coefficient = nCoefficient;
 			}
-		} else {
-			const nStartIndex = bHasVariableCell ? aSortedFormulaArgs.length - 1 : 0;
-			const nEndIndex = bHasVariableCell ? -1 : aSortedFormulaArgs.length;
-			const nStep = bHasVariableCell ? -1 : 1;
-			let nArgIndex = 0;
-			for (let i = nStartIndex; i !== nEndIndex; i += nStep) {
-				const oCell = aSortedFormulaArgs[i];
-				if (oCell.isFormula()) { // Tries to find coefficient for variable
-					const aCellArgs = getArgsFormula(oCell.getFormulaParsed().outStack, true);
-					const bIncludeVariableCell = aCellArgs.some(function (oCellArg) {
-						return oVarsBbox.contains(oCellArg.nCol, oCellArg.nRow);
-					});
-					if (bIncludeVariableCell) {
-						let oVariableCell = null;
-						aCellArgs.forEach(function (oCellArg) {
-							if (!oVarsBbox.contains(oCellArg.nCol, oCellArg.nRow) && oCellArg.getNumberValue() !== null) {
-								nCoefficient = bVarCellIsDividend ? 1 / oCellArg.getNumberValue() : oCellArg.getNumberValue();
-							} else {
-								oVariableCell = oCellArg;
-							}
-						});
-						fAction(nCoefficient, oVariableCell, i);
-					} else if (bHasVariableCell) {
-						const nFormulaResult = oModel.calculateFormula(NaN, null, oCell.getFormulaParsed());
-						if (nFormulaResult) {
-							nCoefficient = nFormulaResult;
-						}
-					} else {
-						// Tries to find a variable cell in the next cells of the formula recursively.
-						const oVariableCell = findCell(oCell, this.getVariables());
-						if (oVariableCell) {
-							const DEFAULT_VALUE = 1;
-							// Creates a Range object from a Cell object for calculateFormula method.
-							const oVariableRange = new AscCommonExcel.Range(oVariableCell.ws, oVariableCell.nRow, oVariableCell.nCol, oVariableCell.nRow, oVariableCell.nCol);
-							nCoefficient = oModel.calculateFormula(DEFAULT_VALUE, oVariableRange, oCell.getFormulaParsed());
-							oVariableCell.setValue("0"); // Resets value from default value.
-							fAction(nCoefficient, oVariableCell, i);
-						}
-					}
-				} else if (oCell.getNumberValue() && !oVarsBbox.contains(oCell.nCol, oCell.nRow))  {
-					nCoefficient = bVarCellIsDividend ? 1 / oCell.getNumberValue() : oCell.getNumberValue();
-				}
-
-				if (oVarsBbox.contains(oCell.nCol, oCell.nRow)) {
-					if (!bHasOnlyVarCells && aCoefficients.length) {
-						nCoefficient = aCoefficients[nArgIndex];
-					}
-					fAction(nCoefficient, oCell, i);
-					nArgIndex++;
-				} else {
-					aCoefficients.push(nCoefficient);
-				}
-			}
+			aSimplexVariables.push(oVariable);
+			// Resets value
+			oVariableRange.setValue('0');
+		});
+		AscCommon.History.TurnOn();
+		for (let i = 0, length = aSimplexVariables.length; i < length; i++) {
+			const oVariable = aSimplexVariables[i];
+			fAction(oVariable.coefficient, oVariable.variableCell, i);
 		}
 	};
 	/**
@@ -2436,7 +2354,6 @@ function (window, undefined) {
 		const aObjectiveFuncRow = aMatrix[0];
 		const oModel = this.getModel();
 		const oVariables = this.getVariables();
-		const nTotalCountVariables = oVariables.getBBox0().getWidth() * oVariables.getBBox0().getHeight();
 		const nCoeff = oModel.getOptimizeResultTo() === c_oAscOptimizeTo.min ? -1 : 1;
 		const oObjectiveFunc = oModel.getParsedFormula();
 
@@ -2457,33 +2374,25 @@ function (window, undefined) {
 			oThis.addVarIndexByColElem(nVarIndex, nIndex + 1);
 		}
 		let nObjectiveResult;
-		if (nTotalCountVariables > 1) {
+		const aFormulaArgs = getArgsFormula(oObjectiveFunc.outStack, true);
+		// Checks whether the variable cell is the same as the objective function cell
+		if (!aFormulaArgs.length && oVariables.isOneCell()) {
+			oVariables.worksheet._getCell(oVariables.bbox.r1, oVariables.bbox.c1, function (oVariableCell) {
+				if (oVariableCell.compareCellIndex(oObjectiveFunc.getParent())) {
+					// Set the default coefficient in that case - equation is 1*x
+					nObjectiveResult = 1;
+				}
+			});
+			let nVarIndex = aVariablesIndexes[FIRST_COLUMN_INDEX];
+			fillObjectiveFuncRow(nObjectiveResult, FIRST_COLUMN_INDEX, nVarIndex);
+		} else {
 			this.fillMatrixRows(function (nValue, oVarCell, nIndex) {
 				let nVarIndex = aVariablesIndexes[nIndex];
 				fillObjectiveFuncRow(nValue, nIndex, nVarIndex);
 			}, oObjectiveFunc)
-		} else { // For one variable - calculates the objective function with a constant variable
-			const DEFAULT_VALUE = 1;
-			const aFormulaArgs = getArgsFormula(oObjectiveFunc.outStack, true);
-			// Checks whether the variable cell is the same as the objective function cell
-			if (!aFormulaArgs.length && oVariables.isOneCell()) {
-				oVariables.worksheet._getCell(oVariables.bbox.r1, oVariables.bbox.c1, function (oVariableCell) {
-					if (oVariableCell.compareCellIndex(oObjectiveFunc.getParent())) {
-						// Set the default coefficient in that case - equation is 1*x
-						nObjectiveResult = DEFAULT_VALUE;
-					}
-				});
-			}
-			if (!nObjectiveResult) {
-				nObjectiveResult = oModel.calculateFormula(DEFAULT_VALUE, oVariables);
-				oVariables.setValue("0");
-			}
-			let nVarIndex = aVariablesIndexes[FIRST_COLUMN_INDEX];
-			fillObjectiveFuncRow(nObjectiveResult, FIRST_COLUMN_INDEX, nVarIndex);
 		}
 		// Fills remain matrix's rows by constraints
 		const aColByVarIndex = this.getColByVarIndex();
-		const oObjectiveParentCell = oObjectiveFunc.getParent();
 		let nRowIndex = 1;
 		for (let j = 0, length = aConstraints.length; j < length; j++) {
 			function fillRow(oCell) {
@@ -2503,18 +2412,7 @@ function (window, undefined) {
 			const aRow = aMatrix[nRowIndex++];
 			let coefficient = 1;
 			// Work with terms
-			if (oRefCell.compareCellIndex(oObjectiveParentCell) && nTotalCountVariables === 1) {
-				let oVariableCell = null;
-				coefficient = nObjectiveResult;
-				if (oRefCell.isFormula()) {
-					oVariableCell = findCell(oRefCell, oVariables);
-				} else if (oVariables.isOneCell() && oVariables.bbox.contains(oRefCell.nCol, oRefCell.nRow)) {
-					oVariableCell = oRefCell;
-				}
-				if (oVariableCell) {
-					fillRow(oVariableCell);
-				}
-			} else if (oRefCell.isFormula()) {
+			if (oRefCell.isFormula()) {
 				this.fillMatrixRows(function (nCoefficient, oVarCell) {
 					if (nCoefficient) {
 						coefficient = nCoefficient;

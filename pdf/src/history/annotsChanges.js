@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -577,7 +580,7 @@ CChangesPDFAnnotRC.prototype.WriteToBinary = function(Writer)
 				nStyle |= (1 << 6);
 				Writer.WriteString2(aRC[i]["actual"]);
 			}
-			// запись флагов настроек шрифта
+			// write font style flags
 			let nEndPos = Writer.GetCurPosition();
 			Writer.Seek(nFontStylePos);
 			Writer.WriteLong(nStyle);
@@ -620,7 +623,7 @@ CChangesPDFAnnotRC.prototype.ReadFromBinary = function(Reader) {
             rcItem["alignment"] = Reader.GetByte();
             let nStyle = Reader.GetLong();
 
-            // обработка флагов стиля шрифта
+            // process font style flags
             rcItem["bold"] = !!(nStyle & (1 << 0));
             rcItem["italic"] = !!(nStyle & (1 << 1));
             rcItem["strikethrough"] = !!(nStyle & (1 << 3));
@@ -631,7 +634,7 @@ CChangesPDFAnnotRC.prototype.ReadFromBinary = function(Reader) {
             rcItem["size"] = Reader.GetDouble();
 
             rcItem["color"] = [];
-            for (let j = 0; j < 3; j++) {  // Предполагается, что цвет состоит из 3 компонентов (например, RGB)
+            for (let j = 0; j < 3; j++) {  // Assuming color consists of 3 components (e.g., RGB)
                 rcItem["color"].push(Reader.GetDouble());
             }
 
@@ -926,7 +929,7 @@ CChangesPDFAnnotActions.prototype.ReadFromBinary = function(Reader)
 	this.FromLoad = true;
 
 	// Long  : Flag
-	// 1-bit : Подсвечивать ли данные изменения
+	// 1-bit : Whether to highlight these changes
 	// 2-bit : IsUndefined New
 	// 3-bit : IsUndefined Old
 	// long : New
@@ -1390,7 +1393,8 @@ CChangesPDFAnnotBorderEffect.prototype.private_SetValue = function(Value)
 {
 	let oAnnot = this.Class;
 	oAnnot._borderEffectStyle = Value;
-	oAnnot.AddToRedraw();
+	oAnnot.SetNeedRecalc(true);
+	oAnnot.recalcGeometry();
 	if (Value == AscPDF.BORDER_EFFECT_STYLES.none) {
 		oAnnot.SetDefaultGeometry();
 	}
@@ -1411,7 +1415,8 @@ CChangesPDFAnnotBorderIntensity.prototype.private_SetValue = function(Value)
 {
 	let oAnnot = this.Class;
 	oAnnot._borderEffectIntensity = Value;
-	oAnnot.AddToRedraw();
+	oAnnot.SetNeedRecalc(true);
+	oAnnot.recalcGeometry();
 };
 
 /**
@@ -1469,7 +1474,7 @@ CChangesPDFAnnotMeta.prototype.private_SetValue = function(Value)
 CChangesPDFAnnotMeta.prototype.WriteToBinary = function(Writer)
 {
 	// Long  : Flag
-	// 1-bit : Подсвечивать ли данные изменения
+	// 1-bit : Whether to highlight these changes
 	// 2-bit : IsUndefined New
 	// 3-bit : IsUndefined Old
 	// string : New
@@ -1499,7 +1504,7 @@ CChangesPDFAnnotMeta.prototype.WriteToBinary = function(Writer)
 CChangesPDFAnnotMeta.prototype.ReadFromBinary = function(Reader)
 {
 	// Long  : Flag
-	// 1-bit : Подсвечивать ли данные изменения
+	// 1-bit : Whether to highlight these changes
 	// 2-bit : IsUndefined New
 	// 3-bit : IsUndefined Old
 	// string : New
@@ -1687,7 +1692,7 @@ CChangesPDFLineAnnotRC.prototype.WriteToBinary = function(Writer)
 				nStyle |= (1 << 6);
 				Writer.WriteString2(aRC[i]["actual"]);
 			}
-			// запись флагов настроек шрифта
+			// write font style flags
 			let nEndPos = Writer.GetCurPosition();
 			Writer.Seek(nFontStylePos);
 			Writer.WriteLong(nStyle);
@@ -1730,7 +1735,7 @@ CChangesPDFLineAnnotRC.prototype.ReadFromBinary = function(Reader) {
             rcItem["alignment"] = Reader.GetByte();
             let nStyle = Reader.GetLong();
 
-            // обработка флагов стиля шрифта
+            // process font style flags
             rcItem["bold"] = !!(nStyle & (1 << 0));
             rcItem["italic"] = !!(nStyle & (1 << 1));
             rcItem["strikethrough"] = !!(nStyle & (1 << 3));
@@ -1741,7 +1746,7 @@ CChangesPDFLineAnnotRC.prototype.ReadFromBinary = function(Reader) {
             rcItem["size"] = Reader.GetDouble();
 
             rcItem["color"] = [];
-            for (let j = 0; j < 3; j++) {  // Предполагается, что цвет состоит из 3 компонентов (например, RGB)
+            for (let j = 0; j < 3; j++) {  // Assuming color consists of 3 components (e.g., RGB)
                 rcItem["color"].push(Reader.GetDouble());
             }
 

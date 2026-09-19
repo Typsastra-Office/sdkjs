@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -869,7 +872,7 @@
 		if (!window['IS_NATIVE_EDITOR'])
 		{
 			loadFileContent(sFileUrl, function (httpRequest) {
-					//получаем url к папке с файлом
+					//get URL of file folder
 					var url;
 					var nIndex = sFileUrl.lastIndexOf("/");
 					url = (-1 !== nIndex) ? sFileUrl.substring(0, nIndex + 1) : sFileUrl;
@@ -937,7 +940,7 @@
 		{
 			var stream = window["native"]["openFileCommand"](sFileUrl, changesUrl, Signature);
  
-            //получаем url к папке с файлом
+            //get URL of file folder
             var url;
             var nIndex = sFileUrl.lastIndexOf("/");
             url = (-1 !== nIndex) ? sFileUrl.substring(0, nIndex + 1) : sFileUrl;
@@ -956,7 +959,7 @@
 
 	function sendCommand(editor, fCallback, rdata, dataContainer)
 	{
-		//json не должен превышать размера 2097152, иначе при его чтении будет exception
+		//json must not exceed 2097152, otherwise reading throws exception
 		if (null == rdata["savetype"])
 		{
 			editor.CoAuthoringApi.openDocument(rdata);
@@ -1362,16 +1365,16 @@
 			}
 
 			if (!this.regExp_namedRanges.test(ch1))
-			{//если первый символ находится не в str_namedRanges, то однозначно надо экранировать
+			{//if first character is not in str_namedRanges, escaping is required
 				return false;
 			}
 			else
 			{
 				if (this.regExp_namedSheetsRange.test(str) || this.regExp_strOperator.test(str))
-				{//первый символ допустимый. проверяем всю строку на наличие символов, с которыми необходимо экранировать
+				{//first character is valid. check full string for characters requiring escaping
 					return false;
 				}
-				//проверка на то, что название листа не совпадает с допустимым адресом ячейки, как в A1 так и RC стилях.
+				//check that sheet name doesn't match valid cell address in A1 or RC style
 				var match = str.match(rx_ref);
 				if (match != null)
 				{
@@ -1564,7 +1567,7 @@
 
 	function build_rx_error(local)
 	{
-		// ToDo переделать на более правильную реализацию. Не особо правильное копирование
+		// ToDo refactor to more correct implementation. Copying not fully correct
 		local = local ? local : {
 			"nil":     "#NULL!",
 			"div":     "#DIV\/0!",
@@ -1608,7 +1611,7 @@
 
 	function build_rx_cell_func(local)
 	{
-		// ToDo переделать на более правильную реализацию. Не особо правильное копирование
+		// ToDo refactor to more correct implementation. Copying not fully correct
 		local = local ? local : {
 			"address": "address",
 			"col": "col",
@@ -1712,7 +1715,7 @@
 	};
 
 	//todo get from server config
-	var c_oAscImageUploadProp = {//Не все браузеры позволяют получить информацию о файле до загрузки(например ie9), меняя параметры здесь надо поменять аналогичные параметры в web.common
+	var c_oAscImageUploadProp = {//Not all browsers allow getting file info before upload (e.g. ie9); if params change here, change matching params in web.common
 		MaxFileSize:      25000000, //25 mb
 		SupportedFormats: ["jpg", "jpeg", "jpe", "png", "gif", "bmp", "svg", "tiff", "tif"]
 	};
@@ -2648,7 +2651,7 @@
 			for (var i = 0, length = files.length; i < length; i++)
 			{
 				var file = files[i];
-				//проверяем расширение файла
+				//check file extension
 				var sName = file.name;
 				if (sName)
 				{
@@ -2778,7 +2781,7 @@
 	{
 		var inputName = 'apiiuFile';
 		var input = document.getElementById(inputName);
-		//удаляем чтобы очистить input от предыдущего ввода
+		//remove to clear previous input value
 		if (input)
 		{
 			document.body.removeChild(input);
@@ -2882,9 +2885,9 @@
 	var	str_namedSheetsRange  = "\u0001-\u0026\u0028-\u0029\u002B-\u002D\u003B-\u003E\u0040\u005E\u0060\u007B-\u007F\u0082\u0084\u008B\u0092\u0095\u0098\u009B\u00A0\u00A6\u00A9\u00AB-\u00AC\u00AE\u00BB\u0378-\u0379\u037E-\u0383\u0387\u038B\u038D\u03A2\u0524-\u0530\u0557-\u0558\u055A-\u0560\u0588-\u0590\u05BE\u05C0\u05C3\u05C6\u05C8-\u05CF\u05EB-\u05EF\u05F3-\u05FF\u0604-\u0605\u0609-\u060A\u060C-\u060D\u061B-\u061E\u0620\u065F\u066A-\u066D\u06D4\u0700-\u070E\u074B-\u074C\u07B2-\u07BF\u07F7-\u07F9\u07FB-\u0900\u093A-\u093B\u094E-\u094F\u0955-\u0957\u0964-\u0965\u0970\u0973-\u097A\u0980\u0984\u098D-\u098E\u0991-\u0992\u09A9\u09B1\u09B3-\u09B5\u09BA-\u09BB\u09C5-\u09C6\u09C9-\u09CA\u09CF-\u09D6\u09D8-\u09DB\u09DE\u09E4-\u09E5\u09FB-\u0A00\u0A04\u0A0B-\u0A0E\u0A11-\u0A12\u0A29\u0A31\u0A34\u0A37\u0A3A-\u0A3B\u0A3D\u0A43-\u0A46\u0A49-\u0A4A\u0A4E-\u0A50\u0A52-\u0A58\u0A5D\u0A5F-\u0A65\u0A76-\u0A80\u0A84\u0A8E\u0A92\u0AA9\u0AB1\u0AB4\u0ABA-\u0ABB\u0AC6\u0ACA\u0ACE-\u0ACF\u0AD1-\u0ADF\u0AE4-\u0AE5\u0AF0\u0AF2-\u0B00\u0B04\u0B0D-\u0B0E\u0B11-\u0B12\u0B29\u0B31\u0B34\u0B3A-\u0B3B\u0B45-\u0B46\u0B49-\u0B4A\u0B4E-\u0B55\u0B58-\u0B5B\u0B5E\u0B64-\u0B65\u0B72-\u0B81\u0B84\u0B8B-\u0B8D\u0B91\u0B96-\u0B98\u0B9B\u0B9D\u0BA0-\u0BA2\u0BA5-\u0BA7\u0BAB-\u0BAD\u0BBA-\u0BBD\u0BC3-\u0BC5\u0BC9\u0BCE-\u0BCF\u0BD1-\u0BD6\u0BD8-\u0BE5\u0BFB-\u0C00\u0C04\u0C0D\u0C11\u0C29\u0C34\u0C3A-\u0C3C\u0C45\u0C49\u0C4E-\u0C54\u0C57\u0C5A-\u0C5F\u0C64-\u0C65\u0C70-\u0C77\u0C80-\u0C81\u0C84\u0C8D\u0C91\u0CA9\u0CB4\u0CBA-\u0CBB\u0CC5\u0CC9\u0CCE-\u0CD4\u0CD7-\u0CDD\u0CDF\u0CE4-\u0CE5\u0CF0\u0CF3-\u0D01\u0D04\u0D0D\u0D11\u0D29\u0D3A-\u0D3C\u0D45\u0D49\u0D4E-\u0D56\u0D58-\u0D5F\u0D64-\u0D65\u0D76-\u0D78\u0D80-\u0D81\u0D84\u0D97-\u0D99\u0DB2\u0DBC\u0DBE-\u0DBF\u0DC7-\u0DC9\u0DCB-\u0DCE\u0DD5\u0DD7\u0DE0-\u0DF1\u0DF4-\u0E00\u0E3B-\u0E3E\u0E4F\u0E5A-\u0E80\u0E83\u0E85-\u0E86\u0E89\u0E8B-\u0E8C\u0E8E-\u0E93\u0E98\u0EA0\u0EA4\u0EA6\u0EA8-\u0EA9\u0EAC\u0EBA\u0EBE-\u0EBF\u0EC5\u0EC7\u0ECE-\u0ECF\u0EDA-\u0EDB\u0EDE-\u0EFF\u0F04-\u0F12\u0F3A-\u0F3D\u0F48\u0F6D-\u0F70\u0F85\u0F8C-\u0F8F\u0F98\u0FBD\u0FCD\u0FD0-\u0FFF\u104A-\u104F\u109A-\u109D\u10C6-\u10CF\u10FB\u10FD-\u10FF\u115A-\u115E\u11A3-\u11A7\u11FA-\u11FF\u1249\u124E-\u124F\u1257\u1259\u125E-\u125F\u1289\u128E-\u128F\u12B1\u12B6-\u12B7\u12BF\u12C1\u12C6-\u12C7\u12D7\u1311\u1316-\u1317\u135B-\u135E\u1361-\u1368\u137D-\u137F\u139A-\u139F\u13F5-\u1400\u166D-\u166E\u1677-\u167F\u169B-\u169F\u16EB-\u16ED\u16F1-\u16FF\u170D\u1715-\u171F\u1735-\u173F\u1754-\u175F\u176D\u1771\u1774-\u177F\u17D4-\u17D6\u17D8-\u17DA\u17DE-\u17DF\u17EA-\u17EF\u17FA-\u180A\u180F\u181A-\u181F\u1878-\u187F\u18AB-\u18FF\u191D-\u191F\u192C-\u192F\u193C-\u193F\u1941-\u1945\u196E-\u196F\u1975-\u197F\u19AA-\u19AF\u19CA-\u19CF\u19DA-\u19DF\u1A1C-\u1AFF\u1B4C-\u1B4F\u1B5A-\u1B60\u1B7D-\u1B7F\u1BAB-\u1BAD\u1BBA-\u1BFF\u1C38-\u1C3F\u1C4A-\u1C4C\u1C7E-\u1CFF\u1DE7-\u1DFD\u1F16-\u1F17\u1F1E-\u1F1F\u1F46-\u1F47\u1F4E-\u1F4F\u1F58\u1F5A\u1F5C\u1F5E\u1F7E-\u1F7F\u1FB5\u1FC5\u1FD4-\u1FD5\u1FDC\u1FF0-\u1FF1\u1FF5\u1FFF\u200e\u2011-\u2012\u2017\u2019-\u201B\u201E-\u201F\u2022-\u2024\u2031\u2034\u2036-\u203A\u203C-\u2043\u2045-\u2051\u2053-\u205E\u2065-\u2069\u2072-\u2073\u207D-\u207E\u208D-\u208F\u2095-\u209F\u20B6-\u20CF\u20F1-\u20FF\u2150-\u2152\u2189-\u218F\u2329-\u232A\u23E8-\u23FF\u2427-\u243F\u244B-\u245F\u269E-\u269F\u26BD-\u26BF\u26C4-\u2700\u2705\u270A-\u270B\u2728\u274C\u274E\u2753-\u2755\u2757\u275F-\u2760\u2768-\u2775\u2795-\u2797\u27B0\u27BF\u27C5-\u27C6\u27CB\u27CD-\u27CF\u27E6-\u27EF\u2983-\u2998\u29D8-\u29DB\u29FC-\u29FD\u2B4D-\u2B4F\u2B55-\u2BFF\u2C2F\u2C5F\u2C70\u2C7E-\u2C7F\u2CEB-\u2CFC\u2CFE-\u2CFF\u2D26-\u2D2F\u2D66-\u2D6E\u2D70-\u2D7F\u2D97-\u2D9F\u2DA7\u2DAF\u2DB7\u2DBF\u2DC7\u2DCF\u2DD7\u2DDF\u2E00-\u2E2E\u2E30-\u2E7F\u2E9A\u2EF4-\u2EFF\u2FD6-\u2FEF\u2FFC-\u2FFF\u3018-\u301C\u3030\u303D\u3040\u3097-\u3098\u30A0\u3100-\u3104\u312E-\u3130\u318F\u31B8-\u31BF\u31E4-\u31EF\u321F\u3244-\u324F\u32FF\u4DB6-\u4DBF\u9FC4-\u9FFF\uA48D-\uA48F\uA4C7-\uA4FF\uA60D-\uA60F\uA62C-\uA63F\uA660-\uA661\uA673-\uA67B\uA67E\uA698-\uA6FF\uA78D-\uA7FA\uA82C-\uA83F\uA874-\uA87F\uA8C5-\uA8CF\uA8DA-\uA8FF\uA92F\uA954-\uA9FF\uAA37-\uAA3F\uAA4E-\uAA4F\uAA5A-\uABFF\uD7A4-\uD7FF\uFA2E-\uFA2F\uFA6B-\uFA6F\uFADA-\uFAFF\uFB07-\uFB12\uFB18-\uFB1C\uFB37\uFB3D\uFB3F\uFB42\uFB45\uFBB2-\uFBD2\uFD3E-\uFD4F\uFD90-\uFD91\uFDC8-\uFDEF\uFDFE-\uFDFF\uFE10-\uFE1F\uFE27-\uFE2F\uFE32\uFE45-\uFE48\uFE53\uFE58\uFE67\uFE6C-\uFE6F\uFE75\uFEFD-\uFEFE\uFF00\uFF5F-\uFF60\uFFBF-\uFFC1\uFFC8-\uFFC9\uFFD0-\uFFD1\uFFD8-\uFFD9\uFFDD-\uFFDF\uFFE7\uFFEF-\uFFF8\uFFFE-\uFFFF",
 		rx_operators          = /^ *[-+*\/^&%<=>:] */,
 		rg                    = new XRegExp("^((?:_xlfn.)?[\\p{L}\\d._]+ *)[-+*/^&%<=>:;\\(\\)]"),
-		//TODO для правки ввода формулы SUM(A1:B1.) - меняю rgRange/rgRangeR1C1 ,
-		// есть ещё символы, на которые ругается ms подобным образом - ~@#(мы тоже ругаемся, но не выделяем диапазон перед данными символами).
-		// для проверки нужно ввести в ячейку SUM(A1:B1@)
+		//TODO for formula input fix SUM(A1:B1.) - change rgRange/rgRangeR1C1,
+		// MS also complains about other symbols - ~@# (we also complain, but do not highlight range before them).
+		// to test, enter SUM(A1:B1@) in cell
 		rgRange               = /^(\$?[A-Za-z]+\$?\d+:\$?[A-Za-z]+\$?\d+)(?:[-+*\/^&%<=>: ;),.]|$)/,
 		rgRangeR1C1           = /^(([Rr]{1}(\[)?(-?\d*)(\])?)([Cc]{1}(\[)?(-?\d*)(\])?):([Rr]{1}(\[)?(-?\d*)(\])?)([Cc]{1}(\[)?(-?\d*)(\])?))([-+*\/^&%<=>: ;),.]|$)/,
 		rgCols                = /^(\$?[A-Za-z]+:\$?[A-Za-z]+)(?:[-+*\/^&%<=>: ;),]|$)/,
@@ -2923,7 +2926,7 @@
 		rx_arraySeparatorsDef = /^ *[,;] */,
 		rx_numberDef          = /^ *[+-]?\d*(\d|\.)\d*([eE][+-]?\d+)?/,
 		rx_CommaDef           = /^ *[,;] */,
-		//пока не объединяю с проверкой именованных диапазонов, подумать на счёт объединения. при объединении в парсере формул проблема - мы не попадаем в isName, а далее заходим в isFunc
+		//not merging with named range check for now. consider merge later. in formula parser, merge skips isName and goes to isFunc
 		rx_r1c1DefError       = /^(?!(([Rr]|[Cc]|([Rr][Cc]))(\d)))/i,
 
 		rx_ControlSymbols     = /^ *[\u0000-\u001F\u007F-\u009F] */,
@@ -3115,7 +3118,7 @@
 	}
 
 	/**
-	 * вспомогательный объект для парсинга формул и проверки строки по регуляркам указанным выше.
+	 * helper object for formula parsing and string checks against regexes above.
 	 * @constructor
 	 */
 	function parserHelper()
@@ -3147,7 +3150,7 @@
 	};
 	parserHelper.prototype.isOperator = function (formula, start_pos)
 	{
-		// ToDo нужно ли это?
+		// ToDo is this needed?
 		if (this instanceof parserHelper)
 		{
 			this._reset();
@@ -3498,7 +3501,7 @@
 			this._reset();
 		}
 
-		//проверям на [0-9] - в таком виде мы получаем ссылки при открытии.
+		//check [0-9] - references arrive in this form on open
 		var subSTR = formula.substring(start_pos);
 		var external = XRegExp.exec(subSTR, rx_ref_external);
 		var externalLength = 0;
@@ -3507,12 +3510,12 @@
 			subSTR = formula.substring(start_pos + externalLength);
 			external = external[2];
 		} else {
-			//1. при вводе в ячейку
-			//проверям на наличие ссылки при вводе 'C:\Users\[test.xlsx]Sheet1'!$A$1 (с обратным слэшем тоже нужно распознать) / 'https://test.net/[test.xlsx]Sheet1'!$A$1
-			//необходимо вычленить имя файла и путь к нему, затем проверить путь
-			//если путь указан, то ссылка должна быть в одинарных кавычках, если указан просто название файла в [] - в мс это означает, что данный файл открыт, при его закрытии путь проставляется
-			//пока не реализовываем с открытыми файлами, работаем только с путями
-			//также ссылки типа [] + ! + Defname должны обрабатываться аналогично как [] + SheetName + ! + Defname
+			//1. on cell input
+			//check for reference when entering 'C:\Users\[test.xlsx]Sheet1'!$A$1 (with backslash also needs to be recognized) / 'https://test.net/[test.xlsx]Sheet1'!$A$1
+			//need to extract filename and path, then validate path
+			//if path is specified, reference must be in single quotes. filename in [] means file is open in MS; on close, path is added
+			//open files not supported for now, paths only
+			//also references like [] + ! + Defname should be handled same as [] + SheetName + ! + Defname
 			external = parseExternalLink(subSTR);
 			if (external) {
 				if (external.name && (external.name.indexOf("[") !== -1)) {
@@ -4023,16 +4026,16 @@
 		}
 		return false;
 	};
-// Парсим ссылку на диапазон в листе
+// Parse sheet range reference
 	parserHelper.prototype.parse3DRef = function (formula)
 	{
-		// Сначала получаем лист
+		// First get sheet
 		var is3DRefResult = this.is3DRef(formula, 0);
 		if (is3DRefResult && true === is3DRefResult[0])
 		{
-			// Имя листа в ссылке
+			// Sheet name in reference
 			var sheetName = is3DRefResult[1];
-			// Ищем начало range
+			// Find range start
 			var indexStartRange = null !== this.pCurrPos ? this.pCurrPos : formula.indexOf("!") + 1;
 			if (this.isArea(formula, indexStartRange) || this.isRef(formula, indexStartRange))
 			{
@@ -4042,10 +4045,10 @@
 					return null;
 			}
 		}
-		// Возвращаем ошибку
+		// Return null on error
 		return null;
 	};
-// Возвращает ссылку на диапазон с листом (название листа экранируется)
+// Returns range reference with sheet (sheet name escaped)
 	parserHelper.prototype.get3DRef = function (sheet, range)
 	{
 		sheet = sheet.split(":");
@@ -4062,7 +4065,7 @@
 			return "'" + (wsFrom !== wsTo ? wsFrom + ":" + wsTo : wsFrom) + "'!" + range;
 		}
 	};
-// Возвращает экранируемое название листа
+// Returns escaped sheet name
 	parserHelper.prototype.getEscapeSheetName = function (sheet, shortLink)
 	{
 		if (shortLink) {
@@ -4071,7 +4074,7 @@
 		return rx_test_ws_name.test(sheet) ? sheet : "'" + sheet.replace(/'/g, "''") + "'";
 	};
 	/**
-	 * Проверяем ссылку на валидность для диаграммы или автофильтра
+	 * Check reference validity for chart or autofilter
 	 * @param {AscCommonExcel.Workbook} model
 	 * @param {AscCommonExcel.WorkbookView} wb
 	 * @param {Asc.c_oAscSelectionDialogType} dialogType
@@ -4169,7 +4172,7 @@
 			}
 			else if (cDialogType.FormatTable === dialogType)
 			{
-				// ToDo убрать эту проверку, заменить на более грамотную после правки функции _searchFilters
+				// ToDo remove check, replace with proper one after _searchFilters fix
 				if (true === wb.getWorksheet().model.autoFilters.isRangeIntersectionTableOrFilter(range)) {
 					return Asc.c_oAscError.ID.AutoFilterDataRangeError;
 				} else if (wb.getWorksheet().intersectionFormulaArray(range, true, true, true)) {
@@ -4180,7 +4183,7 @@
 			}
 			else if (cDialogType.FormatTableChangeRange === dialogType)
 			{
-				// ToDo убрать эту проверку, заменить на более грамотную после правки функции _searchFilters
+				// ToDo remove check, replace with proper one after _searchFilters fix
 				checkChangeRange = wb.getWorksheet().af_checkChangeRange(range);
 				if (null !== checkChangeRange)
 					return checkChangeRange;
@@ -4545,12 +4548,12 @@
 		this.m_sUserId = null;
 		this.m_bLoad = true;
 		this.m_bRead = false;
-		this.m_nIdCounterLoad = 0; // Счетчик Id для загрузки
-		this.m_nIdCounterEdit = 0; // Счетчик Id для работы
+		this.m_nIdCounterLoad = 0; // Id counter for loading
+		this.m_nIdCounterEdit = 0; // Id counter for editing
 
 		this.m_nOFormLoadCounter = 0;
 		this.m_nOFormEditCounter = 0;
-		
+
 		this.m_nPdfNewFormCounter = 0;
 		this.m_nPdfRedactCounter = 0;
 
@@ -4589,8 +4592,8 @@
 	{
 		this.m_sUserId = null;
 		this.m_bLoad = true;
-		this.m_nIdCounterLoad = 0; // Счетчик Id для загрузки
-		this.m_nIdCounterEdit = 0; // Счетчик Id для работы
+		this.m_nIdCounterLoad = 0; // Id counter for loading
+		this.m_nIdCounterEdit = 0; // Id counter for editing
 
 		this.m_nOFormLoadCounter = 0;
 		this.m_nOFormEditCounter = 0;
@@ -4638,7 +4641,7 @@
 		var oLogicDocument = oApi && oApi.WordControl && oApi.WordControl.m_oLogicDocument;
 		if (false != Redraw && oLogicDocument)
 		{
-			// TODO: переделать перерисовку тут
+			// TODO: refactor redrawing here
 			var oDrawingDocument = oLogicDocument.DrawingDocument;
 			oDrawingDocument.ClearCachePages();
 			oDrawingDocument.FirePaint();
@@ -4651,8 +4654,8 @@
                     oDrawingDocument.Notes_OnRecalculate(oLogicDocument.CurPage, oCurSlide.NotesWidth, oCurSlide.getNotesHeight());
 				}
 			}
-			// TODO: Обновлять интерфейс нужно, потому что мы можем стоять изначально в незалоченном объекте, а тут он
-			//       может быть залочен.
+			// TODO: Interface needs to be updated because we may initially be in an unlocked object, but here it
+			//       may be locked.
 			var oRevisionsStack = oApi.asc_GetRevisionsChangesStack();
 			var arrParagraphs = [];
 			for (var nIndex = 0, nCount = oRevisionsStack.length; nIndex < nCount; ++nIndex)
@@ -4779,11 +4782,11 @@
 
 	function CContentChangesElement(Type, Pos, Count, Data)
 	{
-		this.m_nType = Type;  // Тип изменений (удаление или добавление)
-		this.m_nCount = Count; // Количество добавленных/удаленных элементов
-		this.m_pData = Data;  // Связанные с данным изменением данные из истории
+		this.m_nType = Type;  // Change type (deletion or addition)
+		this.m_nCount = Count; // Number of added/deleted elements
+		this.m_pData = Data;  // Data from history associated with this change
 
-		// Разбиваем сложное действие на простейшие
+		// Divide complex action into simple ones
 		this.m_aPositions = this.Make_ArrayOfSimpleActions(Type, Pos, Count);
 	}
 
@@ -4859,8 +4862,8 @@
 				{
 					if (AscCommon.contentchanges_Remove === this.m_nType)
 					{
-						// Мы попали в позицию, удаленную другим пользователем
-						// Если наше действие удаляем тоже самое место, то помечаем, что удалять ничего не нужно
+						// We hit a position deleted by another user
+						// If our action deletes the same place, mark that nothing needs to be deleted
 						if (!checkPos)
 							this.m_aPositions[Index] = false;
 						
@@ -4878,7 +4881,7 @@
 	};
 	CContentChangesElement.prototype.Make_ArrayOfSimpleActions = function (Type, Pos, Count)
 	{
-		// Разбиваем действие на простейшие
+		// Break action into simple ones
 		var Positions = [];
 		if (contentchanges_Add === Type)
 		{
@@ -4896,17 +4899,17 @@
 
 
 	/**
-	 * Корректируем заданное значение в миллиметрах к ближайшему целому значению в твипсах
-	 * @param mm - заданное значение в миллиметрах
-	 * @returns {number} - получаем новое значение в миллиметрах, являющееся целым значением в твипсах
+	 * Rounds the given value in millimeters to the nearest integer value in twips
+	 * @param mm - the given value in millimeters
+	 * @returns {number} - returns a new value in millimeters that is an integer value in twips
 	 */
 	function CorrectMMToTwips(mm)
 	{
 		return (((mm * 20 * 72 / 25.4) + 0.5) | 0) * 25.4 / 20 / 72;
 	}
 	/**
-	 * Получаем значение в миллиметрах заданного количества твипсов
-	 * @param nTwips[=1] - значение в твипсах
+	 * Gets the value in millimeters for the given number of twips
+	 * @param nTwips[=1] - value in twips
 	 * @returns {number}
 	 */
 	function TwipsToMM(nTwips)
@@ -4915,8 +4918,8 @@
 	}
 
 	/**
-	 * Конвертируем миллиметры в ближайшее целое значение твипсов
-	 * @param mm - значение в миллиметрах
+	 * Converts millimeters to the nearest integer value of twips
+	 * @param mm - value in millimeters
 	 * @param [mode=0]
 	 * @returns {number}
 	 */
@@ -4931,7 +4934,7 @@
 	}
 
 	/**
-	 * Конвертируем число из римской системы исчисления в обычное десятичное число
+	 * Converts a number from Roman numeral system to a regular decimal number
 	 * @param sRoman {string}
 	 * @returns {number}
 	 */
@@ -4972,7 +4975,7 @@
 	}
 
 	/**
-	 * Конвертируем нумерацию {a b ... z aa bb ... zz aaa bbb ... zzz ...} в число
+	 * Converts numbering {a b ... z aa bb ... zz aaa bbb ... zzz ...} to a number
 	 * @param sLetters
 	 */
 	function LatinNumberingToInt(sLetters)
@@ -8138,7 +8141,7 @@
 	function IntToLetter(nValue, nFormat)
 	{
 		var sResult = '';
-		// Формат: a,..,z,aa,..,zz,aaa,...,zzz,...
+		// Format: a,..,z,aa,..,zz,aaa,...,zzz,...
 		nValue = repeatNumberingLvl(nValue, 780);
 		var Num = nValue - 1;
 
@@ -8160,14 +8163,14 @@
 	function IntToRussian(nValue, nFormat)
 	{
 		var sResult = '';
-		// Формат: а,..,я,аа,..,яя,ааа,...,яяя,...
+		// Format: a,..,ya,aa,..,yaya,aaa,...,yayaya,... (Russian letters а,..,я)
 		nValue = repeatNumberingLvl(nValue, 870);
 		var Num = nValue - 1;
 
 		var Count = (Num - Num % 29) / 29;
 		var Ost   = Num % 29;
 
-		// Буквы й, ъ, ь - не участвуют
+		// Letters й (y), ъ (hard sign), ь (soft sign) - are not used
 		if (Ost > 25)
 			Ost += 3;
 		else if (Ost > 24)
@@ -8193,7 +8196,7 @@
 		nValue = repeatNumberingLvl(nValue, 32767);
 		var Num = nValue;
 
-		// Переводим число Num в римскую систему исчисления
+		// Convert number Num to Roman numeral system
 		var Rims;
 
 		if (Asc.c_oAscNumberingFormat.LowerRoman === nFormat)
@@ -10400,7 +10403,7 @@
 	}
 
 	/**
-	 * Переводим числовое значение в строку с заданным форматом нумерации
+	 * Converts a numeric value to a string with the specified numbering format
 	 * @param nValue {number}
 	 * @param nFormat {Asc.c_oAscNumberingFormat}
 	 * @param [oPr] {Object}
@@ -10755,7 +10758,7 @@
 	}
 
 	/**
-	 * Корректируем значение размера шрифта к допустимому
+	 * Adjusts the font size value to an acceptable value
 	 * @param {number} nFontSize
 	 * @param {boolean} isCeil
 	 */
@@ -10764,7 +10767,7 @@
 		return isCeil ? Math.ceil(nFontSize * 2) / 2 : Math.floor(nFontSize * 2) / 2;
 	}
 
-	// Non-breaking-space сюда не добавлять!
+	// Do not add non-breaking-space here!
 	var c_oAscSpaces = [];
 	c_oAscSpaces[0x000A] = 1;
 	c_oAscSpaces[0x0020] = 1;
@@ -10775,7 +10778,7 @@
 	c_oAscSpaces[0xFEFF] = 1;
 
 	/**
-	 * Проверяем является ли заданный юникод пробелом
+	 * Checks if the given unicode is a space character
 	 * @param nUnicode {number}
 	 * @returns {boolean}
 	 */
@@ -10785,7 +10788,7 @@
 	}
 
 	/**
-	 * Переводим числовое значение в Hex строку
+	 * Converts a numeric value to a Hex string
 	 * @param nValue
 	 * @returns {string}
 	 */
@@ -10799,7 +10802,7 @@
 		return sRes;
 	}
 	/**
-	 * Переводим числовое значение в Hex строку
+	 * Converts a numeric value to a Hex string
 	 * @param nValue
 	 * @returns {string}
 	 */
@@ -10808,7 +10811,7 @@
 		return nValue.toString(16).padStart(8, "0").toUpperCase();
 	}
 	/**
-	 * Переводим числовое значение в Hex строку
+	 * Converts a numeric value to a Hex string
 	 * @param nValue
 	 * @returns {string}
 	 */
@@ -10821,7 +10824,7 @@
 		}
 	}
 	/**
-	 * Переводим числовое значение в Hex строку
+	 * Converts a numeric value to a Hex string
 	 * @param nValue
 	 * @returns {string}
 	 */
@@ -10830,7 +10833,7 @@
 		return nValue.toString(16).padStart(4, "0").toUpperCase();
 	}
 	/**
-	 * Переводим числовое значение в Hex строку
+	 * Converts a numeric value to a Hex string
 	 * @param nValue
 	 * @returns {string}
 	 */
@@ -10843,7 +10846,7 @@
 		}
 	}
 	/**
-	 * Переводим числовое значение в Hex строку
+	 * Converts a numeric value to a Hex string
 	 * @param nValue
 	 * @returns {string}
 	 */
@@ -10853,7 +10856,7 @@
 	}
 
 	/**
-	 * Проверяем является ли заданный юникод цифрой
+	 * Checks if the given unicode is a digit
 	 * @param nUnicode {number}
 	 * @returns {boolean}
 	 */
@@ -10863,7 +10866,7 @@
 	}
 
 	/**
-	 * Проверяем является ли заданный юникод буквой
+	 * Checks if the given unicode is a letter
 	 * @param nUnicode {number}
 	 * @returns {boolean}
 	 */
@@ -10893,7 +10896,7 @@
 	}
 
 	/**
-	 * Присутствует ли символ заданного шрифта в шрифте ASCW3
+	 * Checks if the character of the given font is present in the ASCW3 font
 	 * @param sFontFamily
 	 * @param nUnicode
 	 * @returns {boolean}
@@ -10909,12 +10912,12 @@
 	
 	function ExecuteNoHistory(f, oLogicDocument, oThis, args)
 	{
-		// TODO: Заменить на нормальное обращение Asc.editor.getLogicDocument
+		// TODO: Replace with proper access to Asc.editor.getLogicDocument
 		if (!oLogicDocument && editor && editor.WordControl)
 			oLogicDocument = editor.WordControl.m_oLogicDocument;
 		
 		
-		// TODO: Надо перевести все редакторы на StartNoHistoryMode/EndNoHistoryMode
+		// TODO: Need to migrate all editors to StartNoHistoryMode/EndNoHistoryMode
 		let oState = null, isTableId = false;
 		if (oLogicDocument && oLogicDocument.IsDocumentEditor && oLogicDocument.IsDocumentEditor())
 		{
@@ -11050,7 +11053,7 @@
 		};
 	}
 	/**
-	 * Функция сравнивает две строки (они могут быть не заданы)
+	 * Compares two strings (they may be undefined)
 	 * @param s1 {?string}
 	 * @param s2 {?string}
 	 * @returns {-1 | 0 | 1}
@@ -11102,7 +11105,7 @@
 	}
 
 	/**
-	 * Проверяем поддержку заданного функционала
+	 * Checks support for the specified functionality
 	 * @param type
 	 * @returns {boolean}
 	 */
@@ -11112,7 +11115,7 @@
 	}
 
 	/**
-	 * Проверяем поддержку всего функционала, связанного с oform
+	 * Checks support for all functionality related to oform
 	 * @returns {boolean}
 	 */
 	function IsSupportOFormFeature()
@@ -11161,12 +11164,10 @@
 
 		return -1 === isDark ? res.Light : true === isDark || 1 === isDark ? res.Dark : res.Normal;
 	}
-	function setUserColorById(userId, light, dark)
+	function setUserColorById(userId, color)
 	{
-		g_oUserColorById[userId] = {
-			Light : new CColor(light.r, light.g, light.b, 255),
-			Dark : new CColor(dark.r, dark.g, dark.b, 255),
-		};
+		let nColor = typeof color === "number" ? color : ((color.r & 0xFF) << 16) | ((color.g & 0xFF) << 8) | (color.b & 0xFF);
+		g_oUserColorById[userId] = new CUserCacheColor(nColor);
 	}
 	function getUserColorById(userId, userName, isDark, isNumericValue)
 	{
@@ -11492,7 +11493,7 @@
 		if (color.rgb && !color.theme) {
 			var nIndex = GetDefaultIndexByRGBA(color.getR(), color.getG(), color.getB(), 255);
 			if (-1 === nIndex) {
-				//TODO проверить rgb
+				//TODO check rgb
 				var hex = IntToHex(color.getRgb()).toUpperCase();
 				if (hex.length === 4) {
 					hex = "00" + hex;
@@ -11788,9 +11789,9 @@
 		return nStartIndex_;
 	}
 
-	// Данный список шрифтов используется совместно с настройкой BalanceSingleByteDoubleByteWidth
-	// если список будет изменяться, то проверить работу этой настройки с новыми шрифтами, если работать не будет, тогда
-	// надо будет иметь два разных списка
+	// This font list is used together with the BalanceSingleByteDoubleByteWidth setting
+	// if the list changes, check the operation of this setting with the new fonts, if it doesn't work, then
+	// two different lists will need to be maintained
 	const EAST_ASIA_FONTS = [
 		"MingLiU", "PMingLiU", "MingLiU_HKSCS-ExtB", "MingLiU-ExtB",
 		"SimSun", "NSimSun", "SimSun-ExtA", "SimSun-ExtB",
@@ -11802,7 +11803,7 @@
 		"Dotum", "Gulim", "Malgun Gothic"
 	];
 	
-	// Символы, на которых работает <w:rFonts w:hint="eastAsia"/>
+	// Characters for which <w:rFonts w:hint="eastAsia"/> applies
 	function isAmbiguousCharacter(codePoint)
 	{
 		return (0x00D7 === codePoint
@@ -12374,7 +12375,7 @@
         this.cryptoMode = 0; // start crypto mode
 		this.isFrameEditor = false;
 
-        this.isExistDecryptedChanges = false; // был ли хоть один запрос на расшифровку данных (были ли чужие изменения)
+        this.isExistDecryptedChanges = false; // whether there was at least one request to decrypt data (were there foreign changes)
 
         this.cryptoPrefix = (window["AscDesktopEditor"] && window["AscDesktopEditor"]["GetEncryptedHeader"]) ? window["AscDesktopEditor"]["GetEncryptedHeader"]() : "ENCRYPTED;";
         this.cryptoPrefixLen = this.cryptoPrefix.length;
@@ -12530,14 +12531,14 @@
                 return;
 
             if (undefined !== type && ((1 != this.arrData.length) || !this.isChangesHandled))
-            	return; // вызовется на коллбэке
+            	return; // will be called on the callback
 
 			if (undefined !== type && -1 != this.nextChangesTimeoutId)
 			{
-				// вызвали send, когда данные на receiveChanges были удалены - и запустился nextChanges
-				// но так как он сделан на таймере - то просто он не успел отработать.
-				// тут запускаем единственное изменение - это и есть как бы next.
-				// убиваем таймер
+				// send was called when data on receiveChanges was deleted - and nextChanges started
+				// but since it's done on a timer - it simply didn't have time to complete.
+				// here we start the single change - this is essentially the next one.
+				// kill the timer
 
 				clearTimeout(this.nextChangesTimeoutId);
 				this.nextChangesTimeoutId = -1;
@@ -12609,7 +12610,7 @@
 					{
 						if (this.cryptoPrefix == data[i].substr(0, this.cryptoPrefixLen))
 						{
-							// дописываем extension
+							// append extension
                             data[i] = this.cryptoPrefix + obj.options.ext[i] + ";" + data[i].substr(this.cryptoPrefixLen);
 						}
 					}
@@ -13068,7 +13069,7 @@
 			var VBeginX = parseInt(X);
 			var VEndX = CurrentVector[VBeginX];
 
-			if (VBeginX !== VEndX || VX[VBeginX] === undefined) // добавляем точку, только если она не существует, а ненулевой вектор всегда
+			if (VBeginX !== VEndX || VX[VBeginX] === undefined) // add a point only if it doesn't exist, and non-zero vector always
 			{
 				VX[VBeginX] = VEndX;
 			}
@@ -13159,10 +13160,10 @@
 				maxY = CurBeginY;
 			}
 
-			var bInterSection = !((maxY <= BeginY && maxY <= EndY) || (minY >= BeginY && minY >= EndY )), // нач или конечная точка нах-ся внутри данного отрезка
-				bDirection = (CurBeginY - CurEndY) * (BeginY - EndY) < 0; // векторы противоположно направленны
+			var bInterSection = !((maxY <= BeginY && maxY <= EndY) || (minY >= BeginY && minY >= EndY )), // start or end point is inside this segment
+				bDirection = (CurBeginY - CurEndY) * (BeginY - EndY) < 0; // vectors are opposite directions
 
-			if (bInterSection && bDirection) // если направления векторов совпало, значит один Bounds нах-ся в другом, ничего не делаем, такого быть не должно
+			if (bInterSection && bDirection) // if vector directions matched, it means one Bounds is inside another, do nothing, this should not happen
 			{
 
 				VectorsY[X][CurBeginY] = EndY;
@@ -13227,12 +13228,12 @@
 							{
 								break;
 							}
-							else if (y2 == undefined) // такой ситуации не должно произойти, если произошла, значит есть ошибка в алгоритме => не отрисовываем путь
+							else if (y2 == undefined) // this situation should not happen, if it did, there's an error in the algorithm => don't draw the path
 							{
 								return [];
 							}
 
-							VectorsY[x][y1] = -1;  // выставляем -1 => чтобы не добавить повторно путь с данными точками + проверка на возвращение в стартовую точку
+							VectorsY[x][y1] = -1;  // set -1 => to not add duplicate path with these points + check for returning to start point
 
 							SignDownUp = y1 > y2 ? 1 : -1;
 							X = x + SignDownUp * shift;
@@ -13247,19 +13248,19 @@
 							{
 								break;
 							}
-							else if (x2 == undefined) // такой ситуации не должно произойти, если произошла, значит есть ошибка в алгоритме => не отрисовываем путь
+							else if (x2 == undefined) // this situation should not happen, if it did, there's an error in the algorithm => don't draw the path
 							{
 								return [];
 							}
 
-							VectorsX[y][x1] = -1; // выставляем -1 => чтобы не добавить повторно путь с данными точками + проверка на возвращение в стартовую точку
+							VectorsX[y][x1] = -1; // set -1 => to not add duplicate path with these points + check for returning to start point
 
 							SignRightLeft = x1 > x2 ? 1 : -1;
 							Y = y - SignRightLeft * shift;
 
 							Polygon.PushPoint(X, Y);
 
-							if (y < minY) // направление обхода
+							if (y < minY) // traversal direction
 							{
 								minY = y;
 								Direction = x1 > x2 ? 1 : -1;
@@ -13347,7 +13348,7 @@
 		var Points = oPath.Points;
 		var nCount = Points.length;
 
-		// берем предпоследнюю точку, т.к. последняя совпадает с первой
+		// take the second to last point, since the last one matches the first
 		var PrevX = Points[nCount - 2].X, PrevY = Points[nCount - 2].Y;
 		var x, y;
 		var eps = 0.0001;
@@ -13692,7 +13693,7 @@
 			{
 				if (_newW != 2 && _newH != 2)
 				{
-					// просто очищаем
+					// just clear
 					this.HtmlElement.width = _newW;
 				}
 			}
@@ -13749,7 +13750,7 @@
 		{
 			if (_oldW == _newW && _oldH == _newH)
 			{
-				// просто очищаем
+				// just clear
 				this.HtmlElement.width = _newW;
 			}
 			else
@@ -13809,7 +13810,7 @@
 	};
 	CDrawingCollaborativeTargetBase.prototype.Update = function()
 	{
-		// 1) создаем новый элемент, если еще его не было
+		// 1) create a new element if it doesn't exist yet
 		if (this.HtmlElement == null)
 		{
 			this.CreateElement();
@@ -13819,13 +13820,13 @@
 		{
 			return;
 		}
-		// 2) определяем размер
+		// 2) determine the size
 		this.CalculateSizeAndPos();
 
 		if (AscCommon.CollaborativeEditing)
 			AscCommon.CollaborativeEditing.Update_ForeignCursorLabelPosition(this.Id, this.HtmlElementX, this.HtmlElementY, this.Color);
 
-		// 3) добавить, если нужно
+		// 3) add if needed
 		var oParentElement = this.GetParentElement();
 		if(oParentElement && oParentElement !== this.HtmlParent)
 		{
@@ -14622,9 +14623,9 @@
 
 	function _getIntegerByDivide(val)
 	{
-		// поддерживаем scale, который
-		// 1) рациональное число
-		// 2) знаменатель несократимой дроби <= 10 (поддерживаем проценты кратные 1/10, 1/9, ... 1/2)
+		// we support scale that is
+		// 1) a rational number
+		// 2) the denominator of irreducible fraction <= 10 (we support percentages divisible by 1/10, 1/9, ... 1/2)
 		var test = val;
 		for (var i = 0; i < 10; i++)
 		{
@@ -14735,7 +14736,7 @@
 		var new_width = 0;
 		var new_height = 0;
 
-		// в мозилле баг. включаем особую ветку
+		// there's a bug in Mozilla. enable a special branch
 		if (!AscCommon.AscBrowser.isMozilla)
 		{
 			new_width = Math.round(scale * rect.right) - Math.round(scale * rect.left);
@@ -15263,8 +15264,10 @@
 		let dir = 'ltr';
 		for (let iter = text.getUnicodeIterator(); iter.check(); iter.next()) {
 			let charDir = AscCommon.getCharStrongDir(iter.value());
-			if (charDir === AscBidi.DIRECTION_FLAG.RTL) {
-				dir = 'rtl';
+			if (charDir !== null) {
+				if (charDir === AscBidi.DIRECTION_FLAG.RTL) {
+					dir = 'rtl';
+				}
 				break;
 			}
 		}
@@ -15393,7 +15396,7 @@
 
 				return points;
 			}
-			// никогда сюда не зайдем
+			// we will never get here
 			return points;
 		}
 
@@ -15474,13 +15477,13 @@
 
 			return points;
 		}
-		// никогда сюда не зайдем
+		// we will never get here
 		return points;
 	}
 
 	function getNormalPoint(x0, y0, angle, x1, y1) {
-		// точка - пересечение прямой, проходящей через точку (x0, y0) под углом angle и
-		// перпендикуляра к первой прямой, проведенной из точки (x1, y1)
+		// point - intersection of a line passing through point (x0, y0) at angle and
+		// perpendicular to the first line, drawn from point (x1, y1)
 		let ex1 = Math.cos(angle);
 		let ey1 = Math.sin(angle);
 
@@ -15872,7 +15875,7 @@ window["asc_initAdvancedOptions"] = function(_code, _file_hash, _docInfo, csv_da
     {
     	if (window["AscDesktopEditor"] && (0 !== window["AscDesktopEditor"]["CryptoMode"]) && !_editor.isLoadFullApi)
 		{
-            // ждем инициализации
+            // waiting for initialization
             _editor.asc_initAdvancedOptions_params = [];
             _editor.asc_initAdvancedOptions_params.push(_code);
             _editor.asc_initAdvancedOptions_params.push(_file_hash);
@@ -16136,7 +16139,7 @@ window["NativeFileOpen_error"] = function(error, _file_hash, _docInfo)
 
         if (window["AscDesktopEditor"] && (0 !== window["AscDesktopEditor"]["CryptoMode"]) && !_api.isLoadFullApi)
         {
-            // ждем инициализации
+            // waiting for initialization
             _api.asc_initAdvancedOptions_params = [];
             _api.asc_initAdvancedOptions_params.push(90);
             _api.asc_initAdvancedOptions_params.push(_file_hash);
@@ -16174,7 +16177,7 @@ window["AscDesktopEditor_Save"] = function()
     var _editor = window.Asc.editor ? window.Asc.editor : window.editor;
     if (!_editor.asc_Save(false))
     {
-    	// сейва не будет. сами посылаем callback
+    	// save won't happen. send callback ourselves
         window["AscDesktopEditor"]["OnSave"]();
     }
 };

@@ -1,34 +1,39 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
+
+"use strict";
 
 (function(){
 
@@ -38,7 +43,7 @@
     */
     function CAnnotationBase(sName, nType, aOrigRect, oDoc)
     {
-        // если аннотация не shape based
+        // if the annotation is not shape based
         if (this.Id == undefined) {
             this.Id = AscCommon.g_oIdCounter.Get_NewId();
             if ((AscCommon.g_oIdCounter.m_bLoad || AscCommon.History.CanAddChanges())) {
@@ -55,7 +60,7 @@
         this._contents              = undefined;
         this._creationDate          = undefined;
         this._modDate               = undefined;
-        this._delay                 = false; // пока не используется
+        this._delay                 = false; // not used yet
         this._doc                   = undefined;
         this._inReplyTo             = undefined;
         this._intent                = undefined;
@@ -79,10 +84,10 @@
         this._rectDiff              = undefined;
         this._popupIdx              = undefined;
         this._meta                  = {};
-        this._replies               = []; // тут будут храниться ответы (text аннотации)
+        this._replies               = []; // replies will be stored here (text annotations)
 
         // internal
-        this._bDrawFromStream   = false; // нужно ли рисовать из стрима
+        this._bDrawFromStream   = false; // whether to draw from stream
         this._originView = {
             normal:     null,
             mouseDown:  null,
@@ -286,7 +291,7 @@
         return this._refType;
     };
     CAnnotationBase.prototype.SetRectangleDiff = function(aDiff) {
-        AscCommon.History.Add(new CChangesPDFAnnotRD(this, this.GetRectangleDiff(), aDiff));
+        AscCommon.History.Add(new CChangesPDFAnnotRD(this, this._rectDiff, aDiff));
 
         this._rectDiff = aDiff;
         if (this.IsShapeBased()) {
@@ -318,13 +323,13 @@
         return this._dash;
     };
     CAnnotationBase.prototype.SetFillColor = function(aColor) {
-        AscCommon.History.Add(new CChangesPDFAnnotFill(this, this.GetFillColor(), aColor));
+        AscCommon.History.Add(new CChangesPDFAnnotFill(this, this._fillColor, aColor));
 
         this._fillColor = aColor;
 
         if (this.IsShapeBased()) {
-            let oRGB    = this.GetRGBColor(aColor);
-            let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
+            let oRGB    = aColor ? this.GetRGBColor(aColor) : null;
+            let oFill   = oRGB ? AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255) : AscFormat.CreateNoFillUniFill();
             this.setFill(oFill);
             this.SetNeedRecalc(true);
             this.SetNeedUpdateOpacity(true);
@@ -332,6 +337,8 @@
         else {
             this.AddToRedraw();
         }
+
+		this.SetWasChanged(true);
     };
     CAnnotationBase.prototype.GetFillColor = function() {
         return this._fillColor;
@@ -347,6 +354,8 @@
     CAnnotationBase.prototype.private_UpdateLn = function() {
         let nWidthPt = this.GetBorderWidth();
         
+		AscCommon.History.StartNoHistoryMode();
+
         if (this.IsShapeBased()) {
             let oLine = this.spPr.ln;
             oLine.setW(nWidthPt * g_dKoef_pt_to_mm * 36000.0);
@@ -355,13 +364,16 @@
                 oLine.setFill(AscFormat.CreateNoFillUniFill());
             }
             else {
-                AscCommon.History.StartNoHistoryMode();
-                this.SetBorderColor(this.GetBorderColor());
-                AscCommon.History.EndNoHistoryMode();
+                let oRGB    = this.GetRGBColor(this.GetBorderColor(), true);
+				let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
+				let oLine   = this.spPr.ln;
+				oLine.setFill(oFill);
             }
 
             this.handleUpdateLn();
         }
+
+		AscCommon.History.EndNoHistoryMode();
     };
     CAnnotationBase.prototype.GetBorderWidth = function() {
         return this._borderWidth;
@@ -591,7 +603,7 @@
         return this._needUpdateOpacity;
     };
 
-    CAnnotationBase.prototype.UpdateOpacity = function() {
+    CAnnotationBase.prototype.private_UpdateOpacity = function() {
         const t = this.GetOpacity() * 100 * 2.55;
 
         if (!this.IsShapeBased()) {
@@ -600,31 +612,21 @@
             return;
         }
 
-        if (this.IsFreeText()) {
-            for (let i = 0; i < this.spTree.length; i++) {
-                const oLine = this.spTree[i].spPr.ln;
-                oLine.Fill.transparent = t;
+        const oLine = this.spPr.ln;
+		if (oLine) {
+			oLine.Fill.transparent = t;
+		}
 
-                const oFill = this.spTree[i].spPr.Fill;
-                oFill.transparent = t;
+		const oFill = this.spPr.Fill;
+		if (oFill) {
+			oFill.transparent = t;
+		}
 
-                this.spTree[i].handleUpdateLn();
-                this.spTree[i].handleUpdateFill();
-            }
-        }
-        else {
-            const oLine = this.spPr.ln;
-            oLine.Fill.transparent = t;
-
-            const oFill = this.spPr.Fill;
-            oFill.transparent = t;
-
-            this.handleUpdateLn();
-            this.handleUpdateFill();
-        }
+		this.handleUpdateLn();
+		this.handleUpdateFill();
 
         this.SetNeedUpdateOpacity(false);
-    }
+    };
     CAnnotationBase.prototype.GetOpacity = function() {
         return this._opacity;
     };
@@ -934,7 +936,7 @@
         }
         else {
             this._needRecalc = true;
-            // note: movingCopy флаг означает, что объект был скопирован для отрисовки на overlay
+            // note: movingCopy flag means the object was copied for drawing on overlay
             if (bSkipAddToRedraw != true && this.movingCopy != true)
                 this.AddToRedraw();
         }
@@ -952,6 +954,11 @@
         AscCommon.History.Add(new CChangesPDFAnnotChangedView(this, this._bDrawFromStream, bFromStream));
         this._bDrawFromStream = bFromStream;
     };
+	CAnnotationBase.prototype.private_UpdateRect = function(rect) {
+		if (rect) {
+			this.SetRect(rect);
+		}
+	};
     CAnnotationBase.prototype.SetRect = function(aRect) {
 		if (aRect) {
 			aRect = aRect.slice();
@@ -1109,7 +1116,7 @@
         }
 
         if (this.IsNeedUpdateOpacity()) {
-            this.UpdateOpacity();
+            this.private_UpdateOpacity();
         }
         
         if (this.IsNeedRecalcSizes()) {
@@ -1438,12 +1445,8 @@
 	 * @typeofeditors ["PDF"]
      * @returns {object}
 	 */
-    CAnnotationBase.prototype.GetRGBColor = function(aInternalColor) {
-        let oColor = {
-            r: 255,
-            g: 255,
-            b: 255
-        };
+    CAnnotationBase.prototype.GetRGBColor = function(aInternalColor, isForStroke) {
+        let oColor = isForStroke !== true ? {r: 255, g: 255, b: 255} : {r: 0, g: 0, b: 0};
 
         if (!aInternalColor || aInternalColor.length == 0) {
             return oColor;
@@ -1500,21 +1503,13 @@
     };
 
     CAnnotationBase.prototype.SetBorderColor = function(aColor) {
-        AscCommon.History.Add(new CChangesPDFAnnotStroke(this, this.GetBorderColor(), aColor));
+        AscCommon.History.Add(new CChangesPDFAnnotStroke(this, this._strokeColor, aColor));
 
         this._strokeColor = aColor;
         this.SetWasChanged(true);
 
-        if (!aColor) {
-            aColor = [0, 0, 0];
-        }
-        
         if (this.IsShapeBased()) {
-            let oRGB    = this.GetRGBColor(aColor);
-            let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
-            let oLine   = this.spPr.ln;
-            oLine.setFill(oFill);
-            this.handleUpdateLn();
+            this.private_UpdateLn();
             this.SetNeedUpdateOpacity(true);
         }
         else {
@@ -1792,7 +1787,7 @@
     CAnnotationBase.prototype.WriteToBinaryBase2 = function(memory) {
         let nType = this.GetType();
         if ((nType < 18 && nType != 1 && nType != 15) || nType == 25) {
-            // запишем флаги в конце
+            // write flags at the end
             memory.annotFlags   = 0;
             memory.posForFlags  = memory.GetCurPosition();
             memory.Skip(4);
@@ -1855,7 +1850,7 @@
                     if (aRC[i]["rtl"]) {
                         nStyle |= (1 << 7);
                     }
-                    // запись флагов настроек шрифта
+                    // write font settings flags
                     let nEndPos = memory.GetCurPosition();
                     memory.Seek(nFontStylePos);
                     memory.WriteLong(nStyle);
@@ -1895,7 +1890,7 @@
     CAnnotationBase.prototype.ReadFromBinaryBase2 = function(memory) {
         let nType = this.GetType();
         if ((nType < 18 && nType != 1 && nType != 15) || nType == 25) {
-            // Чтение флагов
+            // Reading flags
             memory.annotFlags = memory.GetLong();
     
             let nPopupIdx = null;
@@ -1976,20 +1971,20 @@
         }
     };
     CAnnotationBase.prototype.WriteRenderToBinary = function(memory) {
-        // пока только для основанных на фигурах
+        // for now only for shape-based
         if (false == this.IsShapeBased() || this.IsNeedDrawFromStream() || !memory.docRenderer || (memory.isForSplit || memory.isCopyPaste)) {
             return;
         }
 
-        // тут будет длина комманд
+        // here will be the commands length
         let nStartPos = memory.GetCurPosition();
         memory.Skip(4);
 
         memory.docRenderer.ClearCacheProps();
-        this.draw(memory.docRenderer); // для каждой страницы инициализируется свой renderer
+        this.draw(memory.docRenderer); // a separate renderer is initialized for each page
         memory.docRenderer.ClearCacheProps();
 
-        // запись длины комманд
+        // write commands length
         let nEndPos = memory.GetCurPosition();
         memory.Seek(nStartPos);
         memory.WriteLong(nEndPos - nStartPos);
@@ -2004,14 +1999,14 @@
     }
 
     function ParsePDFDate(sDate) {
-        // Регулярное выражение для извлечения компонентов даты
+        // Regular expression to extract date components
         let regex = /D:(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})([Z\+\-]?)(\d{2})?'?(\d{2})?/;
 
-        // Используем регулярное выражение для извлечения компонентов даты
+        // Use regular expression to extract date components
         let match = sDate.match(regex);
 
         if (match) {
-            // Извлекаем компоненты даты из совпадения
+            // Extract date components from the match
             let year = parseInt(match[1]);
             let month = parseInt(match[2]);
             let day = parseInt(match[3]);
@@ -2022,12 +2017,12 @@
             let timeZoneOffsetHours = parseInt(match[8]);
             let timeZoneOffsetMinutes = parseInt(match[9]);
 
-            // Создаем объект Date с извлеченными компонентами даты
+            // Create Date object with extracted date components
             let date = new Date(Date.UTC(year, month - 1, day, hour, minute, second));
 
-            // Учитываем смещение времени
+            // Account for time offset
             if (timeZoneSign === 'Z') {
-                // Если указано "Z", это означает UTC
+                // If "Z" is specified, it means UTC
             } else if (timeZoneSign === '+') {
                 date.setHours(date.getHours() - timeZoneOffsetHours);
                 date.setMinutes(date.getMinutes() - timeZoneOffsetMinutes);
@@ -2042,7 +2037,7 @@
         return null;
     }
 
-    // переопределение методов cshape
+    // overriding cshape methods
     CAnnotationBase.prototype.canRotate = function() {
         return false;
     };

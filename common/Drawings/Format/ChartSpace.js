@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 
@@ -509,6 +512,13 @@ function(window, undefined) {
 				oElement.tx.rich.content.SetApplyToAll(false);
 			}
 			CheckParagraphTextPr(oElement.txPr.content.Content[0], oTextPr);
+
+			var nElementType = oElement.getObjectType && oElement.getObjectType();
+			if (nElementType === AscDFH.historyitem_type_DataLabels || nElementType === AscDFH.historyitem_type_DataLabel) {
+				oElement.txPr.content.SetApplyToAll(true);
+				oElement.txPr.content.AddToParagraph(new AscCommonWord.ParaTextPr(oTextPr));
+				oElement.txPr.content.SetApplyToAll(false);
+			}
 		}
 	}
 
@@ -1461,7 +1471,7 @@ function(window, undefined) {
 					if (!oCompiledPr) {
 						oCompiledPr = oContent.Content[0].CompiledPr;
 					}
-					oContent.Reset(0, 0, fContentWidth, 20000);//выставляем большую ширину чтобы текст расчитался в одну строку.
+					oContent.Reset(0, 0, fContentWidth, 20000);//set large width so text calculates in one line.
 					oContent.Recalculate_Page(0, true);
 					var fContentHeight = oContent.GetSummaryHeight();
 					oTransform = oLabel.localTransformText;
@@ -2584,6 +2594,20 @@ function(window, undefined) {
 	{
 		return !!this.externalReference;
 	}
+	CChartSpace.prototype._getCommonSeriesValue = function (seriesArray, getValueCallback) {
+		if (!seriesArray || seriesArray.length === 0) {
+			return null;
+		}
+
+		const firstValue = getValueCallback(seriesArray[0]);
+		for (let i = 1; i < seriesArray.length; ++i) {
+			if (getValueCallback(seriesArray[i]) !== firstValue) {
+				return undefined;
+			}
+		}
+
+		return AscFormat.isRealNumber(firstValue) ? firstValue : null;
+	};
 	CChartSpace.prototype.getAscSettings = function ()
 	{
 		const chart = this.chart;
@@ -2662,12 +2686,38 @@ function(window, undefined) {
 			ret.showMarker = oFirstChart.isMarkerChart();
 		}
 
-		if (targetSeries && targetSeries.errBars && targetSeries.errBars.length > 0) {
-			const firstErrBar = targetSeries.errBars[0];
-			if (firstErrBar && AscFormat.isRealNumber(firstErrBar.errValType)) {
-				ret.errorBarsValueType = firstErrBar.errValType;
+		const getErrBarType = function (series) {
+			if (series.errBars && series.errBars.length > 0) {
+				const firstErrBar = series.errBars[0];
+				if (firstErrBar && AscFormat.isRealNumber(firstErrBar.errValType)) {
+					return firstErrBar.errValType;
+				}
 			}
-		}
+		};
+		const getTrendlineType = function (series) {
+			const lastTrendline = series.getLastTrendline && series.getLastTrendline();
+			if (lastTrendline && AscFormat.isRealNumber(lastTrendline.trendlineType)) {
+				return lastTrendline.trendlineType;
+			}
+		};
+		const getForecastForward = function (series) {
+			const lastTrendline = series.getLastTrendline && series.getLastTrendline();
+			if (lastTrendline && AscFormat.isRealNumber(lastTrendline.forward)) {
+				return lastTrendline.forward;
+			}
+		};
+		const getForecastBackward = function (series) {
+			const lastTrendline = series.getLastTrendline && series.getLastTrendline();
+			if (lastTrendline && AscFormat.isRealNumber(lastTrendline.backward)) {
+				return lastTrendline.backward;
+			}
+		};
+
+		const seriesToCheck = selectedSeries ? [selectedSeries] : aSeries;
+		ret.errorBarsValueType = this._getCommonSeriesValue(seriesToCheck, getErrBarType);
+		ret.trendlineType = this._getCommonSeriesValue(seriesToCheck, getTrendlineType);
+		ret.forecastForward = this._getCommonSeriesValue(seriesToCheck, getForecastForward);
+		ret.forecastBackward = this._getCommonSeriesValue(seriesToCheck, getForecastBackward);
 
 		ret.putView3d(this.getView3d());
 		return ret;
@@ -3663,42 +3713,81 @@ function(window, undefined) {
 		} else if (AscFormat.isRealNumber(this.selection.dataLbls)) {
 			var ser = this.getAllSeries()[this.selection.dataLbls];
 			if (ser) {
-				var pts = ser.getNumPts();
-				if (!ser.dLbls) {
-					var oDlbls;
-					var oChart = ser.parent;
-					if (oChart && oChart.dLbls) {
-						oDlbls = oChart.dLbls.createDuplicate();
+				var bChartEx = ser.isChartEx();
+				var oDlbls = bChartEx ? ser.dataLabels : ser.dLbls;
+				if (!oDlbls) {
+					if (bChartEx) {
+						oDlbls = new AscFormat.CDataLabels();
+						ser.setDataLabels(oDlbls);
 					} else {
-						oDlbls = new AscFormat.CDLbls();
+						if (ser.parent && ser.parent.dLbls) {
+							oDlbls = ser.parent.dLbls.createDuplicate();
+						} else {
+							oDlbls = new AscFormat.CDLbls();
+						}
+						ser.setDLbls(oDlbls);
 					}
-					ser.setDLbls(oDlbls);
 				}
+				var pts = ser.getNumPts();
 				if (!AscFormat.isRealNumber(this.selection.dataLbl)) {
-					fCallback(ser.dLbls, value, this.getDrawingDocument(), 10);
+					fCallback(oDlbls, value, this.getDrawingDocument(), 10);
+					if (bChartEx && oDlbls.txPr) {
+						if (!oDlbls.txPr.bodyPr) {
+							oDlbls.txPr.setBodyPr(new AscFormat.CBodyPr());
+						}
+						oDlbls.txPr.bodyPr.resetInsets();
+						if (!oDlbls.txPr.lstStyle) {
+							oDlbls.txPr.setLstStyle(new AscFormat.TextListStyle());
+						}
+					}
 					for (var i = 0; i < pts.length; ++i) {
-						var dLbl = ser.dLbls && ser.dLbls.findDLblByIdx(pts[i].idx);
+						var dLbl = oDlbls.findDLblByIdx(pts[i].idx);
 						if (dLbl) {
-							if (ser.dLbls.txPr && !dLbl.txPr) {
-								dLbl.setTxPr(ser.dLbls.txPr.createDuplicate());
+							if (oDlbls.txPr && !dLbl.txPr) {
+								dLbl.setTxPr(oDlbls.txPr.createDuplicate());
 							}
 							fCallback(dLbl, value, this.getDrawingDocument(), 10);
+							if (bChartEx && dLbl.txPr) {
+								if (!dLbl.txPr.bodyPr) {
+									dLbl.txPr.setBodyPr(new AscFormat.CBodyPr());
+								}
+								dLbl.txPr.bodyPr.resetInsets();
+								if (!dLbl.txPr.lstStyle) {
+									dLbl.txPr.setLstStyle(new AscFormat.TextListStyle());
+								}
+							}
 						}
 					}
 				} else {
 					var pt = pts[this.selection.dataLbl];
 					if (pt) {
-						var dLbl = ser.dLbls && ser.dLbls.findDLblByIdx(pt.idx);
+						var dLbl = oDlbls.findDLblByIdx(pt.idx);
 						if (!dLbl) {
-							dLbl = new AscFormat.CDLbl();
-							dLbl.setIdx(pt.idx);
-							if (ser.dLbls.txPr) {
-								dLbl.merge(ser.dLbls);
+							if (bChartEx) {
+								dLbl = new AscFormat.CDataLabel();
+								dLbl.setIdx(pt.idx);
+								if (oDlbls.txPr) {
+									dLbl.setTxPr(oDlbls.txPr.createDuplicate());
+								}
+							} else {
+								dLbl = new AscFormat.CDLbl();
+								dLbl.setIdx(pt.idx);
+								if (oDlbls.txPr) {
+									dLbl.merge(oDlbls);
+								}
 							}
-							ser.dLbls.addDLbl(dLbl);
-
+							oDlbls.addDLbl(dLbl);
 						}
 						fCallback(dLbl, value, this.getDrawingDocument(), 10);
+						if (bChartEx && dLbl.txPr) {
+							if (!dLbl.txPr.bodyPr) {
+								dLbl.txPr.setBodyPr(new AscFormat.CBodyPr());
+							}
+							dLbl.txPr.bodyPr.resetInsets();
+							if (!dLbl.txPr.lstStyle) {
+								dLbl.txPr.setLstStyle(new AscFormat.TextListStyle());
+							}
+						}
 					}
 				}
 			}
@@ -3723,7 +3812,7 @@ function(window, undefined) {
 				if (plot_area) {
 					for (i = 0; i < plot_area.charts.length; ++i) {
 						plot_area.charts[i] && plot_area.charts[i].applyLabelsFunction(fCallback, value, oDD);
-						/*TODO надо бы этот метод переименовать чтоб название не вводило в заблуждение*/
+						/*TODO this method should be renamed so the name is not misleading*/
 					}
 					var cur_axis;
 					for (i = 0; i < plot_area.axId.length; ++i) {
@@ -3965,7 +4054,7 @@ function(window, undefined) {
 		} else if (AscFormat.isRealNumber(this.selection.dataLbls)) {
 			var ser = this.getAllSeries()[this.selection.dataLbls];
 			if (ser) {
-				var oDlbls = ser.dLbls;
+				var oDlbls = ser.isChartEx() ? ser.dataLabels : ser.dLbls;
 				if (!AscFormat.isRealNumber(this.selection.dataLbl)) {
 					if (oDlbls && oDlbls.spPr && oDlbls.spPr.Fill && oDlbls.spPr.Fill.fill) {
 						ret = oDlbls.spPr.Fill;
@@ -3974,7 +4063,7 @@ function(window, undefined) {
 					var pts = ser.getNumPts();
 					var pt = pts[this.selection.dataLbl];
 					if (pt) {
-						var dLbl = ser.dLbls && ser.dLbls.findDLblByIdx(pt.idx);
+						var dLbl = oDlbls && oDlbls.findDLblByIdx(pt.idx);
 						if (dLbl && dLbl.spPr && dLbl.spPr.Fill && dLbl.spPr.Fill.fill) {
 							ret = dLbl.spPr.Fill;
 						}
@@ -4074,7 +4163,7 @@ function(window, undefined) {
 		} else if (AscFormat.isRealNumber(this.selection.dataLbls)) {
 			var ser = this.getAllSeries()[this.selection.dataLbls];
 			if (ser) {
-				var oDlbls = ser.dLbls;
+				var oDlbls = ser.isChartEx() ? ser.dataLabels : ser.dLbls;
 				if (!AscFormat.isRealNumber(this.selection.dataLbl)) {
 					if (oDlbls && oDlbls.spPr && oDlbls.spPr.ln && oDlbls.spPr.ln.Fill) {
 						ret = oDlbls.spPr.ln;
@@ -4083,7 +4172,7 @@ function(window, undefined) {
 					var pts = ser.getNumPts();
 					var pt = pts[this.selection.dataLbl];
 					if (pt) {
-						var dLbl = ser.dLbls && ser.dLbls.findDLblByIdx(pt.idx);
+						var dLbl = oDlbls && oDlbls.findDLblByIdx(pt.idx);
 						if (dLbl && dLbl.spPr && dLbl.spPr.ln && dLbl.spPr.ln.Fill) {
 							ret = dLbl.spPr.ln;
 						}
@@ -4221,16 +4310,20 @@ function(window, undefined) {
 		} else if (AscFormat.isRealNumber(this.selection.dataLbls)) {
 			var ser = this.getAllSeries()[this.selection.dataLbls];
 			if (ser) {
-				var oDlbls = ser.dLbls;
-				if (!ser.dLbls) {
-
-					if (ser.parent && ser.parent.dLbls) {
-						oDlbls = ser.parent.dLbls.createDuplicate();
+				var bChartEx = ser.isChartEx();
+				var oDlbls = bChartEx ? ser.dataLabels : ser.dLbls;
+				if (!oDlbls) {
+					if (bChartEx) {
+						oDlbls = new AscFormat.CDataLabels();
+						ser.setDataLabels(oDlbls);
 					} else {
-						oDlbls = new AscFormat.CDLbls();
+						if (ser.parent && ser.parent.dLbls) {
+							oDlbls = ser.parent.dLbls.createDuplicate();
+						} else {
+							oDlbls = new AscFormat.CDLbls();
+						}
+						ser.setDLbls(oDlbls);
 					}
-
-					ser.setDLbls(oDlbls);
 				}
 				if (!AscFormat.isRealNumber(this.selection.dataLbl)) {
 					if (!oDlbls.spPr) {
@@ -4245,15 +4338,22 @@ function(window, undefined) {
 					var pts = ser.getNumPts();
 					var pt = pts[this.selection.dataLbl];
 					if (pt) {
-						var dLbl = ser.dLbls && ser.dLbls.findDLblByIdx(pt.idx);
+						var dLbl = oDlbls.findDLblByIdx(pt.idx);
 						if (!dLbl) {
-							dLbl = new AscFormat.CDLbl();
-							dLbl.setIdx(pt.idx);
-							if (ser.dLbls.txPr) {
-								dLbl.merge(ser.dLbls);
+							if (bChartEx) {
+								dLbl = new AscFormat.CDataLabel();
+								dLbl.setIdx(pt.idx);
+								if (oDlbls.txPr) {
+									dLbl.setTxPr(oDlbls.txPr.createDuplicate());
+								}
+							} else {
+								dLbl = new AscFormat.CDLbl();
+								dLbl.setIdx(pt.idx);
+								if (oDlbls.txPr) {
+									dLbl.merge(oDlbls);
+								}
 							}
-							ser.dLbls.addDLbl(dLbl);
-
+							oDlbls.addDLbl(dLbl);
 						}
 						var brush = null;
 						if (pt.compiledDlb) {
@@ -4485,16 +4585,20 @@ function(window, undefined) {
 		} else if (AscFormat.isRealNumber(this.selection.dataLbls)) {
 			var ser = this.getAllSeries()[this.selection.dataLbls];
 			if (ser) {
-				var oDlbls = ser.dLbls;
-				if (!ser.dLbls) {
-
-					if (ser.parent && ser.parent.dLbls) {
-						oDlbls = ser.parent.dLbls.createDuplicate();
+				var bChartEx = ser.isChartEx();
+				var oDlbls = bChartEx ? ser.dataLabels : ser.dLbls;
+				if (!oDlbls) {
+					if (bChartEx) {
+						oDlbls = new AscFormat.CDataLabels();
+						ser.setDataLabels(oDlbls);
 					} else {
-						oDlbls = new AscFormat.CDLbls();
+						if (ser.parent && ser.parent.dLbls) {
+							oDlbls = ser.parent.dLbls.createDuplicate();
+						} else {
+							oDlbls = new AscFormat.CDLbls();
+						}
+						ser.setDLbls(oDlbls);
 					}
-
-					ser.setDLbls(oDlbls);
 				}
 				if (!AscFormat.isRealNumber(this.selection.dataLbl)) {
 					if (!oDlbls.spPr) {
@@ -4510,15 +4614,22 @@ function(window, undefined) {
 					var pts = ser.getNumPts();
 					var pt = pts[this.selection.dataLbl];
 					if (pt) {
-						var dLbl = ser.dLbls && ser.dLbls.findDLblByIdx(pt.idx);
+						var dLbl = oDlbls.findDLblByIdx(pt.idx);
 						if (!dLbl) {
-							dLbl = new AscFormat.CDLbl();
-							dLbl.setIdx(pt.idx);
-							if (ser.dLbls.txPr) {
-								dLbl.merge(ser.dLbls);
+							if (bChartEx) {
+								dLbl = new AscFormat.CDataLabel();
+								dLbl.setIdx(pt.idx);
+								if (oDlbls.txPr) {
+									dLbl.setTxPr(oDlbls.txPr.createDuplicate());
+								}
+							} else {
+								dLbl = new AscFormat.CDLbl();
+								dLbl.setIdx(pt.idx);
+								if (oDlbls.txPr) {
+									dLbl.merge(oDlbls);
+								}
 							}
-							ser.dLbls.addDLbl(dLbl);
-
+							oDlbls.addDLbl(dLbl);
 						}
 						if (!dLbl.spPr) {
 							dLbl.setSpPr(new AscFormat.CSpPr());
@@ -4780,27 +4891,46 @@ function(window, undefined) {
 		} else if (AscFormat.isRealNumber(this.selection.dataLbls)) {
 			var ser = this.getAllSeries()[this.selection.dataLbls];
 			if (ser) {
-				var oDlbls = ser.dLbls;
-				if (!ser.dLbls) {
-
-					if (ser.parent && ser.parent.dLbls) {
-						oDlbls = ser.parent.dLbls.createDuplicate();
+				var bChartEx = ser.isChartEx();
+				var oDlbls = bChartEx ? ser.dataLabels : ser.dLbls;
+				if (!oDlbls) {
+					if (bChartEx) {
+						oDlbls = new AscFormat.CDataLabels();
+						ser.setDataLabels(oDlbls);
 					} else {
-						oDlbls = new AscFormat.CDLbls();
+						if (ser.parent && ser.parent.dLbls) {
+							oDlbls = ser.parent.dLbls.createDuplicate();
+						} else {
+							oDlbls = new AscFormat.CDLbls();
+						}
+						ser.setDLbls(oDlbls);
 					}
-
-					ser.setDLbls(oDlbls);
 				}
 				if (!AscFormat.isRealNumber(this.selection.dataLbl)) {
-					oDlbls.setDeleteValue(true);
+					if (bChartEx) {
+						if (!oDlbls.visibility) {
+							oDlbls.setVisibility(new AscFormat.CDataLabelVisibilities());
+						}
+						oDlbls.visibility.setSeriesName(false);
+						oDlbls.visibility.setCategoryName(false);
+						oDlbls.visibility.setValue(false);
+					} else {
+						oDlbls.setDeleteValue(true);
+					}
 				} else {
 					var pts = ser.getNumPts();
 					var pt = pts[this.selection.dataLbl];
 					if (pt) {
-						var dLbl = new AscFormat.CDLbl();
-						dLbl.setIdx(pt.idx);
-						dLbl.setDelete(true);
-						ser.dLbls.addDLbl(dLbl);
+						if (bChartEx) {
+							var oHidden = new AscFormat.CDataLabelHidden();
+							oHidden.setIdx(pt.idx);
+							oDlbls.addDataLabelHidden(oHidden);
+						} else {
+							var dLbl = new AscFormat.CDLbl();
+							dLbl.setIdx(pt.idx);
+							dLbl.setDelete(true);
+							oDlbls.addDLbl(dLbl);
+						}
 					}
 				}
 			}
@@ -5215,7 +5345,7 @@ function(window, undefined) {
 			if (plot_area) {
 				for (i = 0; i < plot_area.charts.length; ++i) {
 					plot_area.charts[i] && plot_area.charts[i].documentCreateFontMap(allFonts);
-					/*TODO надо бы этот метод переименовать чтоб название не вводило в заблуждение*/
+					/*TODO this method should be renamed so the name is not misleading*/
 				}
 				var cur_axis;
 				for (i = 0; i < plot_area.axId.length; ++i) {
@@ -5929,6 +6059,11 @@ function(window, undefined) {
 				pt = aPts[nPt];
 				const compiled_dlb = new AscFormat.CDLbl();
 				compiled_dlb.merge(default_lbl);
+				compiled_dlb.merge(seria.dataLabels);
+				const oIndividualDLbl = seria.dataLabels.findDataLabelByIdx(pt.idx);
+				if (oIndividualDLbl) {
+					compiled_dlb.merge(oIndividualDLbl);
+				}
 				pt.compiledDlb = compiled_dlb;
 				pt.compiledDlb.chart = this;
 				pt.compiledDlb.series = seria;
@@ -5971,7 +6106,7 @@ function(window, undefined) {
 			let oLbl = aDLbls[i];
 			if (oLbl && oLbl.series && oLbl.pt) {
 
-				let ser_idx = oLbl.series.idx; //сделаем проверку лежит ли серия с индексом this.recalcInfo.dataLbls[i].series.idx в сериях первой диаграммы
+				let ser_idx = oLbl.series.idx; //check if the series with index this.recalcInfo.dataLbls[i].series.idx exists in the first chart's series
 				for (var j = 0; j < series.length; ++j) {
 					if (series[j].idx === ser_idx) {
 						let pos = this.chartObj.recalculatePositionText(oLbl);
@@ -6204,7 +6339,7 @@ function(window, undefined) {
 		switch (nAxisType) {
 			case AscDFH.historyitem_type_DateAx:
 			case AscDFH.historyitem_type_CatAx: {
-				//расчитаем подписи для горизонтальной оси
+				//calculate labels for horizontal axis
 				let nPtsLen = 0;
 				let aScale = [];
 				if (Array.isArray(oAxis.scale)) {
@@ -7768,7 +7903,7 @@ function(window, undefined) {
 							}
 							if(ser.compiledSeriesPen && !b_scatter_no_line) {
 								union_marker.lineMarker = AscFormat.CreateMarkerGeometryByType(AscFormat.SYMBOL_DASH);
-								union_marker.lineMarker.pen = ser.compiledSeriesPen.createDuplicate(); //Копируем, так как потом возможно придется изменять толщину линии;
+								union_marker.lineMarker.pen = ser.compiledSeriesPen.createDuplicate(); //Copy, as we may need to change line thickness later;
 							}
 							if(!b_scatter_no_line && !AscFormat.CChartsDrawer.prototype._isSwitchCurrent3DChart(this)) {
 								b_line_series = true;
@@ -7898,12 +8033,12 @@ function(window, undefined) {
 			var line_marker_width;
 			if (b_line_series) {
 				marker_size = 2.5;
-				line_marker_width = 7.7;//Пока так
+				line_marker_width = 7.7;//For now
 				for (i = 0; i < calc_entryes.length; ++i) {
 					calc_entry = calc_entryes[i];
 					if (calc_entry.calcMarkerUnion.lineMarker) {
 						calc_entry.calcMarkerUnion.lineMarker.spPr.geometry.Recalculate(line_marker_width, 1);
-						/*Excel не дает сделать толщину линии для маркера легенды больше определенной. Считаем, что это толщина равна 133000emu*/
+						/*Excel doesn't allow legend marker line thickness to exceed a certain value. We assume this thickness equals 133000emu*/
 						if (calc_entry.calcMarkerUnion.lineMarker.pen
 							&& AscFormat.isRealNumber(calc_entry.calcMarkerUnion.lineMarker.pen.w) && calc_entry.calcMarkerUnion.lineMarker.pen.w > 133000) {
 							calc_entry.calcMarkerUnion.lineMarker.pen.w = 133000;
@@ -7986,7 +8121,7 @@ function(window, undefined) {
 					legend_pos === c_oAscChartLegendShowSettings.leftOverlay ||
 					legend_pos === c_oAscChartLegendShowSettings.right ||
 					legend_pos === c_oAscChartLegendShowSettings.rightOverlay || legend_pos === c_oAscChartLegendShowSettings.topRight) && !bFixedSize) {
-					max_legend_width = this.extX / 3;//Считаем, что ширина легенды не больше трети ширины всей диаграммы;
+					max_legend_width = this.extX / 3;//We assume legend width is no more than one third of the total chart width;
 					var sizes = this.getChartSizes();
 					max_legend_height = sizes.h;
 					if (b_line_series) {
@@ -8152,9 +8287,9 @@ function(window, undefined) {
 						legend.setPosition(0, 0);
 					}
 				} else {
-					/*пока сделаем так: максимальная ширимна 0.9 от ширины дмаграммы
-                     без заголовка  максимальная высота легенды 0.6 от высоты диаграммы,
-                     с заголовком 0.6 от высоты за вычетом высоты заголовка*/
+					/*for now we'll do it this way: max width is 0.9 of chart width,
+                     without title max legend height is 0.6 of chart height,
+                     with title 0.6 of height minus title height*/
 					var fMaxLegendHeight, fMaxLegendWidth;
 					if (bFixedSize) {
 						fMaxLegendWidth = fFixedWidth;
@@ -10302,8 +10437,8 @@ function(window, undefined) {
 		}
 	};
 	CChartSpace.prototype.updateLinks = function () {
-		//Этот метод нужен, т. к. мы не полностью поддерживаем формат в котором в одном plotArea может быть несколько разных диаграмм(конкретных типов).
-		// Здесь мы берем первую из диаграмм лежащих в массиве plotArea.charts, а также выставляем ссылки для осей ;
+		//This method is needed because we don't fully support the format where one plotArea can have multiple different charts (of specific types).
+		// Here we take the first chart from the plotArea.charts array and also set axis references;
 		if (this.chart && this.chart.plotArea) {
 			var oCheckChart;
 			var oPlotArea = this.chart.plotArea;
@@ -10351,7 +10486,7 @@ function(window, undefined) {
 							}
 						}
 					} else {
-						if (axis_by_types.valAx.length > 1) {//TODO: выставлять оси исходя из настроек
+						if (axis_by_types.valAx.length > 1) {//TODO: set axes based on settings
 							oPlotArea.valAx = axis_by_types.valAx[1];
 							oPlotArea.catAx = axis_by_types.valAx[0];
 						}
@@ -10863,35 +10998,28 @@ function(window, undefined) {
 		return oChartStyleCache.getStyleIdx(this.getChartType(), this.chartStyle.id);
 	};
 	CChartSpace.prototype.getDisplayTrendlinesEquation = function () {
-		let aSeries = this.getAllSeries();
-		let bResult = null;
-		if(aSeries.length === 0) {
-			return bResult;
-		}
-		let aAllTrendlines = [];
-		let oTrendline;
-		for(let nSer = 0; nSer < aSeries.length; ++nSer) {
-			const seria = aSeries[nSer];
-			oTrendline = seria.getLastTrendline();
-			if(oTrendline) {
-				aAllTrendlines.push(oTrendline);
-			}
-		}
-		if(aAllTrendlines.length === 0) {
+		// undefined for mixed state
+		// null for disabled state
+
+		const allSeries = this.getAllSeries();
+		if (allSeries.length === 0) {
 			return null;
 		}
-		if(!oTrendline) {
-			return bResult;
+
+		const trendlines = allSeries
+			.map(function (series) { return series.getLastTrendline(); })
+			.filter(function (trendline) { return trendline != null; });
+
+		if (trendlines.length === 0) {
+			return null;
 		}
-		oTrendline = aAllTrendlines[0];
-		bResult = oTrendline.trendlineLbl !== null;
-		for(let nIdx = 1; nIdx < aAllTrendlines.length; ++nIdx) {
-			let bLbl = aAllTrendlines[nIdx].trendlineLbl !== null;
-			if(bResult !== bLbl) {
-				return undefined;
-			}
-		}
-		return bResult;
+
+		const firstLabelValue = trendlines[0].trendlineLbl !== null;
+		const allSame = trendlines.every(function (trendline) {
+			return (trendline.trendlineLbl !== null) === firstLabelValue;
+		});
+
+		return allSame ? firstLabelValue : undefined;
 	};
 	CChartSpace.prototype.setDisplayTrendlinesEquation = function (bValue) {
 		if(bValue === this.getDisplayTrendlinesEquation()) {
@@ -11469,7 +11597,7 @@ function(window, undefined) {
 			oSeria.asc_setValues(sRange);
 			return true;
 		}
-		// пока только для Spreadsheet
+		// for now only for Spreadsheet
 		return false;
 	};
 	CChartSpace.prototype.SetSeriaXValues = function (sRange, nSeria) {
@@ -11495,7 +11623,7 @@ function(window, undefined) {
 			oSeria.asc_setXValues(sRange);
 			return true;
 		}
-		// пока только для Spreadsheet
+		// for now only for Spreadsheet
 		return false;
 	};
 	CChartSpace.prototype.SetSeriaName = function (sName, nSeria) {
@@ -11574,7 +11702,7 @@ function(window, undefined) {
 			}
 		}
 
-		// пока только для Spreadsheet
+		// for now only for Spreadsheet
 		return false;
 	};
 	CChartSpace.prototype.RemoveSeria = function (nSeria) {
@@ -13913,7 +14041,7 @@ function(window, undefined) {
 			return;
 		}
 
-		// сheck if diagonal labels can fit into axis width
+		// check if diagonal labels can fit into axis width
 		// also other suggestions to calculate diagonal width can be found in this function in commit: 616c0a0665bb0b09e81d9bc25df120ddf3c6783a
 		if (this.isUserDefinedLabelFormat || this.sDataType === 'string') {
 			// multiplier is the square root of 2;

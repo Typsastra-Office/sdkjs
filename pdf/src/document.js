@@ -1,36 +1,41 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-// TODO: Временно
+"use strict";
+
+// TODO: Temporary
 var CPresentation = CPresentation || function(){};
 
 (function(){
@@ -69,7 +74,7 @@ var CPresentation = CPresentation || function(){};
         this.ids = [];
         this.document = oDoc;
         this.isInProgress = false;
-        this.sourceField = null; // поле вызвавшее calculate
+        this.sourceField = null; // field that triggered calculate
     };
 
     CCalculateInfo.prototype.constructor = CCalculateInfo;
@@ -111,16 +116,18 @@ var CPresentation = CPresentation || function(){};
     CCalculateInfo.prototype.GetSourceField = function() {
         return this.sourceField;
     };
+    CCalculateInfo.prototype.SetCurrentField = function(oField) {
+        this.currentField = oField;
+    };
+    CCalculateInfo.prototype.GetCurrentField = function() {
+        return this.currentField;
+    };
 	
 	/**
 	 * Main class for working with PDF structure
 	 * @constructor
 	 */
     function CPDFDoc(viewer) {
-        this.widgets    = []; // непосредственно сами поля, которые отрисовываем (дочерние без потомков)
-        this.annots     = [];
-        this.drawings   = []; // из презентаций (чарты, шейпы, картинки)
-
         this.maxApIdx               = -1;
         this.CollaborativeEditing   = AscCommon.CollaborativeEditing;
         this.CollaborativeEditing.SetLogicDocument(this);
@@ -148,11 +155,11 @@ var CPresentation = CPresentation || function(){};
 
         this.pagesTransform = [];
 
-        this._fieldsChildsMap = {}; // map при открытии форм
+        this._fieldsChildsMap = {}; // map when opening forms
         this.api = this.GetDocumentApi();
 		
 
-        this.CurPosition = {X: 0, Y: 0}; // для graphic frame
+        this.CurPosition = {X: 0, Y: 0}; // for graphic frame
 
         // internal
         this.activeForm         = null;
@@ -189,11 +196,11 @@ var CPresentation = CPresentation || function(){};
         this.appliedRedactsData = [];
 
 		this.fontLoader             = AscCommon.g_font_loader;
-		this.defaultFontsLoaded     = -1; // -1 не загружены и не грузим, 0 - грузим, 1 - загружены
+		this.defaultFontsLoaded     = -1; // -1 not loaded and not loading, 0 - loading, 1 - loaded
         this.loadedFonts            = [];
         this.Action                 = {};
 		
-		this.needRecalcShape = {}; // шейпы, которые нужно пересчитать из-за конвертации PdfText->RunText
+		this.needRecalcShape = {}; // shapes that need to be recalculated due to PdfText->RunText conversion
         
         this.checkDefaultFonts();
     }
@@ -203,7 +210,8 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.GetFile = function() {
         return this.Viewer.file;
-    };    Object.defineProperties(CPDFDoc.prototype, {
+    };
+    Object.defineProperties(CPDFDoc.prototype, {
 		widgets: {
 			get: function () {
                 let aWidgets = [];
@@ -334,10 +342,10 @@ var CPresentation = CPresentation || function(){};
                     break;
                 }
                 case 90: {
-                    // Новый отступ слева после поворота
+                    // New left indent after rotation
                     let newXInd = xInd + (nPageW - nPageH >> 1);
-                    tx = -yInd * nScale - (0.5 / this.Viewer.zoom); // магическое число
-                    ty = (nPageH + newXInd) * nScale - (0.5 / this.Viewer.zoom); // магическое число
+                    tx = -yInd * nScale - (0.5 / this.Viewer.zoom); // magic number
+                    ty = (nPageH + newXInd) * nScale - (0.5 / this.Viewer.zoom); // magic number
                     sx = 0;
                     sy = 0;
                     shx = 1 * nScale;
@@ -345,7 +353,7 @@ var CPresentation = CPresentation || function(){};
                     break;
                 }
                 case 180: {
-                    tx = (xInd + nPageW) * nScale - (1.5 / this.Viewer.zoom); // магическое число
+                    tx = (xInd + nPageW) * nScale - (1.5 / this.Viewer.zoom); // magic number
                     ty = (yInd + nPageH) * nScale;
                     sx = -nScale;
                     sy = -nScale;
@@ -354,10 +362,10 @@ var CPresentation = CPresentation || function(){};
                     break;
                 }
                 case 270: {
-                    // Новый отступ слева после поворота
+                    // New left indent after rotation
                     let newXInd = xInd + (nPageW - nPageH >> 1);
                     tx = (nPageW + yInd) * nScale;
-                    ty = -newXInd * nScale + (1.5 / this.Viewer.zoom); // магическое число;
+                    ty = -newXInd * nScale + (1.5 / this.Viewer.zoom); // magic number;
                     sx = 0;
                     sy = 0;
                     shx = -1 * nScale;
@@ -413,10 +421,10 @@ var CPresentation = CPresentation || function(){};
                 break;
             }
             case 90: {
-                // Новый отступ слева после поворота
+                // New left indent after rotation
                 let newXInd = xInd + (nPageW - nPageH >> 1);
-                tx = -yInd * nScale - (0.5 / this.Viewer.zoom); // магическое число
-                ty = (nPageH + newXInd) * nScale - (0.5 / this.Viewer.zoom); // магическое число
+                tx = -yInd * nScale - (0.5 / this.Viewer.zoom); // magic number
+                ty = (nPageH + newXInd) * nScale - (0.5 / this.Viewer.zoom); // magic number
                 sx = 0;
                 sy = 0;
                 shx = 1 * nScale;
@@ -424,7 +432,7 @@ var CPresentation = CPresentation || function(){};
                 break;
             }
             case 180: {
-                tx = (xInd + nPageW) * nScale - (1.5 / this.Viewer.zoom); // магическое число
+                tx = (xInd + nPageW) * nScale - (1.5 / this.Viewer.zoom); // magic number
                 ty = (yInd + nPageH) * nScale;
                 sx = -nScale;
                 sy = -nScale;
@@ -433,10 +441,10 @@ var CPresentation = CPresentation || function(){};
                 break;
             }
             case 270: {
-                // Новый отступ слева после поворота
+                // New left indent after rotation
                 let newXInd = xInd + (nPageW - nPageH >> 1);
                 tx = (nPageW + yInd) * nScale;
-                ty = -newXInd * nScale + (1.5 / this.Viewer.zoom); // магическое число;
+                ty = -newXInd * nScale + (1.5 / this.Viewer.zoom); // magic number;
                 sx = 0;
                 sy = 0;
                 shx = -1 * nScale;
@@ -458,7 +466,7 @@ var CPresentation = CPresentation || function(){};
         }
     };
 
-    /////////// методы для открытия //////////////
+    /////////// methods for opening //////////////
     CPDFDoc.prototype.private_AddFieldToChildsMap = function(oField, nParentIdx) {
         if (this._fieldsChildsMap[nParentIdx] == null)
             this._fieldsChildsMap[nParentIdx] = [];
@@ -470,7 +478,7 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.OnEndFormsActions = function() {
         let oViewer = editor.getDocumentRenderer();
-        if (oViewer.needRedraw == true) { // отключали отрисовку на скроле из ActionToGo, поэтому рисуем тут
+        if (oViewer.needRedraw == true) { // disabled rendering on scroll from ActionToGo, so we draw here
             oViewer.paint();
             oViewer.needRedraw = false;
         }
@@ -725,7 +733,7 @@ var CPresentation = CPresentation || function(){};
         let bInberitValue = false;
         let value;
 
-        let aRadios = []; // обновляем состояние радиокнопок в конце
+        let aRadios = []; // update radio button state at the end
 
         for (let i = 0; i < this.widgets.length; i++) {
             let oField = this.widgets[i];
@@ -1232,7 +1240,7 @@ var CPresentation = CPresentation || function(){};
         if (nCurMatchIdx == -1) {
             nCurMatchIdx = 0;
 
-            // находим индекс найденного элемента на текущей странице
+            // find the index of the found element on the current page
             nCurMatchIdx += this.SearchEngine.PagesMatches.slice(0, nCurPage).reduce(function(accum, pageMatches) {
                 return accum + pageMatches.length;
             }, 0);
@@ -1398,7 +1406,7 @@ var CPresentation = CPresentation || function(){};
         this.NavigateToField(oNextForm);
                 
         let oOnFocus = oNextForm.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.OnFocus);
-        // вызываем выставление курсора после onFocus. Если уже в фокусе, тогда сразу.
+        // set cursor position after onFocus. If already in focus, do it immediately.
         if (oOnFocus && oOnFocus.Actions.length > 0) {
             oActionsQueue.callbackAfterFocus = callbackAfterFocus.bind(this);
             oActionsQueue.AddActions(oOnFocus.Actions);
@@ -1481,7 +1489,7 @@ var CPresentation = CPresentation || function(){};
         this.NavigateToField(oNextForm);
         
         let oOnFocus = oNextForm.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.OnFocus);
-        // вызываем выставление курсора после onFocus. Если уже в фокусе, тогда сразу.
+        // set cursor position after onFocus. If already in focus, do it immediately.
         if (oOnFocus && oOnFocus.Actions.length > 0) {
             oActionsQueue.callbackAfterFocus = callbackAfterFocus.bind(this);
             oActionsQueue.AddActions(oOnFocus.Actions);
@@ -1510,7 +1518,7 @@ var CPresentation = CPresentation || function(){};
             return;
         }
 
-        // выставляем смещения
+        // set offsets
         let yOffset;
         let xOffset;
 
@@ -1591,7 +1599,7 @@ var CPresentation = CPresentation || function(){};
             oForm.onMouseUp();
         }
         else {
-            oForm.UpdateScroll && oForm.UpdateScroll(false); // убираем скролл
+            oForm.UpdateScroll && oForm.UpdateScroll(false); // remove scroll
 
             if (oForm.IsNeedCommit()) {
                 this.CommitField(oForm);
@@ -1602,7 +1610,7 @@ var CPresentation = CPresentation || function(){};
                 oViewer.onUpdateOverlay();
             }
 
-            oDrDoc.TargetEnd(); // убираем курсор
+            oDrDoc.TargetEnd(); // hide cursor
             oForm.AddToRedraw();
         }
     };
@@ -1644,7 +1652,7 @@ var CPresentation = CPresentation || function(){};
             oMouseDownDrawing = null;
         }
 
-        // координаты клика на странице в MM
+        // click coordinates on page in MM
         var pageObject = oViewer.getPageByCoords2(x, y);
         if (!pageObject)
             return false;
@@ -1669,7 +1677,7 @@ var CPresentation = CPresentation || function(){};
                 return;
             }
         }
-        // если ластик
+        // if eraser
         else if (IsOnEraser) {
             if (oMouseDownAnnot && oMouseDownAnnot.IsInk()) {
                 this.EraseInk(oMouseDownAnnot);
@@ -1677,7 +1685,7 @@ var CPresentation = CPresentation || function(){};
 
             return;
         }
-        // если добавление шейпа
+        // if adding shape
         else if (IsOnAddAddShape) {
             if (!oController.isPolylineAddition()) {
                 oController.startAddShape(this.Api.addShapePreset);
@@ -1686,13 +1694,13 @@ var CPresentation = CPresentation || function(){};
             oController.OnMouseDown(e, X, Y, nPage);
             return;
         }
-        // если рисование
+        // if drawing
         else if (IsOnDrawer == true) {
             oController.OnMouseDown(e, X, Y, nPage);
             return;
         }
-        // если хайлайт (аннотация) текста на странице (селектим текст на странице, если не попали в фигуру в режиме view).
-        // если попали в фигуру, то селектим в ней (т.к. это типо текст на странице)
+        // if text highlight (annotation) on page (select text on page if not clicking on shape in view mode).
+        // if clicking on shape, select inside it (since it's like text on page)
         else if (IsPageHighlight) {
             if (null == oMouseDownDrawing) {
                 oViewer.onMouseDownEpsilon(e);
@@ -1705,14 +1713,14 @@ var CPresentation = CPresentation || function(){};
             return drawing.IsEditFieldShape() && drawing.GetEditField() == oFloatObject;
         }));
 
-        // докидываем в селект
+        // add to selection
         if (e.CtrlKey && (oCurObject && oFloatObject) && (oCurObject != oFloatObject) && isSameType && !isFloatSelected) {
             oController.selection.groupSelection = null;
             oController.selectObject(oFloatObject.IsForm() ? oFloatObject.GetEditShape() : oFloatObject, oFloatObject.GetPage());
             return;
         }
 
-        // оставляем текущий объет к селекте, если кликнули по нему же
+        // keep current object in selection if clicked on the same one
         let isObjectSelected = (oCurObject && ([oMouseDownField, oMouseDownAnnot, oMouseDownDrawing, oMouseDownLink].includes(oCurObject)) || isFloatSelected);
         if (null == oCurObject || !isObjectSelected)
             this.SetMouseDownObject(oMouseDownField || oMouseDownAnnot || oMouseDownDrawing || oMouseDownLink);
@@ -1723,7 +1731,7 @@ var CPresentation = CPresentation || function(){};
         let oMouseDownObject = this.GetMouseDownObject();
         if (oMouseDownObject) {
 
-            // если форма, то проверяем шрифт перед кликом в неё
+            // if form, check font before clicking on it
             if (oMouseDownObject.IsForm() && false == [AscPDF.FIELD_TYPES.signature, AscPDF.FIELD_TYPES.checkbox , AscPDF.FIELD_TYPES.radiobutton].includes(oMouseDownObject.GetType())) {
                 let _t = this;
                 if (!this.checkFieldFont(oMouseDownObject, function() {
@@ -1739,7 +1747,7 @@ var CPresentation = CPresentation || function(){};
                 }
             }
 
-            // всегда даём кликнуть по лкм, пкм даем кликнуть один раз, при первом попадании в объект
+            // always allow left click, right click only once on first hit on object
             if (AscCommon.getMouseButton(e || {}) != 2 || (AscCommon.getMouseButton(e || {}) == 2 && oCurObject != oMouseDownObject)) {
                 oMouseDownObject.onMouseDown(x, y, e, nPage);
 
@@ -1749,10 +1757,6 @@ var CPresentation = CPresentation || function(){};
                     oViewer.onMouseDownEpsilon(e);
                     return;
 				}
-            }
-            
-            if ((oMouseDownObject.IsDrawing() || (oMouseDownObject.IsAnnot() && oMouseDownObject.IsFreeText())) && false == oMouseDownObject.IsInTextBox()) {
-                oDrDoc.TargetEnd();
             }
         }
 
@@ -1766,7 +1770,7 @@ var CPresentation = CPresentation || function(){};
             oViewer.onMouseDownEpsilon(e);
         }
         
-        // если в селекте нет drawing по которой кликнули, то сбрасываем селект
+        // if selection doesn't contain the clicked drawing, reset selection
         if (oMouseDownObject == null || (this.IsEditFieldsMode() == false && (false == oController.selectedObjects.includes(oMouseDownObject)) && oController.selection.groupSelection != oMouseDownObject)) {
             oController.resetSelection();
             oController.resetTrackState();
@@ -1804,6 +1808,8 @@ var CPresentation = CPresentation || function(){};
             oActiveObj.OnBlur();
         }
         else if (oActiveObj.IsForm()) {
+			Asc.editor.End_CompositeInput();
+			
             if (this.IsEditFieldsMode() && false == oActiveObj.IsInForm()) {
                 this.activeForm = null;
                 oActiveObj.asc_curImageState = undefined;
@@ -1812,9 +1818,9 @@ var CPresentation = CPresentation || function(){};
 
             oContent = oActiveObj.GetDocContent();
 
-            oActiveObj.UpdateScroll && oActiveObj.UpdateScroll(false); // убираем скрол
-            
-            // если чекбокс то выходим сразу
+            oActiveObj.UpdateScroll && oActiveObj.UpdateScroll(false); // remove scroll
+
+            // if checkbox then exit immediately
             if ([AscPDF.FIELD_TYPES.checkbox, AscPDF.FIELD_TYPES.radiobutton, AscPDF.FIELD_TYPES.button].includes(oActiveObj.GetType())) {
                 oActiveObj.SetPressed(false);
                 oActiveObj.SetHovered(false);
@@ -1906,7 +1912,7 @@ var CPresentation = CPresentation || function(){};
             this.activeDrawing          = oObject;
             this.mouseDownLinkObject    = null;
         }
-        // значит Link object
+        // this is Link object
         else {
             this.mouseDownField         = null;
             this.mouseDownAnnot         = null;
@@ -1990,7 +1996,7 @@ var CPresentation = CPresentation || function(){};
         }), oIdMap);
 
         if (this.DocContent) {
-            //TODO: перенести копирование в CSelectedContent;
+            //TODO: move copying to CSelectedContent;
             oCopy.DocContent = new AscCommonWord.CSelectedContent();
             let aElements = this.DocContent.Elements;
             for (let i = 0; i < aElements.length; ++i) {
@@ -2373,7 +2379,7 @@ var CPresentation = CPresentation || function(){};
 
                                         bOldShowParaMarks = this.Api.ShowParaMarks;
                                         this.Api.ShowParaMarks = false;
-                                        oDocContentForDraw.Draw(oDocContentForDraw.GetAbsolutePage(), oGraphics);
+                                        oDocContentForDraw.Draw(0, oGraphics);
                                         this.Api.ShowParaMarks = bOldShowParaMarks;
                                     }
                                     sImageUrl = oCanvas.toDataURL("image/png");
@@ -2462,7 +2468,7 @@ var CPresentation = CPresentation || function(){};
             oMouseMoveDrawing = null;
         }
 
-        // координаты клика на странице в MM
+        // click coordinates on page in MM
         let pageObjectMM = oViewer.getPageByCoords2(x, y);
         if (!pageObjectMM)
             return false;
@@ -2476,10 +2482,10 @@ var CPresentation = CPresentation || function(){};
         this.CollaborativeEditing.Check_ForeignCursorsLabels(X, Y, pageObjectMM.index);
         this.CollaborativeEditing.Check_ForeignSelectedObjectsLabels(pageObjectOrig.x, pageObjectOrig.y, pageObjectMM.index);
 
-        // при зажатой мышке
+        // when mouse is pressed
         if (oViewer.isMouseDown)
         {
-            // под ластиком стираем только ink аннотации
+            // with eraser we only erase ink annotations
             if (IsOnEraser) {
                 if (oMouseMoveAnnot && oMouseMoveAnnot.IsInk()) {
                     this.EraseInk(oMouseMoveAnnot);
@@ -2487,22 +2493,22 @@ var CPresentation = CPresentation || function(){};
 
                 return;
             }
-            // рисуем ink линию или добавляем фигугу
+            // draw ink line or add shape
             else if (IsOnDrawer || IsOnAddAddShape) {
                 oController.OnMouseMove(e, X, Y, pageObjectMM.index);
             }
-            // обработка mouseMove в полях
+            // handle mouseMove in fields
             else if (this.activeForm) {
                 if (this.IsEditFieldsMode()) {
                     oController.OnMouseMove(e, X, Y, pageObjectMM.index);
                     return;
                 }
 
-                // селект текста внутри формы с редаткриуемым текстом
+                // text selection inside form with editable text
                 if ([AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(this.activeForm.GetType())) {
                     oController.OnMouseMove(e, X, Y, pageObjectMM.index);
                 }
-                // отрисовка нажатого/отжатого состояния кнопок/чекбоксов при входе выходе мыши в форму
+                // drawing pressed/unpressed state of buttons/checkboxes on mouse enter/exit form
                 else if ([AscPDF.FIELD_TYPES.button, AscPDF.FIELD_TYPES.checkbox, AscPDF.FIELD_TYPES.radiobutton].includes(this.activeForm.GetType())) {
                     if (oMouseMoveField != this.activeForm && this.activeForm.IsHovered()) {
                         this.activeForm.SetHovered(false);
@@ -2515,7 +2521,7 @@ var CPresentation = CPresentation || function(){};
                 }
             }
             else if (this.mouseDownAnnot) {
-                // freetext это кастомный шейп со своими обработками взаимодействий, поэтому нужно вызывать свой preMove (не типичный шейп)
+                // freetext is a custom shape with its own interaction handlers, so need to call its own preMove (not a typical shape)
                 if (this.mouseDownAnnot.IsFreeText()) {
                     if (this.mouseDownAnnot.IsInTextBox()) {
                         this.mouseDownAnnot.selectionSetEnd(e, pageObjectMM.x, pageObjectMM.y);
@@ -2531,7 +2537,7 @@ var CPresentation = CPresentation || function(){};
             }
             else if (this.activeDrawing) {
                 oController.OnMouseMove(e, X, Y, pageObjectMM.index);
-                // если тянем за бордер, то не обновляем оверлей, т.к. рисуется внутри oController.OnMouseMove(e, X, Y, pageObjectMM.index);
+                // if dragging by border, don't update overlay, as it's drawn inside oController.OnMouseMove(e, X, Y, pageObjectMM.index);
                 if (this.activeDrawing.IsGraphicFrame() && this.activeDrawing.graphicObject.Selection.Type2 === table_Selection_Border) {
                     return;
                 }
@@ -2546,7 +2552,7 @@ var CPresentation = CPresentation || function(){};
                 return;
             }
 
-            // рисование и ластик работает только при зажатой мышке
+            // drawing and eraser only work with mouse pressed
             if (IsOnDrawer || IsOnEraser || IsOnAddAddShape || IsPageHighlight)
                 return;
             
@@ -2563,7 +2569,7 @@ var CPresentation = CPresentation || function(){};
                 }
             }
 
-            // действия mouseEnter и mouseExit у полей
+            // mouseEnter and mouseExit actions for fields
             if (oMouseMoveField != this.mouseMoveField && true !== this.IsEditFieldsMode()) {
                 if (this.mouseMoveField) {
                     if (!this.mouseMoveField.IsUseInDocument()) {
@@ -2616,7 +2622,7 @@ var CPresentation = CPresentation || function(){};
         
         let isHitted = oMouseMoveLink || oMouseMoveField || oMouseMoveAnnot || oMouseMoveDrawing;
 
-        // координаты клика на странице в MM
+        // click coordinates on page in MM
         let pageObject = oViewer.getPageByCoords2(x, y);
         if (!pageObject)
             return false;
@@ -2633,7 +2639,7 @@ var CPresentation = CPresentation || function(){};
         let oCursorInfo     = oController.getGraphicInfoUnderCursor(pageObject.index, X, Y);
         let oCurObject      = this.GetActiveObject();
 
-        // уже обновлён в oController
+        // already updated in oController
         if (oCurObject && oCurObject.GetId) {
             if (oCurObject.IsAnnot() && oCurObject.IsFreeText()) {
                 let isUnderCursor = oCurObject.spTree.find(function(sp) {
@@ -2659,7 +2665,7 @@ var CPresentation = CPresentation || function(){};
             }
         }
 
-        // курсор залочен для этих действий
+        // cursor is locked for these actions
         if (IsOnDrawer || IsOnEraser || IsOnAddAddShape)
             return true;
 
@@ -2680,7 +2686,7 @@ var CPresentation = CPresentation || function(){};
                         cursorType = "text";
                         
                         if (oMouseMoveField.IsDateFormat() && oMouseMoveField.IsInForm()) {
-                            // попадание в mark поля с датой
+                            // hit in date field mark
                             if (pageObject.x >= oMouseMoveField._markRect.x1 && pageObject.x <= oMouseMoveField._markRect.x2 && pageObject.y >= oMouseMoveField._markRect.y1 && pageObject.y <= oMouseMoveField._markRect.y2) {
                                 cursorType = "pointer";
                             }
@@ -2693,7 +2699,7 @@ var CPresentation = CPresentation || function(){};
                         let aOptions = oMouseMoveField.GetOptions();
                         let hasOptions = aOptions && aOptions.length != 0;
 
-                        // попадание в mark выбора элементов списка
+                        // hit in list item selection mark
                         if (pageObject.x >= oMouseMoveField._markRect.x1 && pageObject.x <= oMouseMoveField._markRect.x2 && pageObject.y >= oMouseMoveField._markRect.y1 && pageObject.y <= oMouseMoveField._markRect.y2 && hasOptions) {
                             cursorType = "pointer";
                         }
@@ -2723,7 +2729,7 @@ var CPresentation = CPresentation || function(){};
             cursorType = "pointer";
         }
 
-        // если не обновлен по drawing объектам и не задан по объектам из pdf то выставляем дефолтный
+        // if not updated by drawing objects and not set by pdf objects, set default
         if (cursorType == undefined) {
             if (isCursorUpdated == false || !isHitted) {
                 if (!oViewer.MouseHandObject) {
@@ -2769,7 +2775,7 @@ var CPresentation = CPresentation || function(){};
             oMouseUpDrawing = null;
         }
 
-        // координаты клика на странице в MM
+        // click coordinates on page in MM
         var pageObject = oViewer.getPageByCoords2(x, y);
         if (!pageObject)
             return false;
@@ -2777,11 +2783,11 @@ var CPresentation = CPresentation || function(){};
         let X = pageObject.x;
         let Y = pageObject.y;
 
-        // ластик работает на mousedown
+        // eraser works on mousedown
         if (IsOnEraser) {
             return;
         }
-        // если рисование или добавление шейпа то просто заканчиваем его
+        // if drawing or adding shape then just finish it
         else if (IsOnDrawer || IsOnAddAddShape) {
             oController.OnMouseUp(e, X, Y, pageObject.index);
             return;
@@ -2817,7 +2823,7 @@ var CPresentation = CPresentation || function(){};
         
         this.UpdateInterface();
         this.UpdateSelectionTrackPos();
-        this.AnnotSelectTrackHandler.Update(true);
+        this.UpdateAnnotTrackPos(true);
         oViewer.onUpdateOverlay();
         oViewer.file.onUpdateSelection();
     };
@@ -2885,7 +2891,7 @@ var CPresentation = CPresentation || function(){};
 
                 if (oSourceObj.IsForm()) {
                     if (AscCommon.History == this.History && false == this.IsEditFieldsMode()) {
-                        oDrDoc.TargetEnd(); // убираем курсор
+                        oDrDoc.TargetEnd(); // hide cursor
                         
                         if (this.activeForm) {
                             this.activeForm.UpdateScroll && this.activeForm.UpdateScroll(false);
@@ -2937,7 +2943,7 @@ var CPresentation = CPresentation || function(){};
 
                 if (oSourceObj.IsForm()) {
                     if (AscCommon.History == this.History && false == this.IsEditFieldsMode()) {
-                        oDrDoc.TargetEnd(); // убираем курсор
+                        oDrDoc.TargetEnd(); // hide cursor
                             
                         if (this.activeForm) {
                             this.activeForm.UpdateScroll && this.activeForm.UpdateScroll(false);
@@ -2962,14 +2968,14 @@ var CPresentation = CPresentation || function(){};
     };
     
     /**
-	 * Получает активный объект
+	 * Gets the active object
 	 */
     CPDFDoc.prototype.GetActiveObject = function() {
         return this.activeForm || this.mouseDownAnnot || this.activeDrawing;
     };
     /**
-	 * Разница от предыдущего метода в том, что для полей будет полочено поле, в которое был клик, а не активное
-     * так как после клика в поле, оно может перестать быть активный после выполнения каких либо actions
+	 * The difference from the previous method is that for fields, the field that was clicked will be returned, not the active one,
+     * since after clicking on a field, it may no longer be active after executing some actions
 	 */
     CPDFDoc.prototype.GetMouseDownObject = function() {
         return this.mouseDownField || this.mouseDownAnnot || this.activeDrawing;
@@ -3034,12 +3040,13 @@ var CPresentation = CPresentation || function(){};
     };
 
     CPDFDoc.prototype.DoCalculateFields = function(oSourceField) {
-        // при изменении любого поля (с коммитом) вызывается calculate у всех
+        // when any field changes (with commit) calculate is called for all
         let oThis = this;
+		let oCalcInfo = this.GetCalculateInfo();
 
-        this.calculateInfo.SetIsInProgress(true);
-        this.calculateInfo.SetSourceField(oSourceField);
-        this.calculateInfo.ids.forEach(function(id) {
+        oCalcInfo.SetIsInProgress(true);
+        oCalcInfo.SetSourceField(oSourceField);
+        oCalcInfo.ids.forEach(function(id) {
             let oField = oThis.GetFieldByApIdx(id);
             if (!oField)
                 return;
@@ -3052,6 +3059,8 @@ var CPresentation = CPresentation || function(){};
             let oActionRunScript = oCalcTrigget ? oCalcTrigget.GetActions()[0] : null;
 
             if (oActionRunScript) {
+				oCalcInfo.SetCurrentField(oField);
+
                 oActionRunScript.RunScript();
                 if (oField.IsNeedCommit()) {
                     oField.SetNeedRecalc(true);
@@ -3059,8 +3068,10 @@ var CPresentation = CPresentation || function(){};
                 }
             }
         });
-        this.calculateInfo.SetIsInProgress(false);
-        this.calculateInfo.SetSourceField(null);
+		
+        oCalcInfo.SetIsInProgress(false);
+        oCalcInfo.SetSourceField(null);
+		oCalcInfo.SetCurrentField(null);
     };
     CPDFDoc.prototype.IsCalcFieldsLocked = function() {
         let oThis = this;
@@ -3213,7 +3224,7 @@ var CPresentation = CPresentation || function(){};
 
         oFile.removeSelection();
         
-        // убираем информацию о странице
+        // remove page information
         let aPages = oFile.removePage(nPos);
 		oViewer.drawingPages.splice(nPos, 1);
         let aPagesInfo = oViewer.pagesInfo.pages.splice(nPos, 1);
@@ -3319,7 +3330,7 @@ var CPresentation = CPresentation || function(){};
 
         oPageInfo.SetRotate(nAngle);
 
-        // sticky note всегда неповернуты
+        // sticky notes are always unrotated
         oViewer.pagesInfo.pages[nPage].annots.forEach(function(annot) {
             if (annot.IsComment()) {
                 annot.AddToRedraw();
@@ -3684,7 +3695,7 @@ var CPresentation = CPresentation || function(){};
         }
 
         function onLoadImages() {
-            // выставляем только ImageData. Форму пересчитаем и добавим картинку после того, как форма изменится, чтобы не грузить шрифты
+            // only set ImageData. We'll recalculate the form and add the image after the form changes, to avoid loading fonts
             for (let nBtn = 0; nBtn < oIconsInfo["MK"].length; nBtn++) {
                 let oBtnField = oDoc.GetFieldByApIdx(oIconsInfo["MK"][nBtn]["i"]);
 				if (!oBtnField) {
@@ -3892,7 +3903,7 @@ var CPresentation = CPresentation || function(){};
                         return a - b;
                     });
 
-                    // Проверка кандидатов (top-left)
+                    // Checking candidates (top-left)
                     for (let yi = 0; yi < yList.length; yi++) {
                         let y = yList[yi];
                         for (let xi = 0; xi < xList.length; xi++) {
@@ -3946,7 +3957,7 @@ var CPresentation = CPresentation || function(){};
         return this.GetDrawingDocument().GetMMPerDot(pix);
     };
     /**
-	 * Обновляет позицию всплывающего окна комментария
+	 * Updates the position of the comment popup window
 	 * @memberof CPDFDoc
 	 * @typeofeditors ["PDF"]
 	 */
@@ -4004,9 +4015,9 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.UpdateMathTrackPos = function() {
         this.MathTrackHandler.OnChangePosition();
     };
-    CPDFDoc.prototype.UpdateAnnotTrackPos = function() {
-        this.AnnotTextPrTrackHandler.OnChangePosition();
-        this.AnnotSelectTrackHandler.OnChangePosition();
+    CPDFDoc.prototype.UpdateAnnotTrackPos = function(bCheckMouseUpPos) {
+        this.AnnotTextPrTrackHandler.OnChangePosition(bCheckMouseUpPos);
+        this.AnnotSelectTrackHandler.OnChangePosition(bCheckMouseUpPos);
     };
     CPDFDoc.prototype.UpdateSelectionTrackPos = function() {
         this.TextSelectTrackHandler.OnChangePosition();
@@ -4075,9 +4086,9 @@ var CPresentation = CPresentation || function(){};
 		return result;
 	};
     /**
-     * Начинаем новое действие, связанное с изменением документа
-     * @param {number} nDescription - тип изменения, ex.: AscDFH.historydescription_Pdf_FieldCommit
-     * @param {object} [oSelectionState=null] - начальное состояние селекта, до начала действия
+     * Start a new action related to document modification
+     * @param {number} nDescription - type of change, e.g.: AscDFH.historydescription_Pdf_FieldCommit
+     * @param {object} [oSelectionState=null] - initial selection state, before the action starts
      */
     CPDFDoc.prototype.StartAction = function(nDescription, oSelectionState) {
         if (this.IsNeedSkipHistory() || this.Viewer.IsOpenFormsInProgress || this.Viewer.IsOpenAnnotsInProgress || AscCommon.History.UndoRedoInProgress)
@@ -4194,9 +4205,9 @@ var CPresentation = CPresentation || function(){};
         return actionCompleted;
     };
     /**
-     * Начинаем составную проверку на залоченность объектов
-     * @param [isIgnoreCanEditFlag=false] игнорируем ли запрет на редактирование
-     * @returns {boolean} началась ли проверка залоченности
+     * Start compound check for locked objects
+     * @param [isIgnoreCanEditFlag=false] whether to ignore the editing prohibition
+     * @returns {boolean} whether the lock check has started
      */
     CPDFDoc.prototype.StartSelectionLockCheck = function(isIgnoreCanEditFlag) {
         if (true === this.CollaborativeEditing.Get_GlobalLock())
@@ -4207,7 +4218,7 @@ var CPresentation = CPresentation || function(){};
         return true;
     };
     /**
-     * Сообщаем, что нужно отменить начатое действие
+     * Notify that the started action should be cancelled
      */
     CPDFDoc.prototype.CancelAction = function() {
         if (!this.IsActionStarted())
@@ -4216,8 +4227,8 @@ var CPresentation = CPresentation || function(){};
         this.Action.CancelAction = true;
     };
     /**
-     * Сообщаем, что перед окончанием действия нужно проверить, что все выполненные изменения были разрешены
-     * Используется, когда мы не может проверить лок объектов до самого действия
+     * Notify that before completing the action, we need to verify that all performed changes were allowed
+     * Used when we cannot check object locks before the action itself
      */
     CPDFDoc.prototype.CheckActionLock = function() {
         if (!this.IsActionStarted())
@@ -4226,9 +4237,9 @@ var CPresentation = CPresentation || function(){};
         this.Action.CheckLock = true;
     };
     /**
-     * Заканчиваем процесс составной проверки залоченности объектов
-     * @param [isDontLockInFastMode=false] {boolean} нужно ли лочить в быстром режиме совместного редактирования
-     * @returns {boolean} залочен ли редактор на выполнение данного составного действия
+     * Finish the compound lock check process for objects
+     * @param [isDontLockInFastMode=false] {boolean} whether to lock in fast collaborative editing mode
+     * @returns {boolean} whether the editor is locked for this compound action
      */
     CPDFDoc.prototype.EndSelectionLockCheck = function(isDontLockInFastMode) {
         let isLocked = this.CollaborativeEditing.OnEnd_CheckLock(isDontLockInFastMode);
@@ -4249,9 +4260,9 @@ var CPresentation = CPresentation || function(){};
         if (this.EndSelectionLockCheck())
             this.Action.CancelAction = true;
     
-        // TODO: Если сервер нам запрещает делать действие, то мы делаем Undo из совместки. Но там делается отмена
-        //       только для одной точки, а в действии их может быть несколько. Надо доработать этот момент (но в текущий
-        //       момент данная проверка не вызывается для случаев, где в действии более одной точки)
+        // TODO: If server forbids us from doing action, we do Undo from collaborative. But there undo is done
+        //       only for one point, while action may have several. Need to refine this moment (but currently
+        //       this check is not called for cases where action has more than one point)
     };
     CPDFDoc.prototype.ResetLastAction = function() {
         this.Action.Start              = false;
@@ -4533,7 +4544,7 @@ var CPresentation = CPresentation || function(){};
             return;
         }
         
-        // выставляем смещения
+        // set offsets
         let yOffset;
         let xOffset;
 
@@ -4563,7 +4574,7 @@ var CPresentation = CPresentation || function(){};
 			let oViewer = this.Viewer;
 
 			oViewer.paint(function() {
-				oViewer.disabledPaintOnScroll = true; // вырубаем отрисовку на скроле
+				oViewer.disabledPaintOnScroll = true; // disable rendering on scroll
 				oViewer.scrollToXY(oViewer.scrollY + oPos.y, oViewer.scrollX + oPos.x);
 				oViewer.disabledPaintOnScroll = false;
 			});
@@ -5012,7 +5023,7 @@ var CPresentation = CPresentation || function(){};
     };
 
     //-----------------------------------------------------------------------------------
-    // Функции для работы с гиперссылками
+    // Functions for working with hyperlinks
     //-----------------------------------------------------------------------------------
     CPDFDoc.prototype.AddHyperlink = function (HyperProps, arrAnnotsIds) {
         if (arrAnnotsIds) {
@@ -6220,17 +6231,6 @@ var CPresentation = CPresentation || function(){};
             }
         }
 
-        const fEndCallback = function() {
-			AscCommon.History.Add(new CChangesEmbedFontsMap(_this, sOldEmbedFontsMap, JSON.stringify(Asc.editor.embeddedFontsMap)));
-
-            _this.FinalizeAction();
-            _this.Viewer.file.removeSelection();
-            _this.Viewer.paint(function() {
-                _this.Viewer.thumbnails._repaintPage(nPage);
-            });
-            Asc.editor.canSave = true;
-        };
-
         const aFonts = [];
         for (let sFont in oFontMap) {
             if (oFontMap.hasOwnProperty(sFont)) {
@@ -6253,14 +6253,10 @@ var CPresentation = CPresentation || function(){};
                 for (let nIdx = 0; nIdx < data.length; ++nIdx) {
                     _file.nativeFile["changeImageUrl"](allImages[nIdx], AscCommon.g_oDocumentUrls.imagePath2Local(data[nIdx].path));
                 }
-
-                Asc.editor.pre_Paste(aFonts, oLoadUrls, fEndCallback);
             });
         }
-        else {
 
-            Asc.editor.pre_Paste(aFonts, oLoadUrls, fEndCallback);
-        }
+		AscCommon.History.Add(new CChangesEmbedFontsMap(_this, sOldEmbedFontsMap, JSON.stringify(Asc.editor.embeddedFontsMap)));
 
 		for (let idx = 0; idx < aPageDrawings.length; idx++) {
 			const drawing = aPageDrawings[idx];
@@ -6269,7 +6265,7 @@ var CPresentation = CPresentation || function(){};
 			drawing.SetNeedRecalc(true);
 		}
 
-        return true;
+        return {fonts: aFonts, images: oLoadUrls};
     };
 
 
@@ -6324,7 +6320,7 @@ var CPresentation = CPresentation || function(){};
                     oXfrm.setOffX(oPos.x);
                     oXfrm.setOffY(oPos.y);
     
-                    // чуть-чуть смещаем при вставке, чтобы было видно вставленную фигуру
+                    // slightly offset when pasting, so the pasted shape is visible
                     let nShift = oController.getDrawingsPasteShift([drawing]);
     
                     if (nShift > 0) {
@@ -6904,7 +6900,7 @@ var CPresentation = CPresentation || function(){};
                 oFreeText.SetSubject('Text box');
                 break;
             }
-            // прописываем RD и Callout
+            // set RD and Callout
             case AscPDF.FREE_TEXT_INTENT_TYPE.freeTextCallout: {
                 oFreeText.SetIntent(AscPDF.FREE_TEXT_INTENT_TYPE.freeTextCallout);
                 oFreeText.SetLineEnd(AscPDF.LINE_END_TYPE.openArrow);
@@ -7320,7 +7316,7 @@ var CPresentation = CPresentation || function(){};
     };
 
     //-----------------------------------------------------------------------------------
-    // Функции для работы с таблицами
+    // Functions for working with tables
     //-----------------------------------------------------------------------------------
 
     CPDFDoc.prototype.GetTableForPreview = function () {
@@ -7389,6 +7385,7 @@ var CPresentation = CPresentation || function(){};
             result = Function.apply(oTable, args);
             if (oTable.Content.length === 0) {
                 this.RemoveDrawing(oTable.Parent.GetId());
+				oController.resetSelection();
                 return result;
             }
         }
@@ -7844,10 +7841,10 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.RecalculateByChanges = function(arrChanges, nStartIndex, nEndIndex) {
         this.SetNeedUpdateSearch(true);
 
-        // Обновляем позицию курсора
+        // Update cursor position
         this.NeedUpdateTarget = true;
 
-        // Увеличиваем номер пересчета
+        // Increase recalculation number
         this.RecalcId++;
 
         this.History.Get_RecalcData(null, arrChanges, nStartIndex, nEndIndex);
@@ -7883,7 +7880,7 @@ var CPresentation = CPresentation || function(){};
 
         let HaveChanges = this.History.Have_Changes(true);
         if (true !== HaveChanges && (true === this.CollaborativeEditing.Have_OtherChanges() || 0 !== this.CollaborativeEditing.getOwnLocksLength())) {
-            // Принимаем чужие изменения. Своих нет, но функцию отсылки надо вызвать, чтобы снять локи.
+            // Accept others' changes. Own changes is none, but need to call send function to release locks.
             this.CollaborativeEditing.Apply_Changes();
             this.CollaborativeEditing.Send_Changes();
         }
@@ -7941,7 +7938,7 @@ var CPresentation = CPresentation || function(){};
     
         let sUserName = this.Api.CoAuthoringApi.getParticipantName(UserId);
     
-        // "" - это означает, что курсор нужно удалить
+        // "" - this means the cursor needs to be deleted
         if (!CursorInfo || "" === CursorInfo || !AscCommon.UserInfoParser.isUserVisible(sUserName))
         {
             this.Remove_ForeignCursor(UserId);
@@ -8052,10 +8049,10 @@ var CPresentation = CPresentation || function(){};
                     let centerY = indTop + Y + H / 2;
                 
                     let corners = [
-                        { x: -W / 2, y: -H / 2 }, // верхний левый
-                        { x: W / 2, y: -H / 2 },  // верхний правый
-                        { x: W / 2, y: H / 2 },   // нижний правый
-                        { x: -W / 2, y: H / 2 },  // нижний левый
+                        { x: -W / 2, y: -H / 2 }, // top left
+                        { x: W / 2, y: -H / 2 },  // top right
+                        { x: W / 2, y: H / 2 },   // bottom right
+                        { x: -W / 2, y: H / 2 },  // bottom left
                     ];
                 
                     let rotatedCorners = corners.map(function (pt) {
@@ -8745,7 +8742,7 @@ var CPresentation = CPresentation || function(){};
         }
     };
     /**
-     * Обновляем отслеживаемые позиции
+     * Update tracked positions
      * @param arrPositions
      */
     CPDFDoc.prototype.RefreshDocumentPositions = function (arrPositions) {
@@ -8794,13 +8791,18 @@ var CPresentation = CPresentation || function(){};
 		if (textController.IsNeedRecalc())
 			return;
 		
-		textController.GetDocContent().RecalculateCurPos();
+		let docContent = textController.GetDocContent();
+		if (!docContent)
+			return;
+
+		docContent.RecalculateCurPos();
 		this.NeedUpdateTarget = false;
 	};
 	CPDFDoc.prototype.SetTextSelectionType = function(type){};
 	CPDFDoc.prototype.ResetTextSelectionType = function(){};
 	CPDFDoc.prototype.IsWordSelection = function(){return false;};
-	CPDFDoc.prototype.IsParagraphSelection = function() {return false;};    CPDFDoc.prototype.Get_AllImageUrls = function(aImages) {
+	CPDFDoc.prototype.IsParagraphSelection = function() {return false;};
+	CPDFDoc.prototype.Get_AllImageUrls = function(aImages) {
         if (!Array.isArray(aImages)) {
             aImages = [];
         }
@@ -8889,7 +8891,7 @@ var CPresentation = CPresentation || function(){};
         return this.clrSchemeMap;
     };
     /**
-     * Запрашиваем настройку автозамены двух дефисов на тире
+     * Request the setting for auto-replacing two hyphens with a dash
      * @returns {boolean}
      */
     CPDFDoc.prototype.IsAutoCorrectHyphensWithDash = function()
@@ -9020,7 +9022,7 @@ var CPresentation = CPresentation || function(){};
         switch (nRotAngle) {
             case 0:
                 nPosX = nPageW * ((oViewRect.x + oViewRect.r) / 2) - nExtX / 2;
-                // Располагаем поле выше центра по вертикали: берем половину расстояния от верхней границы до центра
+                // Position field above center vertically: take half the distance from top edge to center
                 nPosY = nPageH * (oViewRect.y + (oViewRect.b - oViewRect.y) / 4) - nExtY / 2;
                 break;
             case 90:
@@ -9070,7 +9072,7 @@ var CPresentation = CPresentation || function(){};
         if (!oField)
             return true;
         
-        // при клике по кнопке внешний вид остается прежним, поэтому грузить шрифт не надо
+        // when clicking a button, appearance stays the same, so no need to load font
         if (oField.GetType() == AscPDF.FIELD_TYPES.button && oField.IsNeedDrawFromStream())
             return true;
 
@@ -9182,7 +9184,7 @@ var CPresentation = CPresentation || function(){};
 		else if (activeAnnot && ((activeAnnot.IsFreeText() && activeAnnot.IsInTextBox()) || (activeAnnot.IsLine() && activeAnnot.IsDoCaption()))) {
 			return activeAnnot;
 		}
-		else if (activeDrawing && activeDrawing.GetDocContent()) {
+		else if (activeDrawing && (activeDrawing.GetDocContent() || oController.getTargetTextObject())) {
 			return activeDrawing;
 		}
 		
@@ -9752,7 +9754,7 @@ var CPresentation = CPresentation || function(){};
                 oForm.SetTextFontActual(AscPDF.DEFAULT_FIELD_FONT);
             }
 
-            // внутренний ключ для пересылки обратно (зачем? - попросили)
+            // internal key for use it only on save
             oForm.SetFontKey(oFontInfo["key"]);
 
             if (oFontInfo["size"] != null)
@@ -9765,6 +9767,12 @@ var CPresentation = CPresentation || function(){};
                 });
             }
         }
+
+		// on copy page with field with format value
+		if (oMeta && oMeta["formatValue"]) {
+			oForm.SetFormatValue(oMeta["formatValue"], true);
+		}
+
         AscPDF.FillActionsFromJSON(oForm, formJson['AA']);
 
         return oForm;
@@ -10175,6 +10183,11 @@ var CPresentation = CPresentation || function(){};
 	function CPDFCompositeInput(textController, pdfDocument) {
 		this.textController = textController;
 		this.runInput       = new AscWord.RunCompositeInput(false);
+		
+		if (textController.IsDrawing() && textController.IsGraphicFrame() && textController.graphicObject.Selection.Use) {
+			textController.graphicObject.Remove(1, true, undefined, true);
+		}
+
 		this.contentState   = textController.GetDocContent().GetSelectionState();
 		this.pdfDocument    = pdfDocument;
 		this.startPoint     = -1;
@@ -10317,7 +10330,7 @@ var CPresentation = CPresentation || function(){};
 	 * @typeofeditors ["PDF"]
 	 */
     function GetPageCoordsByGlobalCoords(x, y, nPage, isNotMM) {
-        // конвертация из глобальных x, y к mm кординатам самой страницы
+        // conversion from global x, y to mm coordinates of the page itself
         let oViewer = editor.getDocumentRenderer();
         var pageObject = oViewer.getPageByCoords(x, y);
 
@@ -10374,8 +10387,8 @@ var CPresentation = CPresentation || function(){};
         let oViewer     = Asc.editor.getDocumentRenderer();
         let oFile       = oViewer.file;
         let oDoc        = oViewer.getPDFDoc();
-        let oCurPageTr  = oDoc.pagesTransform[curPage].normal.CreateDublicate(); // с помощью этой получаем глобальные координаты
-        let oNeedPageTr = oDoc.pagesTransform[needPage].normal.CreateDublicate(); // с помощью этой получаем координаты на странице
+        let oCurPageTr  = oDoc.pagesTransform[curPage].normal.CreateDublicate(); // use this to get global coordinates
+        let oNeedPageTr = oDoc.pagesTransform[needPage].normal.CreateDublicate(); // use this to get page coordinates
         
         let inchCur     = (25.4 / oFile.pages[curPage].Dpi);
         let inchNeed    = (25.4 / oFile.pages[needPage].Dpi);

@@ -1,33 +1,36 @@
-/*
- * (c) Copyright Ascensio System SIA 2010-2024
+﻿/*
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -175,6 +178,7 @@
 	/**
 	 * Class representing a shape.
 	 * @constructor
+	 * @extends ApiDrawing
 	 */
 	function ApiShape(oShape) {
 		ApiDrawing.call(this, oShape);
@@ -187,6 +191,7 @@
 	/**
 	 * Class representing an image.
 	 * @constructor
+	 * @extends ApiDrawing
 	 */
 	function ApiImage(oImage) {
 		ApiDrawing.call(this, oImage);
@@ -198,6 +203,7 @@
 	/**
 	 * Class representing an OLE object.
 	 * @constructor
+	 * @extends ApiDrawing
 	 */
 	function ApiOleObject(OleObject) {
 		ApiDrawing.call(this, OleObject);
@@ -276,6 +282,13 @@
 	 * @typedef {("top" | "bottom" | "right" | "left")} AxisPos
 	 * @see office-js-api/Examples/Enumerations/AxisPos.js
 	 */
+
+	/**
+	 * The available text vertical alignment (used to align text in a shape with a placement for text inside it).
+	 * @typedef {("top" | "center" | "bottom")} VerticalTextAlign
+	 * @see office-js-api/Examples/Enumerations/VerticalTextAlign.js
+	 */
+
 
 	/**
 	 * Standard numeric format.
@@ -515,6 +528,10 @@
 		/** @type {CT_PivotField} */
 		this.pivotField = pivotField;
 	}
+	ApiPivotField.prototype._getAxis = function () {
+		return this.pivotField ? this.pivotField.axis
+			: (this.table.pivot.dataOnRows ? Asc.c_oAscAxis.AxisRow : Asc.c_oAscAxis.AxisCol);
+	};
 
 	/**
 	 * Class representing a pivot table data field.
@@ -779,6 +796,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sName - The name of a new worksheet.
+	 * @returns {ApiWorksheet}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/AddSheet.js
 	 */
 	Api.AddSheet = function (sName) {
@@ -786,6 +804,7 @@
 			throwException(new Error('Worksheet with such a name already exists.'));
 		else
 			Asc.editor.asc_addWorksheet(sName);
+		return this.GetActiveSheet();
 	};
 
 	/**
@@ -813,10 +832,12 @@
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {number} LCID - The locale specified.
+	 * @returns {boolean} - returns true if the locale was set successfully.
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/SetLocale.js
 	 */
 	Api.SetLocale = function (LCID) {
 		Asc.editor.asc_setLocale(LCID, null, null);
+		return true;
 	};
 
 	/**
@@ -913,10 +934,11 @@
 	 * Creates a new history point.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
+	 * @returns {boolean} - returns true if the history point was created successfully.
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/CreateNewHistoryPoint.js
 	 */
 	Api.CreateNewHistoryPoint = function () {
-		History.Create_NewPoint();
+		return History.Create_NewPoint() !== false;
 	};
 
 	/**
@@ -1039,14 +1061,17 @@
         return new ApiName(defNameFound);
     };
 
+
 	/**
 	 * Saves changes to the specified document.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/Api/Methods/Save.js
 	 */
 	Api.Save = function () {
-		this.SaveAfterMacros = true;
+		Asc.editor.SaveAfterMacros = true;
+		return true;
 	};
 
 	/**
@@ -2855,7 +2880,7 @@
 	 */
 	
 	/**
-	 * Сalculates or predicts a future value based on existing (historical) values by using the AAA version of the Exponential Smoothing (ETS) algorithm.
+	 * Calculates or predicts a future value based on existing (historical) values by using the AAA version of the Exponential Smoothing (ETS) algorithm.
 	 * @memberof ApiWorksheetFunction
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | ApiName | number} arg1 - A date for which a new value will be predicted. Must be after the last date in the timeline.
@@ -7526,7 +7551,7 @@
 
 		var oRange = oSheet.GetRangeByNumber(rowIndex, 0);
 
-		// определяем количество строк с данными
+		// determine the number of rows with data
 		while (oRange.GetValue() !== "") {
 			rowsCount++;
 			rowIndex++;
@@ -7534,7 +7559,7 @@
 		}
 
 		oRange = oSheet.GetRangeByNumber(1, colIndex);
-		// определяем количество столбцов с данными
+		// determine the number of columns with data
 		while (oRange.GetValue() !== "") {
 			colsCount++;
 			colIndex++;
@@ -7841,7 +7866,7 @@
 			comment.asc_putText(sText);
 			let author = ((typeof (sAuthor) === 'string' && sAuthor.trim() !== '') ? sAuthor : Asc['editor'].User.asc_getUserName());
 			comment.asc_putUserName(author);
-			// todo проверить как в документа добавлются (надо ли выставлять этот параметр)
+			// todo check how it is added in documents (whether this parameter needs to be set)
 			// comment.asc_putUserId(Asc['editor'].User.asc_getId());
 			comment.asc_putDocumentFlag(true);
 			Asc.editor.asc_addComment(comment);
@@ -7877,7 +7902,7 @@
 	Api.GetComments = function () {
 		var comments = [];
 		for (var i = 0; i < Asc.editor.wbModel.aComments.length; i++) {
-			comments.push(new ApiComment(Asc.editor.wbModel.aComments[i], this.wb));
+			comments.push(new ApiComment(Asc.editor.wbModel.aComments[i], Asc['editor'].wb));
 		}
 		return comments;
 	};
@@ -8316,10 +8341,12 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isVisible - Specifies if the sheet is visible or not.
+	 * @returns {boolean} - returns true if the visibility state was set successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetVisible.js
 	 */
 	ApiWorksheet.prototype.SetVisible = function (isVisible) {
 		this.worksheet.setHidden(!isVisible);
+		return true;
 	};
 	Object.defineProperty(ApiWorksheet.prototype, "Visible", {
 		get: function () {
@@ -8334,10 +8361,11 @@
 	 * Makes the current sheet active.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
+	 * @returns {boolean} - returns true if the sheet was made active successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetActive.js
 	 */
 	ApiWorksheet.prototype.SetActive = function () {
-		this.worksheet.workbook.setActive(this.worksheet.index);
+		return this.worksheet.workbook.setActive(this.worksheet.index);
 	};
 	Object.defineProperty(ApiWorksheet.prototype, "Active", {
 		set: function () {
@@ -8656,11 +8684,18 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sRange - The range of cells from the current sheet which will be formatted as a table.
+	 * @returns {boolean} - returns true if the range was formatted as a table successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/FormatAsTable.js
 	 */
 	ApiWorksheet.prototype.FormatAsTable = function (sRange) {
+		if (this.worksheet && this.worksheet.getSheetProtection()) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return false;
+		}
 		this.worksheet.autoFilters.addAutoFilter('TableStyleLight9', AscCommonExcel.g_oRangeCache.getAscRange(sRange));
+		return true;
 	};
+
 
 	/**
 	 * Sets the width of the specified column.
@@ -8671,14 +8706,36 @@
 	 * @param {number} nColumn - The number of the column to set the width to.
 	 * @param {number} nWidth - The width of the column divided by 7 pixels.
 	 * @param {boolean} [bWithotPaddings=false] - Specifies whether nWidth will be set without standard paddings.
+	 * @returns {boolean} - returns true if the column width was set successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetColumnWidth.js
 	 */
 	ApiWorksheet.prototype.SetColumnWidth = function (nColumn, nWidth, bWithotPaddings) {
+		if (this.worksheet && this.worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.formatColumns)) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return false;
+		}
+		let nStart, nEnd;
+		if (typeof nColumn === 'string') {
+			if (AscCommon.isNumber(nColumn)) {
+				nStart = nEnd = parseFloat(nColumn);
+			} else {
+				let sRange = nColumn.indexOf(':') === -1 ? nColumn + ':' + nColumn : nColumn;
+				let oAscRange = AscCommonExcel.g_oRangeCache.getAscRange(sRange);
+				if (!oAscRange) {
+					return false;
+				}
+				nStart = oAscRange.c1;
+				nEnd = oAscRange.c2;
+			}
+		} else {
+			nStart = nEnd = nColumn;
+		}
 		if (bWithotPaddings) {
 			let wb = this.worksheet.workbook;
 			nWidth = (nWidth * wb.maxDigitWidth - wb.paddingPlusBorder) / wb.maxDigitWidth;
 		}
-		this.worksheet.setColWidth(nWidth, nColumn, nColumn);
+		this.worksheet.setColWidth(nWidth, nStart, nEnd);
+		return true;
 	};
 
 	/**
@@ -8688,10 +8745,16 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nRow - The number of the row to set the height to.
 	 * @param {number} nHeight - The height of the row measured in points.
+	 * @returns {boolean} - returns true if the row height was set successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetRowHeight.js
 	 */
 	ApiWorksheet.prototype.SetRowHeight = function (nRow, nHeight) {
+		if (this.worksheet && this.worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.formatRows)) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return false;
+		}
 		this.worksheet.setRowHeight(nHeight, nRow, nRow, true);
+		return true;
 	};
 
 	/**
@@ -8699,10 +8762,12 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isDisplayed - Specifies whether the current sheet gridlines must be displayed or not. The default value is <b>true</b>.
+	 * @returns {boolean} - returns true if the display of gridlines was set successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetDisplayGridlines.js
 	 */
 	ApiWorksheet.prototype.SetDisplayGridlines = function (isDisplayed) {
 		this.worksheet.setDisplayGridlines(!!isDisplayed);
+		return true;
 	};
 
 	/**
@@ -8710,10 +8775,12 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isDisplayed - Specifies whether the current sheet row/column headers must be displayed or not. The default value is <b>true</b>.
+	 * @returns {boolean} - returns true if the display of headings was set successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetDisplayHeadings.js
 	 */
 	ApiWorksheet.prototype.SetDisplayHeadings = function (isDisplayed) {
 		this.worksheet.setDisplayHeadings(!!isDisplayed);
+		return true;
 	};
 
 	/**
@@ -8721,11 +8788,13 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nPoints - The left margin size measured in points.
+	 * @returns {boolean} - returns true if the left margin was set successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetLeftMargin.js
 	 */
 	ApiWorksheet.prototype.SetLeftMargin = function (nPoints) {
 		nPoints = (typeof nPoints !== 'number') ? 0 : nPoints;
 		this.worksheet.PagePrintOptions.pageMargins.asc_setLeft(nPoints);
+		return true;
 	};
 	/**
 	 * Returns the left margin of the sheet.
@@ -8751,11 +8820,13 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nPoints - The right margin size measured in points.
+	 * @returns {boolean} - returns true if the right margin was set successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetRightMargin.js
 	 */
 	ApiWorksheet.prototype.SetRightMargin = function (nPoints) {
 		nPoints = (typeof nPoints !== 'number') ? 0 : nPoints;
 		this.worksheet.PagePrintOptions.pageMargins.asc_setRight(nPoints);
+		return true;
 	};
 	/**
 	 * Returns the right margin of the sheet.
@@ -8781,11 +8852,13 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nPoints - The top margin size measured in points.
+	 * @returns {boolean} - returns true if the top margin was set successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetTopMargin.js
 	 */
 	ApiWorksheet.prototype.SetTopMargin = function (nPoints) {
 		nPoints = (typeof nPoints !== 'number') ? 0 : nPoints;
 		this.worksheet.PagePrintOptions.pageMargins.asc_setTop(nPoints);
+		return true;
 	};
 	/**
 	 * Returns the top margin of the sheet.
@@ -8811,11 +8884,13 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nPoints - The bottom margin size measured in points.
+	 * @returns {boolean} - returns true if the bottom margin was set successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetBottomMargin.js
 	 */
 	ApiWorksheet.prototype.SetBottomMargin = function (nPoints) {
 		nPoints = (typeof nPoints !== 'number') ? 0 : nPoints;
 		this.worksheet.PagePrintOptions.pageMargins.asc_setBottom(nPoints);
+		return true;
 	};
 	/**
 	 * Returns the bottom margin of the sheet.
@@ -8841,10 +8916,12 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @param {PageOrientation} sPageOrientation - The page orientation type.
+	 * @returns {boolean} - returns true if the page orientation was set successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetPageOrientation.js
 	 */
 	ApiWorksheet.prototype.SetPageOrientation = function (sPageOrientation) {
 		this.worksheet.PagePrintOptions.pageSetup.asc_setOrientation('xlLandscape' === sPageOrientation ? 1 : 0);
+		return true;
 	};
 
 	/**
@@ -8885,10 +8962,12 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} bPrint - Specifies whether the current sheet row/column headers must be printed or not.
+	 * @returns {boolean} - returns true if the print headings option was set successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetPrintHeadings.js
 	 */
 	ApiWorksheet.prototype.SetPrintHeadings = function (bPrint) {
 		this.worksheet.PagePrintOptions.asc_setHeadings(!!bPrint);
+		return true;
 	};
 
 	Object.defineProperty(ApiWorksheet.prototype, "PrintHeadings", {
@@ -8916,10 +8995,12 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} bPrint - Defines if cell gridlines are printed on this page or not.
+	 * @returns {boolean} - returns true if the print gridlines option was set successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetPrintGridlines.js
 	 */
 	ApiWorksheet.prototype.SetPrintGridlines = function (bPrint) {
 		this.worksheet.PagePrintOptions.asc_setGridLines(!!bPrint);
+		return true;
 	};
 
 	Object.defineProperty(ApiWorksheet.prototype, "PrintGridlines", {
@@ -8935,15 +9016,12 @@
 	 * Returns an array of ApiName objects.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
-	 * @returns {ApiName[]}
+	 * @returns {ApiName[]} - Returns an empty array if no defined names are found.
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/GetDefNames.js
 	 */
 	ApiWorksheet.prototype.GetDefNames = function () {
 		var res = this.worksheet.workbook.getDefinedNamesWS(this.worksheet.getId());
 		var name = [];
-		if (!res.length) {
-			return [new ApiName(undefined)]
-		}
 		for (var i = 0; i < res.length; i++) {
 			name.push(new ApiName(res[i]));
 		}
@@ -9012,10 +9090,11 @@
 	 * Deletes the current worksheet.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
+	 * @returns {boolean} - returns true if the sheet was deleted successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/Delete.js
 	 */
 	ApiWorksheet.prototype.Delete = function () {
-		this.worksheet.workbook.oApi.asc_deleteWorksheet([this.worksheet.getIndex()]);
+		return this.worksheet.workbook.oApi.asc_deleteWorksheet([this.worksheet.getIndex()]);
 	};
 
 	/**
@@ -9027,6 +9106,7 @@
 	 * @param {string} [subAddress] - The link subaddress to insert internal sheet hyperlinks.
 	 * @param {string} [sScreenTip] - The screen tip text.
 	 * @param {string} [sTextToDisplay] - The link text that will be displayed on the sheet.
+	 * @returns {boolean} - returns true if the hyperlink was set successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/SetHyperlink.js
 	 */
 	ApiWorksheet.prototype.SetHyperlink = function (sRange, sAddress, subAddress, sScreenTip, sTextToDisplay) {
@@ -9081,12 +9161,16 @@
 			}
 			this.worksheet.workbook.oApi.wb.insertHyperlink(Hyperlink, this.GetIndex());
 		}
+		return true;
 	};
 
 	/**
 	 * Creates a chart of the specified type from the selected data range of the current sheet.
 	 * <note>Please note that the horizontal and vertical offsets are calculated within the limits of the specified column and
 	 * row cells only. If this value exceeds the cell width or height, another vertical/horizontal position will be set.</note>
+	 * :::note
+	 * Values of <em>nStyleIndex</em> outside <b>1 - 48</b> are interpreted as a chart style id from the <em>cs:chartStyle</em> element (e.g. 201, 215, 284) and are available only for [ONLYOFFICE Docs Enterprise](https://www.onlyoffice.com/docs-enterprise-prices.aspx?from=api) and [ONLYOFFICE Docs Developer](https://www.onlyoffice.com/developer-edition-prices.aspx?from=api).
+	 * :::
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sDataRange - The selected cell range which will be used to get the data for the chart, formed specifically and including the sheet name.
@@ -9123,9 +9207,7 @@
 			} else {
 				private_SetCoords(oChart, this.worksheet, nExtX, nExtY, nFromCol, nColOffset, nFromRow, nRowOffset);
 			}
-			if (AscFormat.isRealNumber(nStyleIndex)) {
-				oChart.setStyle(nStyleIndex);
-			}
+			AscFormat.applyChartStyle(oChart, nStyleIndex);
 			oChart.recalculateReferences();
 			return new ApiChart(oChart);
 		};
@@ -9151,6 +9233,8 @@
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/AddShape.js
 	 */
 	ApiWorksheet.prototype.AddShape = function (sType, nWidth, nHeight, oFill, oStroke, nFromCol, nColOffset, nFromRow, nRowOffset) {
+		sType = sType || "rect";
+		if (!AscFormat.isValidShapeType(sType)) sType = "rect";
 		var oShape = AscFormat.builder_CreateShape(sType, nWidth / 36000, nHeight / 36000, oFill.UniFill, oStroke.Ln, null, this.worksheet.workbook.theme, this.worksheet.getDrawingDocument(), false, this.worksheet);
 		private_SetCoords(oShape, this.worksheet, nWidth, nHeight, nFromCol, nColOffset, nFromRow, nRowOffset);
 		return new ApiShape(oShape);
@@ -9253,6 +9337,7 @@
 	 * @param {string} sImageUrl - The image source where the image to be inserted should be taken from (currently only internet URL or Base64 encoded images are supported).
 	 * @param {EMU} nWidth - The image width in English measure units.
 	 * @param {EMU} nHeight - The image height in English measure units.
+	 * @returns {boolean} - returns true if the image was replaced successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiWorksheet/Methods/ReplaceCurrentImage.js
 	 */
 	ApiWorksheet.prototype.ReplaceCurrentImage = function (sImageUrl, nWidth, nHeight) {
@@ -9260,12 +9345,13 @@
 		if (oWorksheet && oWorksheet.objectRender && oWorksheet.objectRender.controller) {
 			if (oWorksheet.model && oWorksheet.model.getSheetProtection(Asc.c_oAscSheetProtectType.objects)) {
 				throwException(new Error('Cannot modify protected sheet'));
-				return null;
+				return false;
 			}
 			let oController = oWorksheet.objectRender.controller;
 			let dK = 1 / 36000 / AscCommon.g_dKoef_pix_to_mm;
 			oController.putImageToSelection(sImageUrl, nWidth * dK, nHeight * dK);
 		}
+		return true;
 	};
 
 	/**
@@ -9726,6 +9812,7 @@
 	 * Clears the current range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
+	 * @returns {boolean} - returns true if the range was cleared successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/Clear.js
 	 */
 	ApiRange.prototype.Clear = function () {
@@ -9733,12 +9820,17 @@
 			bbox = range.bbox,
 			ws = range.worksheet,
 			wsView = Asc['editor'].wb.getWorksheet(ws.getIndex());
+		if (ws.getSheetProtection(Asc.c_oAscSheetProtectType.formatCells) || (ws.getSheetProtection() && ws.isIntersectLockedRanges([bbox]))) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return false;
+		}
 		range.cleanAll();
 		ws.deletePivotTables(bbox);
 		ws.removeSparklines(bbox);
 		ws.clearDataValidation([bbox], true);
 		ws.clearConditionalFormattingRulesByRanges([bbox]);
 		wsView.cellCommentator.deleteCommentsRange(bbox, null);
+		return true;
 	};
 
     /**
@@ -9752,6 +9844,10 @@
         const range = this.range;
         const bbox = range.bbox;
         const ws = range.worksheet;
+		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return null;
+		}
 		range.cleanFormat();
         ws.clearConditionalFormattingRulesByRanges([bbox]);
     };
@@ -9767,6 +9863,10 @@
 		const range = this.range;
 		const bbox = range.bbox;
 		const ws = range.worksheet;
+		if (ws.getSheetProtection() && ws.isIntersectLockedRanges([bbox])) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return null;
+		}
         this.range.cleanAll();
 		ws.deletePivotTables(bbox);
     };
@@ -9779,6 +9879,10 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/ClearHyperlinks.js
      */
     ApiRange.prototype.ClearHyperlinks = function () {
+		if (!this._checkProtection(Asc.c_oAscSheetProtectType.insertHyperlinks)) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return null;
+		}
         this.range.cleanHyperlinks();
     };
 
@@ -10029,10 +10133,12 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nRow - The row number.
 	 * @param {number} nCol - The column number.
+	 * @returns {boolean} - returns true if the offset was set successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetOffset.js
 	 */
 	ApiRange.prototype.SetOffset = function (nRow, nCol) {
 		this.range.setOffset({row: nRow, col: nCol});
+		return true;
 	};
 
 	/**
@@ -10048,7 +10154,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetAddress.js
 	 */
 	ApiRange.prototype.GetAddress = function (RowAbs, ColAbs, RefStyle, External, RelativeTo) {
-		// todo поправить, чтобы возвращал адреса всех areas внутри range
+		// todo fix to return addresses of all areas inside range
 		var range = this.range.bbox;
 		var isOneCell = this.range.isOneCell();
 		var isOneCol = (this.range.bbox.c1 === this.range.bbox.c2 && this.range.bbox.r1 === 0 && this.range.bbox.r2 === AscCommon.gc_nMaxRow0);
@@ -10086,7 +10192,8 @@
 			col2 = isOneCell ? "" : ((ColAbs ? ":$" : ":") + AscCommon.g_oCellAddressUtils.colnumToColstr(col2));
 			value = isOneCol ? col1 + col2 : isOneRow ? row1 + ":" + row2 : col1 + row1 + col2 + row2;
 		}
-		return (External) ? '[' + ws.workbook.oApi.DocInfo.Title + ']' + AscCommon.parserHelp.get3DRef(ws.sName, value) : value;
+		var title = ws.workbook.oApi && ws.workbook.oApi.DocInfo && ws.workbook.oApi.DocInfo.Title || "";
+		return (External) ? '[' + title + ']' + AscCommon.parserHelp.get3DRef(ws.sName, value) : value;
 	};
 	Object.defineProperty(ApiRange.prototype, "Address", {
 		get: function () {
@@ -10133,7 +10240,7 @@
 	 * Returns a value of the specified range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @returns {string | string[][]}
+	 * @returns {string | number | boolean | Array<Array<string | number | boolean>>}
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/GetValue.js
 	 */
 	ApiRange.prototype.GetValue = function () {
@@ -10142,14 +10249,14 @@
 		var nRow = bbox.r2 - bbox.r1 + 1;
 		var res;
 		if (this.range.isOneCell()) {
-			res = this.range.getValue();
+			res = this.range.getTypedValue();
 		} else {
 			res = [];
 			for (var i = 0; i < nRow; i++) {
 				var arr = [];
 				for (var k = 0; k < nCol; k++) {
 					var cell = this.range.worksheet.getRange3((bbox.r1 + i), (bbox.c1 + k), (bbox.r1 + i), (bbox.c1 + k));
-					arr.push(cell.getValue());
+					arr.push(cell.getTypedValue());
 				}
 				res.push(arr);
 			}
@@ -10247,17 +10354,18 @@
 	 */
 	ApiRange.prototype.GetFormula = function () {
 		if (this.range.isFormula())
-			return "= " + this.range.getFormula();
+			return "=" + this.range.getFormula();
 		else
 			return this.GetValue2();
 	};
+
 
 	Object.defineProperty(ApiRange.prototype, "Formula", {
 		get: function () {
 			return this.GetFormula();
 		},
 		set: function (value) {
-			this.SetValue(value);
+			this.SetFormula(value);
 		}
 	});
 
@@ -10340,13 +10448,15 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiColor} oColor - The color object which specifies the color to be set to the text in the cell / cell range.
+	 * @returns {boolean} - returns true if the font color was set successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetFontColor.js
 	 */
 	ApiRange.prototype.SetFontColor = function (oColor) {
 		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
-			return null;
+			return false;
 		}
 		this.range.setFontcolor(oColor.color);
+		return true;
 	};
 	Object.defineProperty(ApiRange.prototype, "FontColor", {
 		set: function (oColor) {
@@ -10381,6 +10491,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isHidden - Specifies if the values in the current range are hidden or not.
+	 * @returns {boolean} - returns true if the hidden property was set successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetHidden.js
 	 */
 	ApiRange.prototype.SetHidden = function (isHidden) {
@@ -10396,6 +10507,7 @@
 				worksheet.setRowHidden(isHidden, bbox.r1, bbox.r2);
 				break;
 		}
+		return true;
 	};
 	Object.defineProperty(ApiRange.prototype, "Hidden", {
 		get: function () {
@@ -10429,6 +10541,10 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetColumnWidth.js
 	 */
 	ApiRange.prototype.SetColumnWidth = function (nWidth) {
+		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatColumns)) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return null;
+		}
 		this.range.worksheet.setColWidth(nWidth, this.range.bbox.c1, this.range.bbox.c2);
 	};
 	Object.defineProperty(ApiRange.prototype, "ColumnWidth", {
@@ -10446,7 +10562,7 @@
 			var sum = 0;
 			var width;
 			for (var i = 0; i <= max; i++) {
-				width = ws.getColWidth(i);
+				width = ws.getColWidth(this.range.bbox.c1 + i);
 				width = (width < 0) ? AscCommonExcel.oDefaultMetrics.ColWidthChars : width;
 				sum += ws.modelColWidthToColWidth(width);
 			}
@@ -10470,10 +10586,16 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {pt} nHeight - The row height in the current range measured in points.
+	 * @returns {boolean} - returns true if the row height was set successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetRowHeight.js
 	 */
 	ApiRange.prototype.SetRowHeight = function (nHeight) {
+		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatRows)) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return false;
+		}
 		this.range.worksheet.setRowHeight(nHeight, this.range.bbox.r1, this.range.bbox.r2, true);
+		return true;
 	};
 	Object.defineProperty(ApiRange.prototype, "RowHeight", {
 		get: function () {
@@ -10488,7 +10610,7 @@
 			var max = this.range.bbox.r2 - this.range.bbox.r1;
 			var sum = 0;
 			for (var i = 0; i <= max; i++) {
-				sum += this.range.worksheet.getRowHeight(i);
+				sum += this.range.worksheet.getRowHeight(this.range.bbox.r1 + i);
 			}
 			return sum;
 		}
@@ -10499,10 +10621,16 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nSize - The font size value measured in points.
+	 * @returns {boolean} - returns true if the font size was set successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetFontSize.js
 	 */
 	ApiRange.prototype.SetFontSize = function (nSize) {
+		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return false;
+		}
 		this.range.setFontsize(nSize);
+		return true;
 	};
 	Object.defineProperty(ApiRange.prototype, "FontSize", {
 		set: function (nSize) {
@@ -10515,10 +10643,16 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sName - The font family name used for the current cell range.
+	 * @returns {boolean} - returns true if the font name was set successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetFontName.js
 	 */
 	ApiRange.prototype.SetFontName = function (sName) {
+		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return false;
+		}
 		this.range.setFontname(sName);
+		return true;
 	};
 	Object.defineProperty(ApiRange.prototype, "FontName", {
 		set: function (sName) {
@@ -10621,6 +10755,10 @@
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetReadingOrder.js
 	 */
 	ApiRange.prototype.SetReadingOrder = function (direction) {
+		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return null;
+		}
 		const map = {
 			"context": Asc.c_oReadingOrderTypes.Context, // 0
 			"ltr": Asc.c_oReadingOrderTypes.LTR, // 1
@@ -10639,13 +10777,15 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isBold - Specifies that the contents of the current cell / cell range are displayed bold.
+	 * @returns {boolean} - returns true if the bold property was set successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetBold.js
 	 */
 	ApiRange.prototype.SetBold = function (isBold) {
 		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
-			return null;
+			return false;
 		}
 		this.range.setBold(!!isBold);
+		return true;
 	};
 	Object.defineProperty(ApiRange.prototype, "Bold", {
 		set: function (isBold) {
@@ -10658,13 +10798,15 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isItalic - Specifies that the contents of the current cell / cell range are displayed italicized.
+	 * @returns {boolean} - returns true if the italic property was set successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetItalic.js
 	 */
 	ApiRange.prototype.SetItalic = function (isItalic) {
 		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
-			return null;
+			return false;
 		}
 		this.range.setItalic(!!isItalic);
+		return true;
 	};
 	Object.defineProperty(ApiRange.prototype, "Italic", {
 		set: function (isItalic) {
@@ -10683,11 +10825,12 @@
 	 * <b>"singleAccounting"</b> - for a single line underlining the cell contents but not protruding beyond the cell borders;
 	 * <b>"double"</b> - for a double line underlining the cell contents;
 	 * <b>"doubleAccounting"</b> - for a double line underlining the cell contents but not protruding beyond the cell borders.
+	 * @returns {boolean} - returns true if the underline property was set successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetUnderline.js
 	 */
 	ApiRange.prototype.SetUnderline = function (undelineType) {
 		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
-			return null;
+			return false;
 		}
 		var val;
 		switch (undelineType) {
@@ -10709,6 +10852,7 @@
 				break;
 		}
 		this.range.setUnderline(val);
+		return true;
 	};
 	Object.defineProperty(ApiRange.prototype, "Underline", {
 		set: function (undelineType) {
@@ -10721,13 +10865,15 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isStrikeout - Specifies if the contents of the current cell / cell range are displayed struck through.
+	 * @returns {boolean} - returns true if the strikeout property was set successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetStrikeout.js
 	 */
 	ApiRange.prototype.SetStrikeout = function (isStrikeout) {
 		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
-			return null;
+			return false;
 		}
 		this.range.setStrikeout(!!isStrikeout);
+		return true;
 	};
 	Object.defineProperty(ApiRange.prototype, "Strikeout", {
 		set: function (isStrikeout) {
@@ -10740,13 +10886,15 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isWrap - Specifies if the words in the cell will be wrapped to fit the cell size.
+	 * @returns {boolean} - returns true if the wrap property was set successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetWrap.js
 	 */
 	ApiRange.prototype.SetWrap = function (isWrap) {
 		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
-			return null;
+			return false;
 		}
 		this.range.setWrap(!!isWrap);
+		return true;
 	};
 
 	/**
@@ -10774,13 +10922,15 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiColor} oColor - The color object which specifies the color to be set to the background in the cell / cell range.
+	 * @returns {boolean} - returns true if the fill color was set successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetFillColor.js
 	 */
 	ApiRange.prototype.SetFillColor = function (oColor) {
 		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
-			return null;
+			return false;
 		}
 		this.range.setFillColor('No Fill' === oColor ? null : oColor.color);
+		return true;
 	};
 	/**
 	 * Returns the background color for the current cell range. Returns 'No Fill' when the color of the background in the cell / cell range is null.
@@ -10830,13 +10980,15 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sFormat - Specifies the mask applied to the number in the cell.
+	 * @returns {boolean} - returns true if the number format was set successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetNumberFormat.js
 	 */
 	ApiRange.prototype.SetNumberFormat = function (sFormat) {
 		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
-			return null;
+			return false;
 		}
 		this.range.setNumFormat(sFormat);
+		return true;
 	};
 	Object.defineProperty(ApiRange.prototype, "NumberFormat", {
 		get: function () {
@@ -10854,43 +11006,57 @@
 	 * @param {BordersIndex} bordersIndex - Specifies the cell border position.
 	 * @param {LineStyle} lineStyle - Specifies the line style used to form the cell border.
 	 * @param {ApiColor} oColor - The color object which specifies the color to be set to the cell border.
+	 * @returns {boolean} - returns true if the borders were set successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/SetBorders.js
 	 */
 	ApiRange.prototype.SetBorders = function (bordersIndex, lineStyle, oColor) {
 		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
-			return null;
+			return false;
 		}
 		var borders = new AscCommonExcel.Border();
 		borders.initDefault();
+		if (typeof bordersIndex === 'string') {
+			bordersIndex = bordersIndex.toLowerCase();
+		}
 		switch (bordersIndex) {
-			case 'DiagonalDown':
+			case 'diagonaldown':
 				borders.dd = true;
 				borders.d = private_MakeBorder(lineStyle, oColor);
 				break;
-			case 'DiagonalUp':
+			case 'diagonalup':
 				borders.du = true;
 				borders.d = private_MakeBorder(lineStyle, oColor);
 				break;
-			case 'Bottom':
+			case 'bottom':
 				borders.b = private_MakeBorder(lineStyle, oColor);
 				break;
-			case 'Left':
+			case 'left':
 				borders.l = private_MakeBorder(lineStyle, oColor);
 				break;
-			case 'Right':
+			case 'right':
 				borders.r = private_MakeBorder(lineStyle, oColor);
 				break;
-			case 'Top':
+			case 'top':
 				borders.t = private_MakeBorder(lineStyle, oColor);
 				break;
-			case 'InsideHorizontal':
+			case 'insidehorizontal':
 				borders.ih = private_MakeBorder(lineStyle, oColor);
 				break;
-			case 'InsideVertical':
+			case 'insidevertical':
 				borders.iv = private_MakeBorder(lineStyle, oColor);
+				break;
+			case 'all':
+				var border = private_MakeBorder(lineStyle, oColor);
+				borders.b = border;
+				borders.l = border;
+				borders.r = border;
+				borders.t = border;
+				borders.ih = border;
+				borders.iv = border;
 				break;
 		}
 		this.range.setBorder(borders);
+		return true;
 	};
 
 	/**
@@ -10899,11 +11065,12 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} isAcross - When set to <b>true</b>, the cells within the selected range will be merged along the rows,
 	 * but remain split in the columns. When set to <b>false</b>, the whole selected range of cells will be merged into a single cell.
+	 * @returns {boolean} - returns true if the range was merged successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/Merge.js
 	 */
 	ApiRange.prototype.Merge = function (isAcross) {
 		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
-			return null;
+			return false;
 		}
 		if (isAcross) {
 			var ws = this.range.worksheet;
@@ -10914,19 +11081,22 @@
 		} else {
 			this.range.merge(null);
 		}
+		return true;
 	};
 
 	/**
 	 * Splits the selected merged cell range into the single cells.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
+	 * @returns {boolean} - returns true if the range was unmerged successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/UnMerge.js
 	 */
 	ApiRange.prototype.UnMerge = function () {
 		if (!this._checkProtection(Asc.c_oAscSheetProtectType.formatCells)) {
-			return null;
+			return false;
 		}
 		this.range.unmerge();
+		return true;
 	};
 
 	/**
@@ -10953,6 +11123,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {Function} fCallback - A function which will be executed for each cell.
+	 * @returns {boolean} - returns true if the callback was executed, false if the callback is not a function.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/ForEach.js
 	 */
 	ApiRange.prototype.ForEach = function (fCallback) {
@@ -10961,7 +11132,9 @@
 			this.range._foreach(function (cell) {
 				fCallback(new ApiRange(ws.getCell3(cell.nRow, cell.nCol)));
 			});
+			return true;
 		}
+		return false;
 	};
 
 	/**
@@ -10982,7 +11155,7 @@
 			comment.asc_putText(sText);
 			let author = ((typeof (sAuthor) === 'string' && sAuthor.trim() !== '') ? sAuthor : Asc['editor'].User.asc_getUserName());
 			comment.asc_putUserName(author);
-			// todo проверить как в документа добавлются (надо ли выставлять этот параметр)
+			// todo check how it is added in documents (whether this parameter needs to be set)
 			// comment.asc_putUserId(Asc['editor'].User.asc_getId());
 			comment.asc_putCol(this.range.bbox.c1);
 			comment.asc_putRow(this.range.bbox.r1);
@@ -11059,6 +11232,7 @@
 	 * Selects the current range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
+	 * @returns {boolean} - returns true if the range was selected successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/Select.js
 	 */
 	ApiRange.prototype.Select = function () {
@@ -11072,8 +11246,21 @@
 						newSelection.ranges.push(el.bbox);
 				})
 			}
-			newSelection.Select();
+			var wsView = this.range.worksheet.workbook.oApi && this.range.worksheet.workbook.oApi.wb &&
+				this.range.worksheet.workbook.oApi.wb.getWorksheet(this.range.worksheet.getIndex());
+			if (wsView) {
+				wsView.cleanSelection();
+				newSelection.Select(true);
+				wsView.updateSelection();
+				if (wsView.drawingCtx) {
+					wsView._scrollToRange(bbox);
+				}
+			} else {
+				newSelection.Select();
+			}
+			return true;
 		}
+		return false;
 	};
 
 	/**
@@ -11119,8 +11306,8 @@
 		get: function () {
 			return this.GetOrientation();
 		},
-		set: function () {
-			return this.SetOrientation();
+		set: function (angle) {
+			this.SetOrientation(angle);
 		}
 	});
 
@@ -11266,6 +11453,11 @@
 			let cols = bbox.c2 - bbox.c1 + 1;
 			shift = (rows <= cols) ? "up" : "left";
 		}
+		const deleteProtectType = shift === "up" ? Asc.c_oAscSheetProtectType.deleteRows : Asc.c_oAscSheetProtectType.deleteColumns;
+		if (!this._checkProtection(deleteProtectType)) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return null;
+		}
 		if (shift === "up") {
 			val = Asc.c_oAscDeleteOptions.DeleteCellsAndShiftTop;
 			lockRange = ws.getRange3(bbox.r1, bbox.c1, bbox.r2, AscCommon.gc_nMaxCol0);
@@ -11292,6 +11484,11 @@
 			var rows = bbox.r2 - bbox.r1 + 1;
 			var cols = bbox.c2 - bbox.c1 + 1;
 			shift = (rows <= cols) ? "down" : "right";
+		}
+		const insertProtectType = shift === "down" ? Asc.c_oAscSheetProtectType.insertRows : Asc.c_oAscSheetProtectType.insertColumns;
+		if (!this._checkProtection(insertProtectType)) {
+			throwException(new Error('Cannot modify protected sheet'));
+			return null;
 		}
 		if (shift == "down")
 			this.range.addCellsShiftBottom();
@@ -11654,19 +11851,28 @@
 			options.asc_setIsWholeCell(LookAt === 'xlWhole');
 			options.asc_setScanOnOnlySheet(Asc.c_oAscSearchBy.Range);
 			options.asc_setSpecificRange(this["Address"]);
-			options.asc_setScanByRows(SearchOrder === 'xlByRows');
+
+            // by default excel uses rows search
+            if (SearchOrder == null) {
+                options.asc_setScanByRows(true);
+            } else {
+                options.asc_setScanByRows(SearchOrder === 'xlByRows');
+            }
+
 			options.asc_setLookIn((LookIn === 'xlValues' ? 2 : 1));
 			options.asc_setNotSearchEmptyCells(!(What === "" && !options.isWholeCell));
 			let start = (After instanceof ApiRange && After.range.isOneCell() && this.range.containsRange(After.range))
 				? {row: After.range.bbox.r1, col: After.range.bbox.c1}
 				: {row: this.range.bbox.r1, col: this.range.bbox.c1};
 
-			start.row += (options.scanByRows ? (options.scanForward ? 1 : -1) : 0);
-			start.col += (!options.scanByRows ? (options.scanForward ? 1 : -1) : 0);
+			start.row += (!options.scanByRows ? (options.scanForward ? 1 : -1) : 0);
+			start.col += (options.scanByRows ? (options.scanForward ? 1 : -1) : 0);
 			options.asc_setActiveCell(start);
+			options.asc_setWsIndex(this.range.worksheet.index);
 			let engine = this.range.worksheet.workbook.oApi.wb.Search(options);
 			let id = this.range.worksheet.workbook.oApi.wb.GetSearchElementId(options.scanForward);
 			if (id != null) {
+                engine.SetCurrent(id);
 				let elem = engine.Elements[id];
 				res = new ApiRange(this.range.worksheet.getRange3(elem.row, elem.col, elem.row, elem.col));
 			}
@@ -11695,8 +11901,8 @@
 			this._searchOptions.asc_setScanForward(true);
 			if (After instanceof ApiRange && After.range.isOneCell() && this.range.containsRange(After.range)) {
 				activeCell = {row: After.range.bbox.r1, col: After.range.bbox.c1};
-				activeCell.row += (this._searchOptions.scanByRows ? 1 : 0);
-				activeCell.col += (!this._searchOptions.scanByRows ? 1 : 0);
+				activeCell.row += (!this._searchOptions.scanByRows ? 1 : 0);
+				activeCell.col += (this._searchOptions.scanByRows ? 1 : 0);
 			} else {
 				activeCell = {row: this.range.bbox.r1, col: this.range.bbox.c1};
 			}
@@ -11709,6 +11915,7 @@
 			engine = this.range.worksheet.workbook.oApi.wb.Search(this._searchOptions);
 			let id = this.range.worksheet.workbook.oApi.wb.GetSearchElementId(true);
 			if (id != null) {
+                engine.SetCurrent(id);
 				let elem = engine.Elements[id];
 				res = new ApiRange(this.range.worksheet.getRange3(elem.row, elem.col, elem.row, elem.col));
 			}
@@ -11736,8 +11943,8 @@
 			this._searchOptions.asc_setScanForward(false);
 			if (Before instanceof ApiRange && Before.range.isOneCell() && this.range.containsRange(Before.range)) {
 				activeCell = {row: Before.range.bbox.r1, col: Before.range.bbox.c1};
-				activeCell.row += (this._searchOptions.scanByRows ? -1 : 0);
-				activeCell.col += (!this._searchOptions.scanByRows ? -1 : 0);
+				activeCell.row += (!this._searchOptions.scanByRows ? -1 : 0);
+				activeCell.col += (this._searchOptions.scanByRows ? -1 : 0);
 			} else {
 				activeCell = {row: this.range.bbox.r1, col: this.range.bbox.c1};
 			}
@@ -11750,6 +11957,7 @@
 			engine = this.range.worksheet.workbook.oApi.wb.Search(this._searchOptions);
 			let id = this.range.worksheet.workbook.oApi.wb.GetSearchElementId(false);
 			if (id != null) {
+				engine.SetCurrent(id);
 				let elem = engine.Elements[id];
 				res = new ApiRange(this.range.worksheet.getRange3(elem.row, elem.col, elem.row, elem.col));
 			}
@@ -11765,7 +11973,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {ReplaceData} oReplaceData - The data used to make search and replace.
-	 * @returns {ApiRange | null} - Returns null if the current range does not contain such text.
+	 * @returns {boolean} - Returns true if at least one match was found and replacement was initiated, false otherwise.
 	 * @see office-js-api/Examples/{Editor}/ApiRange/Methods/Replace.js
 	 */
 	ApiRange.prototype.Replace = function (oReplaceData) {
@@ -11781,7 +11989,7 @@
 				MatchCase = oReplaceData['MatchCase'];
 				ReplaceAll = oReplaceData['ReplaceAll'];
 			} else {
-				return null;
+				return false;
 			}
 		} else {
 			What = arguments[0];
@@ -11802,6 +12010,7 @@
 			options.asc_setIsWholeCell(LookAt === 'xlWhole');
 			options.asc_setScanOnOnlySheet(Asc.c_oAscSearchBy.Range);
 			options.asc_setSpecificRange(this["Address"]);
+			options.asc_setWsIndex(this.range.worksheet.index);
 			options.asc_setScanByRows(SearchOrder === 'xlByRows');
 			options.asc_setLookIn(Asc.c_oAscFindLookIn.Formulas);
 			if (typeof ReplaceAll !== 'boolean')
@@ -11812,9 +12021,11 @@
 			let engine = this.range.worksheet.workbook.oApi.wb.Search(options);
 			engine.Reset();
 			engine = this.range.worksheet.workbook.oApi.wb.Search(options);
-			let id = this.range.worksheet.workbook.oApi.wb.GetSearchElementId(SearchDirection != 'xlPrevious');
-			options.asc_setIsForMacros(true);
-			if (id != null) {
+			// True if matches found; replaceCellText is async so write completion cannot be confirmed.
+			let hasMatches = engine.GetCount() > 0;
+			if (hasMatches) {
+				let id = this.range.worksheet.workbook.oApi.wb.GetSearchElementId(SearchDirection != 'xlPrevious');
+				options.asc_setIsForMacros(true);
 				if (ReplaceAll)
 					engine.SetCurrent(id);
 				else
@@ -11822,6 +12033,7 @@
 
 				this.range.worksheet.workbook.oApi.wb.replaceCellText(options);
 			}
+			return hasMatches;
 		} else {
 			throwException(new Error('Invalid type of parametr "What" or "Replacement".'));
 		}
@@ -12305,13 +12517,24 @@
 		}
 
 		let ws = this.range.worksheet;
-		let selectionRange = ws.selectionRange.getLast();
-		let api = ws.workbook.oApi;
 
+		// Detect if the range belongs to a formatted table (ListObject).
+		// tablePart is used throughout to pick the right filter object vs ws.AutoFilter.
+		let tablePart = null;
+		if (ws.TableParts && ws.TableParts.length) {
+			for (let _i = 0; _i < ws.TableParts.length; _i++) {
+				if (ws.TableParts[_i].Ref.containsRange(this.range.bbox)) {
+					tablePart = ws.TableParts[_i];
+					break;
+				}
+			}
+		}
 
 		let _range;
 		if (ws.AutoFilter) {
 			_range = ws.AutoFilter.Ref;
+		} else if (tablePart) {
+			_range = tablePart.Ref;
 		} else {
 			let filterProps = ws.autoFilters.getAddFormatTableOptions(this.range.bbox);
 			_range = filterProps && filterProps.range && AscCommonExcel.g_oRangeCache.getAscRange(filterProps.range);
@@ -12339,32 +12562,37 @@
 			}
 		}
 
-		//firstly add filter or remove filter
-		if (Field == null && ws.AutoFilter) {
-			ws.autoFilters.deleteAutoFilter(ws.AutoFilter.Ref);
-			//api.asc_changeAutoFilter(null, Asc.c_oAscChangeFilterOptions.filter, false);
-			return;
-		} else if (!ws.AutoFilter) {
-			ws.autoFilters.addAutoFilter(null, this.range.bbox);
-			//api.asc_addAutoFilter(null, null, this.range.bbox);
+		// Add/remove AutoFilter
+		if (Field == null) {
+			if (tablePart || ws.AutoFilter) {
+				// deleteAutoFilter routes correctly for both table and standalone ranges
+				ws.autoFilters.deleteAutoFilter(this.range.bbox);
+				return;
+			}
 		}
 
-		if (Field == null) {
-			return;
+		if (!ws.AutoFilter && !tablePart) {
+			// Standalone range without an AutoFilter: create one.
+			// For a table, tablePart.AutoFilter is intrinsic — no add needed.
+			ws.autoFilters.addAutoFilter(null, this.range.bbox);
 		}
 
 		if (Criteria1 == null) {
-			//clean current filter
-			ws.autoFilters.clearFilterColumn(Asc.Range(_range.c1 + Field, _range.r1, _range.c1 + Field, _range.r1).getName());
-			//api.asc_clearFilterColumn(Asc.range(_range.c1 + Field, _range.r1, _range.c1 + Field, _range.r1).getName());
+			// Clear the filter on this specific column only
+			let _clearCellId = Asc.Range(_range.c1 + Field - 1, _range.r1, _range.c1 + Field - 1, _range.r1).getName();
+			ws.autoFilters.clearFilterColumn(_clearCellId, tablePart ? tablePart.DisplayName : null);
 			return;
 		}
 
 		let cellId = Asc.Range(_range.c1 + Field - 1, _range.r1, _range.c1 + Field - 1, _range.r1).getName();
 
+		// _filterRef is either the tablePart or ws.AutoFilter — passed to getOpenAndClosedValues
+		// which handles both via filter.isAutoFilter()
+		let _filterRef = tablePart || ws.AutoFilter;
+
 		let createSimpleFilter = function () {
 			if (Criteria1 && Array.isArray(Criteria1)) {
-				let autoFiltersOptionsElements = ws.autoFilters.getOpenAndClosedValues(ws.AutoFilter, Field - 1);
+				let autoFiltersOptionsElements = ws.autoFilters.getOpenAndClosedValues(_filterRef, Field - 1);
 
 				let criteriaMap = {};
 				for (let i in Criteria1) {
@@ -12443,7 +12671,7 @@
 		};
 
 		//apply filtering
-		let isAutoFilter = this.range.worksheet && this.range.worksheet.AutoFilter && this.range.worksheet.AutoFilter.Ref.intersection(this.range.bbox);
+		let isAutoFilter = (ws.AutoFilter && ws.AutoFilter.Ref.intersection(this.range.bbox)) || tablePart !== null;
 		let autoFilterOptions;
 		if (isAutoFilter) {
 			switch (Operator) {
@@ -12844,6 +13072,7 @@
 		}
 	});
 
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiDrawing
@@ -12917,7 +13146,7 @@
 	/**
 	 * Returns the width of the current drawing.
 	 * @memberof ApiDrawing
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @typeofeditors ["CSE"]
 	 * @returns {EMU}
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetWidth.js
 	 */
@@ -12927,7 +13156,7 @@
 	/**
 	 * Returns the height of the current drawing.
 	 * @memberof ApiDrawing
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @typeofeditors ["CSE"]
 	 * @returns {EMU}
 	 * @see office-js-api/Examples/{Editor}/ApiDrawing/Methods/GetHeight.js
 	 */
@@ -12960,23 +13189,12 @@
 		if (name === "" || name === null || name === undefined)
 			return false
 
-		let worksheet = this.Drawing.getWorksheet();
-		let drawings = GetApiDrawings(worksheet.Drawings.map(function(drawingBase) { return drawingBase.graphicObject }));
-
-		for (let nCount = 0; nCount < drawings.length; nCount++)
-		{
-			let drawing = drawings[nCount];
-			if (drawing.Drawing.getOwnName() === name)
-			{
-				drawing.Drawing.setName("");
-				break;
-			}
-		}
 		this.Drawing.setName(name);
 		return true;
 	}
 	/**
 	 * Returns the lock value for the specified lock type of the current drawing.
+	 * @memberof ApiDrawing
 	 * @typeofeditors ["CSE"]
 	 * @param {DrawingLockType} sType - Lock type in the string format.
 	 * @returns {boolean}
@@ -12996,6 +13214,7 @@
 
 	/**
 	 * Sets the lock value to the specified lock type of the current drawing.
+	 * @memberof ApiDrawing
 	 * @typeofeditors ["CSE"]
 	 * @param {DrawingLockType} sType - Lock type in the string format.
 	 * @param {boolean} bValue - Specifies if the specified lock is applied to the current drawing.
@@ -13019,6 +13238,7 @@
 
 	/**
 	 * Returns the parent sheet of the current drawing.
+	 * @memberof ApiDrawing
 	 * @typeofeditors ["CSE"]
 	 * @returns {?ApiWorksheet}
 	 * @since 8.3.0
@@ -13253,7 +13473,7 @@
 	/**
 	 * Returns a type of the ApiImage class.
 	 * @memberof ApiImage
-	 * @typeofeditors ["CDE", "CSE"]
+	 * @typeofeditors ["CSE"]
 	 * @returns {"image"}
 	 * @see office-js-api/Examples/{Editor}/ApiImage/Methods/GetClassType.js
 	 */
@@ -13270,6 +13490,7 @@
 	/**
 	 * Class representing a group of drawings.
 	 * @constructor
+	 * @extends ApiDrawing
 	 */
 	function ApiGroup(oGroup) {
 		ApiDrawing.call(this, oGroup);
@@ -13297,6 +13518,7 @@
 	/**
 	 * Class representing a smart art.
 	 * @constructor
+	 * @extends ApiDrawing
 	 */
 	function ApiSmartArt(oGroup){
 		ApiDrawing.call(this, oGroup);
@@ -13366,13 +13588,13 @@
 	 * Sets the vertical alignment to the shape content where a paragraph or text runs can be inserted.
 	 * @memberof ApiShape
 	 * @typeofeditors ["CSE"]
-	 * @param {"top" | "center" | "bottom" } sVerticalAlign - The vertical alignment type for the shape inner contents.
+	 * @param {VerticalTextAlign} verticalAlign - The vertical alignment type for the shape inner contents.
 	 * @returns {boolean} - returns false if shape or aligment doesn't exist.
 	 * @see office-js-api/Examples/{Editor}/ApiShape/Methods/SetVerticalTextAlign.js
 	 */
-	ApiShape.prototype.SetVerticalTextAlign = function (sVerticalAlign) {
+	ApiShape.prototype.SetVerticalTextAlign = function (verticalAlign) {
 		if (this.Shape) {
-			switch (sVerticalAlign) {
+			switch (verticalAlign) {
 				case "top": {
 					this.Shape.setVerticalAlign(4);
 					break;
@@ -13560,6 +13782,7 @@
 	/**
 	 * Class representing a chart.
 	 * @constructor
+	 * @extends ApiDrawing
 	 */
 	function ApiChart(Chart) {
 		ApiDrawing.call(this, Chart);
@@ -13661,7 +13884,7 @@
 	/**
 	 * Returns a type of the ApiOleObject class.
 	 * @memberof ApiOleObject
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @typeofeditors ["CSE"]
 	 * @returns {"oleObject"}
 	 * @see office-js-api/Examples/{Editor}/ApiOleObject/Methods/GetClassType.js
 	 */
@@ -13672,7 +13895,7 @@
 	/**
 	 * Sets the data to the current OLE object.
 	 * @memberof ApiOleObject
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @typeofeditors ["CSE"]
 	 * @param {string} sData - The OLE object string data.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiOleObject/Methods/SetData.js
@@ -13688,7 +13911,7 @@
 	/**
 	 * Returns the string data from the current OLE object.
 	 * @memberof ApiOleObject
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @typeofeditors ["CSE"]
 	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiOleObject/Methods/GetData.js
 	 */
@@ -13702,7 +13925,7 @@
 	/**
 	 * Sets the application ID to the current OLE object.
 	 * @memberof ApiOleObject
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @typeofeditors ["CSE"]
 	 * @param {string} sAppId - The application ID associated with the current OLE object.
 	 * @returns {boolean}
 	 * @see office-js-api/Examples/{Editor}/ApiOleObject/Methods/SetApplicationId.js
@@ -13718,7 +13941,7 @@
 	/**
 	 * Returns the application ID from the current OLE object.
 	 * @memberof ApiOleObject
-	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @typeofeditors ["CSE"]
 	 * @returns {string}
 	 * @see office-js-api/Examples/{Editor}/ApiOleObject/Methods/GetApplicationId.js
 	 */
@@ -13806,10 +14029,12 @@
 	 * Deletes the DefName object.
 	 * @memberof ApiName
 	 * @typeofeditors ["CSE"]
+	 * @returns {boolean} - returns true if the name was deleted successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiName/Methods/Delete.js
 	 */
 	ApiName.prototype.Delete = function () {
 		this.DefName.wb.delDefinesNames(this.DefName.getAscCDefName(false));
+		return true;
 	};
 
 	/**
@@ -13818,10 +14043,12 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sRef    - The range reference which must contain the sheet name, followed by sign ! and a range of cells.
 	 * Example: "Sheet1!$A$1:$B$2".
+	 * @returns {boolean} - returns true if the reference was set successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiName/Methods/SetRefersTo.js
 	 */
 	ApiName.prototype.SetRefersTo = function (sRef) {
 		this.DefName.setRef(sRef);
+		return true;
 	};
 
 	/**
@@ -14224,7 +14451,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiComment/Methods/RemoveReplies.js
 	 */
 	ApiComment.prototype.RemoveReplies = function (nPos, nCount, bRemoveAll) {
-		if (typeof (nPos) !== "number" || nPos < 0 || nPos > this.GetRepliesCount())
+		if (typeof (nPos) !== "number" || nPos < 0 || nPos >= this.GetRepliesCount())
 			nPos = 0;
 
 		if (typeof (nCount) !== "number" || nCount < 0)
@@ -14246,10 +14473,12 @@
 	 * Deletes the ApiComment object.
 	 * @memberof ApiComment
 	 * @typeofeditors ["CSE"]
+	 * @returns {boolean} - returns true if the comment was deleted successfully.
 	 * @see office-js-api/Examples/{Editor}/ApiComment/Methods/Delete.js
 	 */
 	ApiComment.prototype.Delete = function () {
 		this.WB.Api.asc_removeComment(this.Comment.asc_getId());
+		return true;
 	};
 
 	ApiComment.prototype.private_OnChange = function () {
@@ -15809,10 +16038,15 @@
 	ApiFreezePanes.prototype.FreezeColumns = function (count) {
 		let api = this.ws.workbook.oApi;
 		if (count == undefined) count = 0;
+		let wsView = api.wb.getWorksheetById(this.ws.getId());
 		if (typeof count === 'number' && count > 0 && count <= AscCommon.gc_nMaxCol0) {
-			api.asc_freezePane(null, count, 0);
-		} else if (!!api.wb.getWorksheet().topLeftFrozenCell && count === 0) {
-			api.asc_freezePane(undefined);
+			if (api.canEdit() && wsView) {
+				wsView.freezePane(null, count, 0);
+			}
+		} else if (wsView && wsView.topLeftFrozenCell && count === 0) {
+			if (api.canEdit()) {
+				wsView.freezePane(undefined);
+			}
 		} else {
 			throwException(new Error('Invalid parametr "count".'));
 		}
@@ -15829,10 +16063,15 @@
 	ApiFreezePanes.prototype.FreezeRows = function (count) {
 		let api = this.ws.workbook.oApi;
 		if (count == undefined) count = 0;
+		let wsView = api.wb.getWorksheetById(this.ws.getId());
 		if (typeof count === 'number' && count > 0 && count <= AscCommon.gc_nMaxRow0) {
-			api.asc_freezePane(null, 0, count);
-		} else if (!!api.wb.getWorksheet().topLeftFrozenCell && count === 0) {
-			api.asc_freezePane(undefined);
+			if (api.canEdit && wsView) {
+				wsView.freezePane(null, 0, count);
+			}
+		} else if (wsView && wsView.topLeftFrozenCell && count === 0) {
+			if (api.canEdit()) {
+				wsView.freezePane(undefined);
+			}
 		} else {
 			throwException(new Error('Invalid parametr "count".'));
 		}
@@ -15849,7 +16088,8 @@
 	ApiFreezePanes.prototype.GetLocation = function () {
 		let result = null;
 		let api = this.ws.workbook.oApi;
-		let cell = api.wb.getWorksheet().topLeftFrozenCell;
+		let wsView = api.wb.getWorksheetById(this.ws.getId());
+		let cell = wsView && wsView.topLeftFrozenCell;
 		if (cell) {
 			let c = cell.getCol0();
 			let r = cell.getRow0();
@@ -16615,8 +16855,9 @@
 	ApiPivotTable.prototype.GetColumnFields = function (field) {
 		const pivotFields = this.pivot.asc_getPivotFields();
 		const colFields = this.pivot.asc_getColumnFields();
+		if (!colFields) return [];
 		const t = this;
-		return colFields.map(function(colField, i) {
+		return colFields.map(function(colField) {
 			const index = colField.asc_getIndex();
 			return new ApiPivotField(t, index, pivotFields[index]);
 		});
@@ -16639,6 +16880,7 @@
 	 */
 	ApiPivotTable.prototype.GetDataFields = function (field) {
 		const dataFields = this.pivot.asc_getDataFields();
+		if (!dataFields) return field != null ? null : [];
 		if (field != null) {
 			let dataIndex = -1;
 			if (typeof field === 'number') {
@@ -16730,6 +16972,7 @@
 	ApiPivotTable.prototype.GetPageFields = function (field) {
 		const pivotFields = this.pivot.asc_getPivotFields();
 		const pageFields = this.pivot.asc_getPageFields();
+		if (!pageFields) return [];
 		const t = this;
 		return pageFields.map(function(pageField, i) {
 			const index = pageField.asc_getIndex();
@@ -16754,8 +16997,9 @@
 	ApiPivotTable.prototype.GetRowFields = function (field) {
 		const pivotFields = this.pivot.asc_getPivotFields();
 		const rowFields = this.pivot.asc_getRowFields();
+		if (!rowFields) return [];
 		const t = this;
-		return rowFields.map(function(rowField, i) {
+		return rowFields.map(function(rowField) {
 			const index = rowField.asc_getIndex();
 			return new ApiPivotField(t, index, pivotFields[index]);
 		});
@@ -17532,12 +17776,16 @@
 	ApiPivotDataField.prototype.Move = function (type, index) {
 		function getIndexTo(type, indexFrom, fields) {
 			switch (type) {
+				case "xlUp":
 				case "Up":
 					return (indexFrom > 0) ? indexFrom - 1 : indexFrom;
+				case "xlDown":
 				case "Down":
 					return (indexFrom < fields.length - 1) ? indexFrom + 1 : fields.length - 1;
+				case "xlBegin":
 				case "Begin":
 					return 0;
+				case "xlEnd":
 				case "End":
 					return fields.length - 1;
 				default:
@@ -17545,15 +17793,19 @@
 			}
 		}
 		switch (type) {
+			case "xlRowField":
 			case "Rows":
 				this.table.pivot.asc_moveToRowField(this.table.api, this.index, this.dataIndex, index);
 				break;
+			case "xlColumnField":
 			case "Columns":
 				this.table.pivot.asc_moveToColField(this.table.api, this.index, this.dataIndex, index);
 				break;
+			case "xlPageField":
 			case "Filters":
 				this.table.pivot.asc_moveToPageField(this.table.api, this.index, this.dataIndex, index);
 				break;
+			case "xlDataField":
 			case "Values":
 				this.SetPosition(index);
 				break;
@@ -17589,36 +17841,47 @@
 	ApiPivotDataField.prototype.SetFunction = function (func) {
 		const field = new Asc.CT_DataField();
 		switch (func) {
+			case "xlAverage":
 			case "Average":
 				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.Average);
 				break;
+			case "xlCount":
 			case "Count":
 				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.Count);
 				break;
+			case "xlCountNumbers":
 			case "CountNumbers":
 				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.CountNums);
 				break;
+			case "xlMax":
 			case "Max":
 				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.Max);
 				break;
+			case "xlMin":
 			case "Min":
 				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.Min);
 				break;
+			case "xlProduct":
 			case "Product":
 				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.Product);
 				break;
+			case "xlStdDev":
 			case "StdDev":
 				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.StdDev);
 				break;
+			case "xlStdDevP":
 			case "StdDevP":
 				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.StdDevp);
 				break;
+			case "xlSum":
 			case "Sum":
 				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.Sum);
 				break;
+			case "xlVar":
 			case "Var":
 				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.Var);
 				break;
+			case "xlVarP":
 			case "VarP":
 				field.asc_setSubtotal(Asc.c_oAscDataConsolidateFunction.Varp);
 				break;
@@ -17954,6 +18217,9 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetPivotItems.js
 	 */
 	ApiPivotField.prototype.GetPivotItems = function (index) {
+		if (this.index === AscCommonExcel.st_VALUES) {
+			return [];
+		}
 		const pivotFields = this.table.pivot.asc_getPivotFields();
 		const pivotField = pivotFields[this.index];
 		if (index != null) {
@@ -17991,12 +18257,16 @@
 	ApiPivotField.prototype.Move = function (type, index) {
 		function getIndexTo(type, indexFrom, fields) {
 			switch (type) {
+				case "xlUp":
 				case "Up":
 					return (indexFrom > 0) ? indexFrom - 1 : indexFrom;
+				case "xlDown":
 				case "Down":
 					return (indexFrom < fields.length - 1) ? indexFrom + 1 : fields.length - 1;
+				case "xlBegin":
 				case "Begin":
 					return 0;
+				case "xlEnd":
 				case "End":
 					return fields.length - 1;
 				default:
@@ -18007,35 +18277,43 @@
 			index = 0;
 		}
 		switch (type) {
-			case "Rows":
-				if (this.pivotField.axis !== Asc.c_oAscAxis.AxisRow) {
+			case "xlRowField":
+			case "Rows": {
+				if (this._getAxis() !== Asc.c_oAscAxis.AxisRow) {
 					this.table.pivot.asc_moveToRowField(this.table.api, this.index, undefined, index - 1);
 				} else {
-					this.SetPosition(index)
+					this.SetPosition(index);
 				}
 				break;
-			case "Columns":
-				if (this.pivotField.axis !== Asc.c_oAscAxis.AxisCol) {
+			}
+			case "xlColumnField":
+			case "Columns": {
+				if (this._getAxis() !== Asc.c_oAscAxis.AxisCol) {
 					this.table.pivot.asc_moveToColField(this.table.api, this.index, undefined, index - 1);
 				} else {
-					this.SetPosition(index)
+					this.SetPosition(index);
 				}
 				break;
-			case "Filters":
-				if (this.pivotField.axis !== Asc.c_oAscAxis.AxisPage) {
+			}
+			case "xlPageField":
+			case "Filters": {
+				if (this._getAxis() !== Asc.c_oAscAxis.AxisPage) {
 					this.table.pivot.asc_moveToPageField(this.table.api, this.index, undefined, index - 1);
 				} else {
-					this.SetPosition(index)
+					this.SetPosition(index);
 				}
 				break;
+			}
+			case "xlDataField":
 			case "Values":
 				this.table.pivot.asc_moveToDataField(this.table.api, this.index, undefined, index - 1);
 				break;
+			case "xlHidden":
 			case "Hidden":
 				this.Remove();
 				break;
-			default:
-				const fields = this.table.pivot.getAxisFields(this.pivotField.axis);
+			default: {
+				const fields = this.table.pivot.getAxisFields(this._getAxis());
 				if (fields) {
 					let indexFrom = null;
 					for (let i = 0; i < fields.length; i += 1) {
@@ -18054,6 +18332,7 @@
 					private_MakeError("Field is hidden.");
 				}
 				break;
+			}
 		}
 	};
 	/**
@@ -18079,7 +18358,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetPosition.js
 	 */
 	ApiPivotField.prototype.GetPosition = function () {
-		const fields = this.table.pivot.getAxisFields(this.pivotField.axis);
+		const fields = this.table.pivot.getAxisFields(this._getAxis());
 		if (fields) {
 			for (let i = 0; i < fields.length; i += 1) {
 				if (fields[i].asc_getIndex() === this.index) {
@@ -18104,14 +18383,15 @@
 	 */
 	ApiPivotField.prototype.SetPosition = function (position) {
 		if (typeof position == "number") {
-			if (this.pivotField.axis === null) {
+			const axis = this._getAxis();
+			if (axis === null) {
 				private_MakeError('The field is hidden.\n' +
 					'If you need to set the position of the data field then use ApiPivotDataField.SetPosition.\n' +
 					'See ApiPivotTable.GetDataFields or ApiPivotTable.GetPivotFields with dataField identifier to get ' +
 					'ApiPivotDataField object');
 				return;
 			}
-			if (!this.table.pivot.moveFieldInAxis(this.table.api, this.index, this.pivotField.axis, position - 1)) {
+			if (!this.table.pivot.moveFieldInAxis(this.table.api, this.index, axis, position - 1)) {
 				private_MakeError('Invalid position (out of range or the same).')
 			}
 		} else {
@@ -18138,6 +18418,9 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetOrientation.js
 	 */
 	ApiPivotField.prototype.GetOrientation = function () {
+		if (!this.pivotField) {
+			return this.table.pivot.dataOnRows ? "Rows" : "Columns";
+		}
 		if (this.pivotField.axis === Asc.c_oAscAxis.AxisRow) {
 			return "Rows";
 		} else if (this.pivotField.axis === Asc.c_oAscAxis.AxisCol) {
@@ -18163,29 +18446,32 @@
 	ApiPivotField.prototype.SetOrientation = function (type) {
 		switch (type) {
 			case "xlRowField":
-			case "Rows":
-				if (this.pivotField.axis !== Asc.c_oAscAxis.AxisRow) {
+			case "Rows": {
+				if (this._getAxis() !== Asc.c_oAscAxis.AxisRow) {
 					this.table.pivot.asc_moveToRowField(this.table.api, this.index);
 				} else {
-					private_MakeError('The field already has that orientation.')
+					private_MakeError('The field already has that orientation.');
 				}
 				break;
+			}
 			case "xlColumnField":
-			case "Columns":
-				if (this.pivotField.axis !== Asc.c_oAscAxis.AxisCol) {
+			case "Columns": {
+				if (this._getAxis() !== Asc.c_oAscAxis.AxisCol) {
 					this.table.pivot.asc_moveToColField(this.table.api, this.index);
 				} else {
-					private_MakeError('The field already has that orientation.')
+					private_MakeError('The field already has that orientation.');
 				}
 				break;
+			}
 			case "xlPageField":
-			case "Filters":
-				if (this.pivotField.axis !== Asc.c_oAscAxis.AxisPage) {
+			case "Filters": {
+				if (this._getAxis() !== Asc.c_oAscAxis.AxisPage) {
 					this.table.pivot.asc_moveToPageField(this.table.api, this.index);
 				} else {
-					private_MakeError('The field already has that orientation.')
+					private_MakeError('The field already has that orientation.');
 				}
 				break;
+			}
 			case "xlDataField":
 			case "Values":
 				this.table.pivot.asc_moveToDataField(this.table.api, this.index);
@@ -18281,6 +18567,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetName.js
 	 */
 	ApiPivotField.prototype.GetName = function () {
+		if (!this.pivotField) return AscCommonExcel.DATA_CAPTION;
 		return this.pivotField.asc_getName() || this.GetSourceName();
 	};
 
@@ -18293,6 +18580,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/SetName.js
 	 */
 	ApiPivotField.prototype.SetName = function (name) {
+		if (!this.pivotField) return;
 		if (typeof name === 'string' && name.length > 0) {
 			const field = new Asc.CT_PivotField();
 			field.asc_setName(name);
@@ -18393,6 +18681,7 @@
 	 */
 	ApiPivotField.prototype.GetLayoutCompactRow = function () {
 		const pivField = this.table.pivot.asc_getPivotFields()[this.index];
+		if (!pivField) return null;
 		return (pivField.asc_getOutline() && pivField.asc_getCompact());
 	};
 
@@ -18405,9 +18694,10 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/SetLayoutCompactRow.js
 	 */
 	ApiPivotField.prototype.SetLayoutCompactRow = function (compact) {
+		const pivField = this.table.pivot.asc_getPivotFields()[this.index];
+		if (!pivField) return;
 		if (typeof compact == "boolean") {
 			const field = new Asc.CT_PivotField();
-			const pivField = this.table.pivot.asc_getPivotFields()[this.index];
 			field.asc_setCompact( (pivField.asc_getOutline() && compact) );
 			pivField.asc_set(this.table.api, this.table.pivot, this.index, field);
 		} else {
@@ -18438,6 +18728,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetLayoutForm.js
 	 */
 	ApiPivotField.prototype.GetLayoutForm = function () {
+		if (!this.pivotField) return null;
 		return this.pivotField.asc_getOutline() ? "Outline" : "Tabular";
 	};
 
@@ -18450,6 +18741,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/SetLayoutForm.js
 	 */
 	ApiPivotField.prototype.SetLayoutForm = function (type) {
+		if (!this.pivotField) return;
 		if (type === "Tabular" || type === "Outline") {
 			const newField = new Asc.CT_PivotField();
 			newField.asc_setOutline(type === "Outline");
@@ -18477,6 +18769,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetLayoutPageBreak.js
 	 */
 	ApiPivotField.prototype.GetLayoutPageBreak = function () {
+		if (!this.pivotField) return null;
 		return this.pivotField.insertPageBreak;
 	};
 
@@ -18489,6 +18782,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/SetLayoutPageBreak.js
 	 */
 	ApiPivotField.prototype.SetLayoutPageBreak = function (insert) {
+		if (!this.pivotField) return;
 		if ( typeof insert == "boolean") {
 			this.pivotField.insertPageBreak = insert;
 		} else {
@@ -18514,6 +18808,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetShowingInAxis.js
 	 */
 	ApiPivotField.prototype.GetShowingInAxis = function () {
+		if (!this.pivotField) return true;
 		return this.pivotField.showingInAxis();
 	};
 
@@ -18532,6 +18827,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetRepeatLabels.js
 	 */
 	ApiPivotField.prototype.GetRepeatLabels = function () {
+		if (!this.pivotField) return null;
 		return this.pivotField.asc_getFillDownLabelsDefault();
 	};
 
@@ -18544,6 +18840,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/SetRepeatLabels.js
 	 */
 	ApiPivotField.prototype.SetRepeatLabels = function (repeat) {
+		if (!this.pivotField) return;
 		if (typeof repeat == "boolean") {
 			const field = new Asc.CT_PivotField();
 			field.asc_setFillDownLabelsDefault(repeat);
@@ -18571,6 +18868,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetLayoutBlankLine.js
 	 */
 	ApiPivotField.prototype.GetLayoutBlankLine = function () {
+		if (!this.pivotField) return null;
 		return this.pivotField.asc_getInsertBlankRow();
 	};
 
@@ -18583,6 +18881,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/SetLayoutBlankLine.js
 	 */
 	ApiPivotField.prototype.SetLayoutBlankLine = function (insert) {
+		if (!this.pivotField) return;
 		if (typeof insert == "boolean") {
 			const field = new Asc.CT_PivotField();
 			field.asc_setInsertBlankRow(insert);
@@ -18610,6 +18909,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetShowAllItems.js
 	 */
 	ApiPivotField.prototype.GetShowAllItems = function () {
+		if (!this.pivotField) return null;
 		return this.pivotField.asc_getShowAll();
 	};
 
@@ -18622,6 +18922,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/SetShowAllItems.js
 	 */
 	ApiPivotField.prototype.SetShowAllItems = function (show) {
+		if (!this.pivotField) return;
 		if (typeof show == "boolean") {
 			const field = new Asc.CT_PivotField();
 			field.asc_setShowAll(show);
@@ -18649,6 +18950,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetLayoutSubtotals.js
 	 */
 	ApiPivotField.prototype.GetLayoutSubtotals = function () {
+		if (!this.pivotField) return null;
 		return this.pivotField.asc_getDefaultSubtotal();
 	};
 
@@ -18661,6 +18963,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/SetLayoutSubtotals.js
 	 */
 	ApiPivotField.prototype.SetLayoutSubtotals = function (show) {
+		if (!this.pivotField) return;
 		if (typeof show == "boolean") {
 			const field = new Asc.CT_PivotField();
 			field.asc_setDefaultSubtotal(show);
@@ -18693,6 +18996,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetLayoutSubtotalLocation.js
 	 */
 	ApiPivotField.prototype.GetLayoutSubtotalLocation = function () {
+		if (!this.pivotField) return null;
 		return ( this.pivotField.asc_getSubtotalTop() ? "Top" : "Bottom" );
 	};
 
@@ -18705,6 +19009,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/SetLayoutSubtotalLocation.js
 	 */
 	ApiPivotField.prototype.SetLayoutSubtotalLocation = function (type) {
+		if (!this.pivotField) return;
 		if (typeof type == "string" && ( type == "Top" || type == "Bottom")) {
 			const field = new Asc.CT_PivotField();
 			field.asc_setSubtotalTop( (type == "Top") );
@@ -18732,6 +19037,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetSubtotalName.js
 	 */
 	ApiPivotField.prototype.GetSubtotalName = function () {
+		if (!this.pivotField) return null;
 		return (this.pivotField.subtotalCaption);
 	};
 
@@ -18744,6 +19050,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/SetSubtotalName.js
 	 */
 	ApiPivotField.prototype.SetSubtotalName = function (caption) {
+		if (!this.pivotField) return;
 		if ( typeof caption == "string") {
 			const field = new Asc.CT_PivotField();
 			field.subtotalCaption = caption.trim();
@@ -18787,6 +19094,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetSubtotals.js
 	 */
 	ApiPivotField.prototype.GetSubtotals = function () {
+		if (!this.pivotField) return null;
 		const res = {
 			'Sum': false,
 			'Count': false,
@@ -18852,6 +19160,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/SetSubtotals.js
 	 */
 	ApiPivotField.prototype.SetSubtotals = function (subtotals) {
+			if (!this.pivotField) return;
 			if (typeof subtotals == "object") {
 				const field = new Asc.CT_PivotField();
 				const arr = [];
@@ -18917,6 +19226,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetDragToColumn.js
 	 */
 	ApiPivotField.prototype.GetDragToColumn = function () {
+		if (!this.pivotField) return true;
 		return this.pivotField.dragToCol;
 	};
 
@@ -18929,6 +19239,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/SetDragToColumn.js
 	 */
 	ApiPivotField.prototype.SetDragToColumn = function (flag) {
+		if (!this.pivotField) return;
 		if (typeof flag == "boolean") {
 			this.pivotField.dragToCol = flag;
 		} else {
@@ -18954,6 +19265,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetDragToRow.js
 	 */
 	ApiPivotField.prototype.GetDragToRow = function () {
+		if (!this.pivotField) return true;
 		return this.pivotField.dragToRow;
 	};
 
@@ -18966,6 +19278,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/SetDragToRow.js
 	 */
 	ApiPivotField.prototype.SetDragToRow = function (flag) {
+		if (!this.pivotField) return;
 		if (typeof flag == "boolean") {
 			this.pivotField.dragToRow = flag;
 		} else {
@@ -18991,6 +19304,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetDragToData.js
 	 */
 	ApiPivotField.prototype.GetDragToData = function () {
+		if (!this.pivotField) return null;
 		return this.pivotField.dragToData;
 	};
 
@@ -19003,6 +19317,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/SetDragToData.js
 	 */
 	ApiPivotField.prototype.SetDragToData = function (flag) {
+		if (!this.pivotField) return;
 		if (typeof flag == "boolean") {
 			this.pivotField.dragToData = flag;
 		} else {
@@ -19028,6 +19343,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetDragToPage.js
 	 */
 	ApiPivotField.prototype.GetDragToPage = function () {
+		if (!this.pivotField) return false;
 		return this.pivotField.dragToPage;
 	};
 
@@ -19040,6 +19356,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/SetDragToPage.js
 	 */
 	ApiPivotField.prototype.SetDragToPage = function (flag) {
+		if (!this.pivotField) return;
 		if (typeof flag == "boolean") {
 			this.pivotField.dragToPage = flag;
 		} else {
@@ -19065,6 +19382,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiPivotField/Methods/GetCurrentPage.js
 	 */
 	ApiPivotField.prototype.GetCurrentPage = function () {
+		if (!this.pivotField) return null;
 		const pageFields = this.table.pivot.asc_getPageFields();
 		const t = this;
 		const pageIndex = pageFields.findIndex(function(pageField) {
@@ -20038,7 +20356,7 @@
 		worksheet.dataValidations.deleteMassValidations(this.validations, worksheet, rangeBbox, true);
 		
 
-		// Очищаем ссылку на validation
+		// Clear the reference to validation
 		this.validations = [];
 		return this;
 	};
@@ -20423,7 +20741,7 @@
 		return this.range;
 	};
 
-	// Property implementations с использованием новых методов
+	// Property implementations using new methods
 	Object.defineProperty(ApiValidation.prototype, "Type", {
 		get: function() {
 			return this.GetType();
@@ -20541,8 +20859,8 @@
 	/**
 	 * The conditional formatting type.
 	 * @typedef {("xlCellValue" | "xlExpression" | "xlTop10" | "xlAboveAverageCondition" |
-	 * "xlUniqueValues" | "xlTextString" | "xlBlanksCondition" | "xlTimePeriod" | "xlErrorsCondition" |
-	 * "xlNoErrorsCondition" | "xlColorScale" | "xlDatabar" | "xlIconSets")} XlFormatConditionType
+	 * "xlUniqueValues" | "xlTextString" | "xlBlanksCondition" | "xlNoBlanksCondition" | "xlTimePeriod" | "xlErrorsCondition" |
+	 * "xlNoErrorsCondition" | "xlColorScale" | "xlDataBar" | "xlIconSet")} XlFormatConditionType
 	 */
 
 	/**
@@ -20607,6 +20925,9 @@
 			case "xlBlanksCondition":
 				nType = Asc.ECfType.containsBlanks;
 				break;
+			case "xlNoBlanksCondition":
+				nType = Asc.ECfType.notContainsBlanks;
+				break;
 			case "xlTimePeriod":
 				nType = Asc.ECfType.timePeriod;
 				break;
@@ -20619,9 +20940,11 @@
 			case "xlColorScale":
 				nType = Asc.ECfType.colorScale;
 				break;
+			case "xlDataBar":
 			case "xlDatabar":
 				nType = Asc.ECfType.dataBar;
 				break;
+			case "xlIconSet":
 			case "xlIconSets":
 				nType = Asc.ECfType.iconSet;
 				break;
@@ -20656,6 +20979,9 @@
 			case Asc.ECfType.containsBlanks:
 				sType = "xlBlanksCondition";
 				break;
+			case Asc.ECfType.notContainsBlanks:
+				sType = "xlNoBlanksCondition";
+				break;
 			case Asc.ECfType.timePeriod:
 				sType = "xlTimePeriod";
 				break;
@@ -20669,10 +20995,10 @@
 				sType = "xlColorScale";
 				break;
 			case Asc.ECfType.dataBar:
-				sType = "xlDatabar";
+				sType = "xlDataBar";
 				break;
 			case Asc.ECfType.iconSet:
-				sType = "xlIconSets";
+				sType = "xlIconSet";
 				break;
 		}
 		return sType;
@@ -20960,14 +21286,15 @@
 				props.asc_setAboveAverage(true);
 				props.asc_setEqualAverage(false);
 				props.asc_setStdDev(0);
-				// Operator может переопределить настройки
+				// Operator can override settings
 				if (Operator !== undefined) {
-					// Здесь можно добавить логику для различных типов above/below average
+					// Logic for various above/below average types can be added here
 				}
 				break;
 
 			case Asc.ECfType.duplicateValues:
 			case Asc.ECfType.containsBlanks:
+			case Asc.ECfType.notContainsBlanks:
 
 				if (Operator !== undefined) {
 					let specificType = FromXlFormatConditionOperatorTo(Operator);
@@ -21041,7 +21368,7 @@
 		}
 
 		if (internalType === Asc.ECfType.containsText || internalType === Asc.ECfType.containsBlanks ||
-			internalType === Asc.ECfType.duplicateValues || internalType === Asc.ECfType.timePeriod ||
+			internalType === Asc.ECfType.notContainsBlanks || internalType === Asc.ECfType.duplicateValues || internalType === Asc.ECfType.timePeriod ||
 			internalType === Asc.ECfType.aboveAverage || internalType === Asc.ECfType.top10 ||
 			internalType === Asc.ECfType.cellIs || internalType === Asc.ECfType.expression) {
 			props.dxf = new window['AscCommonExcel'].CellXfs();
@@ -22746,7 +23073,7 @@
 			return null;
 		}
 
-		// DateOperator применяется только для условий типа xlTimePeriod
+		// DateOperator applies only to xlTimePeriod type conditions
 		if (this.rule.type !== Asc.ECfType.timePeriod) {
 			return null;
 		}
@@ -22767,7 +23094,7 @@
 			return;
 		}
 
-		// DateOperator применяется только для условий типа xlTimePeriod
+		// DateOperator applies only to xlTimePeriod type conditions
 		if (this.rule.type !== Asc.ECfType.timePeriod) {
 			return;
 		}
@@ -22832,34 +23159,47 @@
 				newRule.dxf.border.initDefault();
 			}
 
+			if (typeof bordersIndex === 'string') {
+				bordersIndex = bordersIndex.toLowerCase();
+			}
 			var borders = newRule.dxf.border;
 			switch (bordersIndex) {
-				case 'DiagonalDown':
+				case 'diagonaldown':
 					borders.dd = true;
 					borders.d = private_MakeBorder(lineStyle, oColor);
 					break;
-				case 'DiagonalUp':
+				case 'diagonalup':
 					borders.du = true;
 					borders.d = private_MakeBorder(lineStyle, oColor);
 					break;
-				case 'Bottom':
+				case 'bottom':
 					borders.b = private_MakeBorder(lineStyle, oColor);
 					break;
-				case 'Left':
+				case 'left':
 					borders.l = private_MakeBorder(lineStyle, oColor);
 					break;
-				case 'Right':
+				case 'right':
 					borders.r = private_MakeBorder(lineStyle, oColor);
 					break;
-				case 'Top':
+				case 'top':
 					borders.t = private_MakeBorder(lineStyle, oColor);
 					break;
-				case 'InsideHorizontal':
+				case 'insidehorizontal':
 					borders.ih = private_MakeBorder(lineStyle, oColor);
 					break;
-				case 'InsideVertical':
+				case 'insidevertical':
 					borders.iv = private_MakeBorder(lineStyle, oColor);
 					break;
+				case 'all': {
+					var border = private_MakeBorder(lineStyle, oColor);
+					borders.b = border;
+					borders.l = border;
+					borders.r = border;
+					borders.t = border;
+					borders.ih = border;
+					borders.iv = border;
+					break;
+				}
 			}
 		}, true);
 	};
@@ -22987,7 +23327,7 @@
 	// 		return 0; // xlAllValues
 	// 	}
 	//
-	// 	// Возвращаем значение области расчета для сводных таблиц
+	// 	// Return the calculation scope value for pivot tables
 	// 	return this.rule.pivot.calcFor || 0;
 	// };
 
@@ -24787,7 +25127,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiDatabar/Methods/GetType.js
 	 */
 	ApiDatabar.prototype.GetType = function() {
-		return "xlDatabar";
+		return "xlDataBar";
 	};
 
 	Object.defineProperty(ApiDatabar.prototype, "Type", {
@@ -25591,7 +25931,7 @@
 	 * @see office-js-api/Examples/{Editor}/ApiIconSetCondition/Methods/GetType.js
 	 */
 	ApiIconSetCondition.prototype.GetType = function() {
-		return "xlIconSets";
+		return "xlIconSet";
 	};
 
 	Object.defineProperty(ApiIconSetCondition.prototype, "Type", {
@@ -26527,7 +26867,7 @@
 			return;
 		}
 
-		// Создаем или обновляем iconSet
+		// Create or update iconSet
 		if (!this.iconSet) {
 			this.iconSet = new window['AscCommonExcel'].CConditionalFormatIconSet();
 		}
@@ -26535,12 +26875,12 @@
 		this.iconSet.asc_setIconSet(iconData.iconSetType);
 		this.iconSet.asc_setIndex(iconData.iconIndex);
 
-		// Обновляем правило через parent
+		// Update the rule through parent
 		let t = this;
 		this.parent.private_changeStyle(function (newRule) {
 			let iconSetElement = newRule.aRuleElements && newRule.aRuleElements[0];
 			if (iconSetElement && iconSetElement.aIconSets) {
-				// Убеждаемся что массив достаточно большой
+				// Make sure the array is large enough
 				while (iconSetElement.aIconSets.length <= t.index) {
 					iconSetElement.aIconSets.push(new window['AscCommonExcel'].CConditionalFormatIconSet());
 				}
@@ -27366,9 +27706,17 @@
      * @property {ApiWorksheet} Parent - Returns the ApiWorksheet object that contains the AutoFilter.
      * @property {ApiRange | null} Range - Returns the ApiRange object that represents the AutoFilter range; null if no AutoFilter is defined.
      */
-    function ApiAutoFilter(ws) {
+    function ApiAutoFilter(ws, listObject) {
         this.ws = ws;
+        this.listObject = listObject || null;
     }
+
+    ApiAutoFilter.prototype._getAutoFilter = function () {
+        if (this.listObject) {
+            return this.listObject.tablePart.AutoFilter || null;
+        }
+        return this.ws && this.ws.worksheet && this.ws.worksheet.AutoFilter || null;
+    };
 
     /**
      * Reapplies the AutoFilter to the worksheet using the existing filter criteria.
@@ -27385,9 +27733,13 @@
      */
     ApiAutoFilter.prototype.ApplyFilter = function () {
         if (this.GetFilterMode()) {
-            const Id = this.ws.worksheet.Id;
-            if (Id) {
-                this.ws.worksheet.workbook.oApi.asc_reapplyAutoFilter(null, Id);
+            if (this.listObject) {
+                this.ws.worksheet.autoFilters.reapplyAutoFilter(this.listObject.tablePart.DisplayName);
+            } else {
+                const Id = this.ws.worksheet.Id;
+                if (Id) {
+                    this.ws.worksheet.workbook.oApi.asc_reapplyAutoFilter(null, Id);
+                }
             }
         }
     };
@@ -27407,13 +27759,13 @@
      */
     ApiAutoFilter.prototype.ShowAllData = function () {
         if (this.GetFilterMode()) {
-            // const localWs = this.ws.worksheet;
-            // var bbox = localWs.AutoFilter.Ref;
-            // localWs.autoFilters.deleteAutoFilter(bbox);
-            // localWs.autoFilters.addAutoFilter(null, bbox);
-            const Id = this.ws.worksheet.Id;
-            if (Id) {
-                this.ws.worksheet.workbook.oApi.asc_clearFilter(Id);
+            if (this.listObject) {
+                this.ws.worksheet.autoFilters.isApplyAutoFilterInCell(this.listObject.tablePart.Ref, true);
+            } else {
+                const Id = this.ws.worksheet.Id;
+                if (Id) {
+                    this.ws.worksheet.workbook.oApi.asc_clearFilter(Id);
+                }
             }
         }
     };
@@ -27426,14 +27778,8 @@
      * @see office-js-api/Examples/{Editor}/ApiAutoFilter/Methods/GetFilters.js
      */
     ApiAutoFilter.prototype.GetFilters = function () {
-        const cols =
-            this.ws &&
-            this.ws.worksheet &&
-            this.ws.worksheet.AutoFilter &&
-            this.ws.worksheet.AutoFilter.FilterColumns
-                ? this.ws.worksheet.AutoFilter.FilterColumns
-                : [];
-
+        var af = this._getAutoFilter();
+        var cols = af && af.FilterColumns ? af.FilterColumns : [];
         return createAutoFilterArray(this, cols);
     };
 
@@ -27451,7 +27797,7 @@
      * @see office-js-api/Examples/{Editor}/ApiAutoFilter/Methods/GetFilterMode.js
      */
     ApiAutoFilter.prototype.GetFilterMode = function () {
-        return !!(this.ws && this.ws.worksheet && this.ws.worksheet.AutoFilter);
+        return !!this._getAutoFilter();
     };
 
     Object.defineProperty(ApiAutoFilter.prototype, "FilterMode", {
@@ -27468,7 +27814,7 @@
      * @see office-js-api/Examples/{Editor}/ApiAutoFilter/Methods/GetParent.js
      */
     ApiAutoFilter.prototype.GetParent = function () {
-        return this.ws;
+        return this.listObject || this.ws;
     };
 
     Object.defineProperty(ApiAutoFilter.prototype, "Parent", {
@@ -27485,17 +27831,11 @@
      * @see office-js-api/Examples/{Editor}/ApiAutoFilter/Methods/GetRange.js
      */
     ApiAutoFilter.prototype.GetRange = function () {
-        if (
-            !this.ws ||
-            !this.ws.worksheet ||
-            !this.ws.worksheet.AutoFilter ||
-            !this.ws.worksheet.AutoFilter.Ref
-        ) {
+        var af = this._getAutoFilter();
+        if (!af || !af.Ref) {
             return null;
         }
-
-        var bbox = this.ws.worksheet.AutoFilter.Ref;
-        return new ApiRange(AscCommonExcel.Range.prototype.createFromBBox(this.ws.worksheet, bbox));
+        return new ApiRange(AscCommonExcel.Range.prototype.createFromBBox(this.ws.worksheet, af.Ref));
     };
 
     Object.defineProperty(ApiAutoFilter.prototype, "Range", {
@@ -27867,6 +28207,12 @@
     ApiFilter.prototype["GetOperator"] = ApiFilter.prototype.GetOperator;
     ApiFilter.prototype["GetOn"] = ApiFilter.prototype.GetOn;
     ApiFilter.prototype["GetParent"] = ApiFilter.prototype.GetParent;
+
+
+
+
+
+
 
 	ApiRange.prototype["GetClassType"] = ApiRange.prototype.GetClassType;
 	ApiRange.prototype["GetRow"] = ApiRange.prototype.GetRow;
@@ -29242,8 +29588,26 @@
 	window['AscBuilder'] = window['AscBuilder'] || {};
 	
 	window['AscBuilder']["Cell"] = window['AscBuilder'].Cell = window['AscBuilder'].Cell || {};
-	AscBuilder.Cell["Api"] = AscBuilder.Cell.Api = Api;
-	
+	AscBuilder.Cell["Api"]            = AscBuilder.Cell.Api            = Api;
+	AscBuilder.Cell["ApiColor"]       = AscBuilder.Cell.ApiColor       = ApiColor;
+	AscBuilder.Cell["ApiDrawing"]     = AscBuilder.Cell.ApiDrawing     = ApiDrawing;
+	AscBuilder.Cell["ApiShape"]       = AscBuilder.Cell.ApiShape       = ApiShape;
+	AscBuilder.Cell["ApiImage"]       = AscBuilder.Cell.ApiImage       = ApiImage;
+	AscBuilder.Cell["ApiGroup"]       = AscBuilder.Cell.ApiGroup       = ApiGroup;
+	AscBuilder.Cell["ApiSmartArt"]    = AscBuilder.Cell.ApiSmartArt    = ApiSmartArt;
+	AscBuilder.Cell["ApiOleObject"]   = AscBuilder.Cell.ApiOleObject   = ApiOleObject;
+	AscBuilder.Cell["ApiChart"]       = AscBuilder.Cell.ApiChart       = ApiChart;
+	AscBuilder.Cell["ApiWorksheet"]   = AscBuilder.Cell.ApiWorksheet   = ApiWorksheet;
+	AscBuilder.Cell["ApiRange"]       = AscBuilder.Cell.ApiRange       = ApiRange;
+	AscBuilder.Cell["ApiName"]        = AscBuilder.Cell.ApiName        = ApiName;
+	AscBuilder.Cell["ApiAutoFilter"]  = AscBuilder.Cell.ApiAutoFilter  = ApiAutoFilter;
+	AscBuilder.Cell["ApiPivotTable"]             = AscBuilder.Cell.ApiPivotTable             = ApiPivotTable;
+	AscBuilder.Cell["ApiPivotField"]             = AscBuilder.Cell.ApiPivotField             = ApiPivotField;
+	AscBuilder.Cell["ApiPivotDataField"]         = AscBuilder.Cell.ApiPivotDataField         = ApiPivotDataField;
+	AscBuilder.Cell["ApiPivotItem"]              = AscBuilder.Cell.ApiPivotItem              = ApiPivotItem;
+	AscBuilder.Cell["ApiPivotFilters"]           = AscBuilder.Cell.ApiPivotFilters           = ApiPivotFilters;
+	AscBuilder.Cell["ApiWorkbook"]               = AscBuilder.Cell.ApiWorkbook               = ApiWorkbook;
+
 	AscBuilder.Cell.init = function()
 	{
 		AscBuilder.ApiDrawing   = ApiDrawing;

@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -709,7 +712,7 @@ function (window, undefined) {
 				if (pMat1[i][j] && pMat2[i][j]) {
 					bEmpty = false;
 
-					//MS выдает ошибку только если первый элемент строка. LO - если любой.
+					//MS throws an error only if the first element is a string. LO - if any element is.
 					if (i === 0 && j === 0 && cElementType.string === pMat1[i][j].type) {
 						return new cError(cErrorType.division_by_zero);
 					}
@@ -1855,7 +1858,7 @@ function (window, undefined) {
 	}
 
 	function prepeareGrowthTrendCalculation(t, arg) {
-		//если первое значение число
+		//if first value is number
 		arg[0] = tryNumberToArray(arg[0]);
 		if (arg[1]) {
 			arg[1] = tryNumberToArray(arg[1]);
@@ -3913,6 +3916,7 @@ function (window, undefined) {
 	cAVEDEV.prototype.argumentsMin = 1;
 	cAVEDEV.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cAVEDEV.prototype.argumentsType = [[argType.number]];
+	cAVEDEV.prototype.enabledToSingle = {"*": true};
 	cAVEDEV.prototype.Calculate = function (arg) {
 		var count = 0, sum = new cNumber(0), arrX = [], i;
 		for (i = 0; i < arg.length; i++) {
@@ -3976,6 +3980,7 @@ function (window, undefined) {
 	cAVERAGE.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cAVERAGE.prototype.inheritFormat = true;
 	cAVERAGE.prototype.argumentsType = [[argType.number]];
+	cAVERAGE.prototype.enabledToSingle = {"*": true};
 	cAVERAGE.prototype.Calculate = function (arg) {
 		var count = 0, sum = new cNumber(0);
 		for (var i = 0; i < arg.length; i++) {
@@ -4046,6 +4051,7 @@ function (window, undefined) {
 	cAVERAGEA.prototype.argumentsMin = 1;
 	cAVERAGEA.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cAVERAGEA.prototype.argumentsType = [[argType.number]];
+	cAVERAGEA.prototype.enabledToSingle = {"*": true};
 	cAVERAGEA.prototype.Calculate = function (arg) {
 		var count = 0, sum = new cNumber(0);
 		for (var i = 0; i < arg.length; i++) {
@@ -4114,6 +4120,7 @@ function (window, undefined) {
 	cAVERAGEIF.prototype.arrayIndexes = {0: 1, 2: 1};
 	cAVERAGEIF.prototype.exactTypes = {0: 1, 2: 1};
 	cAVERAGEIF.prototype.argumentsType = [argType.reference, argType.any, argType.reference];
+	cAVERAGEIF.prototype.enabledToSingle = {"0": true, "2": true};
 	cAVERAGEIF.prototype.Calculate = function (arg) {
 		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2] ? arg[2] : arg[0], _sum = 0, _count = 0, matchingInfo, ws;
 		if ((cElementType.cell !== arg0.type && cElementType.cell3D !== arg0.type && cElementType.cellsRange !==
@@ -4222,6 +4229,7 @@ function (window, undefined) {
 	};
 	cAVERAGEIFS.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.area_to_ref;
 	cAVERAGEIFS.prototype.argumentsType = [argType.reference, [argType.reference, argType.any]];
+	cAVERAGEIFS.prototype.enabledToSingle = {"arg0orOdd": true};
 	cAVERAGEIFS.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 		if (cElementType.cell !== arg0.type && cElementType.cell3D !== arg0.type &&
@@ -4882,17 +4890,18 @@ function (window, undefined) {
 	cCHITEST.prototype.argumentsMax = 2;
 	cCHITEST.prototype.arrayIndexes = {0: 1, 1: 1};
 	cCHITEST.prototype.argumentsType = [argType.array, argType.array];
+	cCHITEST.prototype.enabledToSingle = {"0": true, "1": true};
 	cCHITEST.prototype.Calculate = function (arg) {
 
 		var arg2 = [arg[0], arg[1]];
-		//если первое или второе значение строка
+		//if first or second value is string
 		if (cElementType.string === arg[0].type || cElementType.bool === arg[0].type) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 		if (cElementType.string === arg[1].type || cElementType.bool === arg[1].type) {
 			return new cError(cErrorType.wrong_value_type);
 		}
-		//если первое или второе значение число
+		//if first or second value is number
 		if (cElementType.number === arg[0].type) {
 			arg2[0] = new cArray();
 			arg2[0].addElement(arg[0]);
@@ -4934,6 +4943,7 @@ function (window, undefined) {
 	cCHISQ_TEST.prototype.name = 'CHISQ.TEST';
 	cCHISQ_TEST.prototype.isXLFN = true;
 	cCHISQ_TEST.prototype.argumentsType = [argType.array, argType.array];
+	cCHISQ_TEST.prototype.enabledToSingle = {"0": true, "1": true};
 
 	/**
 	 * @constructor
@@ -5058,6 +5068,7 @@ function (window, undefined) {
 	cCORREL.prototype.argumentsMax = 2;
 	cCORREL.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cCORREL.prototype.argumentsType = [argType.array, argType.array];
+	cCORREL.prototype.enabledToSingle = {"0": true, "1": true};
 	cCORREL.prototype.Calculate = function (arg) {
 
 		function correl(x, y) {
@@ -5140,6 +5151,7 @@ function (window, undefined) {
 	cCOUNT.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cCOUNT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cCOUNT.prototype.argumentsType = [[argType.number]];
+	cCOUNT.prototype.enabledToSingle = {"*": true};
 	cCOUNT.prototype.Calculate = function (arg) {
 		var count = 0;
 		for (var i = 0; i < arg.length; i++) {
@@ -5192,6 +5204,7 @@ function (window, undefined) {
 	cCOUNTA.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cCOUNTA.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cCOUNTA.prototype.argumentsType = [[argType.number]];
+	cCOUNTA.prototype.enabledToSingle = {"*": true};
 	cCOUNTA.prototype.Calculate = function (arg) {
 		var element, count = 0;
 		for (var i = 0; i < arg.length; i++) {
@@ -5240,6 +5253,7 @@ function (window, undefined) {
 	cCOUNTBLANK.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cCOUNTBLANK.prototype.arrayIndexes = {0: 1};
 	cCOUNTBLANK.prototype.argumentsType = [argType.reference];
+	cCOUNTBLANK.prototype.enabledToSingle = {"0": true};
 	cCOUNTBLANK.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
@@ -5267,6 +5281,7 @@ function (window, undefined) {
 	cCOUNTIF.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cCOUNTIF.prototype.arrayIndexes = {0: 1};
 	cCOUNTIF.prototype.argumentsType = [argType.reference, argType.any];
+	cCOUNTIF.prototype.enabledToSingle = {"0": true};
 	cCOUNTIF.prototype.Calculate = function (arg) {
 		return g_oCountIfCache.calculate(arg, arguments[1]);
 	};
@@ -5291,6 +5306,7 @@ function (window, undefined) {
 	};
 	cCOUNTIFS.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.area_to_ref;
 	cCOUNTIFS.prototype.argumentsType = [[argType.reference, argType.any]];
+	cCOUNTIFS.prototype.enabledToSingle = {"even": true};
 	cCOUNTIFS.prototype.Calculate = function (arg) {
 		let i, j, arg0, arg1, matchingInfo, arg0Matrix, arg1Matrix, _count = 0, argBaseDimension, argNextDimension;
 		let resArrayLength = 0;
@@ -5381,6 +5397,7 @@ function (window, undefined) {
 	cCOVAR.prototype.argumentsMax = 2;
 	cCOVAR.prototype.arrayIndexes = {0: 1, 1: 1};
 	cCOVAR.prototype.argumentsType = [argType.array, argType.array];
+	cCOVAR.prototype.enabledToSingle = {"0": true, "1": true};
 	cCOVAR.prototype.Calculate = function (arg) {
 
 		function covar(x, y) {
@@ -5457,17 +5474,18 @@ function (window, undefined) {
 	cCOVARIANCE_P.prototype.isXLFN = true;
 	cCOVARIANCE_P.prototype.arrayIndexes = {0: 1, 1: 1};
 	cCOVARIANCE_P.prototype.argumentsType = [argType.array, argType.array];
+	cCOVARIANCE_P.prototype.enabledToSingle = {"0": true, "1": true};
 	cCOVARIANCE_P.prototype.Calculate = function (arg) {
 
 		var arg2 = [arg[0], arg[1]];
-		//если первое или второе значение строка
+		//if first or second value is string
 		if (cElementType.string === arg[0].type || cElementType.bool === arg[0].type) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 		if (cElementType.string === arg[1].type || cElementType.bool === arg[1].type) {
 			return new cError(cErrorType.wrong_value_type);
 		}
-		//если первое или второе значение число
+		//if first or second value is number
 		if (cElementType.number === arg[0].type) {
 			arg2[0] = new cArray();
 			arg2[0].addElement(arg[0]);
@@ -5552,17 +5570,18 @@ function (window, undefined) {
 	cCOVARIANCE_S.prototype.isXLFN = true;
 	cCOVARIANCE_S.prototype.arrayIndexes = {0: 1, 1: 1};
 	cCOVARIANCE_S.prototype.argumentsType = [argType.array, argType.array];
+	cCOVARIANCE_S.prototype.enabledToSingle = {"0": true, "1": true};
 	cCOVARIANCE_S.prototype.Calculate = function (arg) {
 
 		var arg2 = [arg[0], arg[1]];
-		//если первое или второе значение строка
+		//if first or second value is string
 		if (cElementType.string === arg[0].type || cElementType.bool === arg[0].type) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 		if (cElementType.string === arg[1].type || cElementType.bool === arg[1].type) {
 			return new cError(cErrorType.wrong_value_type);
 		}
-		//если первое или второе значение число
+		//if first or second value is number
 		if (cElementType.number === arg[0].type) {
 			arg2[0] = new cArray();
 			arg2[0].addElement(arg[0]);
@@ -5731,6 +5750,7 @@ function (window, undefined) {
 	cDEVSQ.prototype.argumentsMin = 1;
 	cDEVSQ.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cDEVSQ.prototype.argumentsType = [[argType.number]];
+	cDEVSQ.prototype.enabledToSingle = {"*": true};
 	cDEVSQ.prototype.Calculate = function (arg) {
 
 		function devsq(x) {
@@ -6246,6 +6266,7 @@ function (window, undefined) {
 	cFORECAST.prototype.arrayIndexes = {1: 1, 2: 1};
 	cFORECAST.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cFORECAST.prototype.argumentsType = [argType.number, argType.array, argType.array];
+	cFORECAST.prototype.enabledToSingle = {"1": true, "2": true};
 	cFORECAST.prototype.Calculate = function (arg) {
 
 		function forecast(fx, y, x) {
@@ -6346,6 +6367,7 @@ function (window, undefined) {
 	cFORECAST_ETS.prototype.arrayIndexes = {1: 1, 2: 1};
 	cFORECAST_ETS.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cFORECAST_ETS.prototype.argumentsType = [argType.number, argType.reference, argType.reference, argType.number, argType.number, argType.number];
+	cFORECAST_ETS.prototype.enabledToSingle = {"1": true, "2": true};
 	cFORECAST_ETS.prototype.Calculate = function (arg) {
 
 		// The results of this function correspond to the results of LO, but differ from MS!!!
@@ -6435,8 +6457,9 @@ function (window, undefined) {
 	cFORECAST_ETS_CONFINT.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cFORECAST_ETS_CONFINT.prototype.argumentsType = [argType.number, argType.reference, argType.reference, argType.number, argType.number,
 		argType.number, argType.number];
+	cFORECAST_ETS_CONFINT.prototype.enabledToSingle = {"1": true, "2": true};
 	cFORECAST_ETS_CONFINT.prototype.Calculate = function (arg) {
-		//результаты данной фукнции соответсвуют результатам LO, но отличаются от MS!!!
+		//results of this function match LO results, but differ from MS!!!
 
 		let oArguments = this._prepareArguments(arg, arguments[1], true,
 			[null, cElementType.array, cElementType.array]);
@@ -6526,9 +6549,10 @@ function (window, undefined) {
 	cFORECAST_ETS_SEASONALITY.prototype.arrayIndexes = {0: 1, 1: 1};
 	cFORECAST_ETS_SEASONALITY.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cFORECAST_ETS_SEASONALITY.prototype.argumentsType = [argType.reference, argType.reference, argType.number, argType.number];
+	cFORECAST_ETS_SEASONALITY.prototype.enabledToSingle = {"0": true, "1": true};
 	cFORECAST_ETS_SEASONALITY.prototype.Calculate = function (arg) {
 
-		//результаты данной фукнции соответсвуют результатам LO, но отличаются от MS!!!
+		//results of this function match LO results, but differ from MS!!!
 		let oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, cElementType.array]);
 		let argClone = oArguments.args;
 
@@ -6583,6 +6607,7 @@ function (window, undefined) {
 	cFORECAST_ETS_STAT.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cFORECAST_ETS_STAT.prototype.argumentsType = [argType.reference, argType.reference, argType.number, argType.number,
 		argType.number, argType.number];
+	cFORECAST_ETS_STAT.prototype.enabledToSingle = {"0": true, "1": true};
 	cFORECAST_ETS_STAT.prototype.Calculate = function (arg) {
 
 		// The results of this function correspond to the results of LO, but differ from MS!!!
@@ -6649,6 +6674,7 @@ function (window, undefined) {
 	cFORECAST_LINEAR.prototype.name = 'FORECAST.LINEAR';
 	cFORECAST_LINEAR.prototype.isXLFN = true;
 	cFORECAST_LINEAR.prototype.argumentsType = [argType.number, argType.array, argType.array];
+	cFORECAST_LINEAR.prototype.enabledToSingle = {"1": true, "2": true};
 
 	/**
 	 * @constructor
@@ -6665,6 +6691,7 @@ function (window, undefined) {
 	cFREQUENCY.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cFREQUENCY.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cFREQUENCY.prototype.argumentsType = [argType.reference, argType.reference];
+	cFREQUENCY.prototype.enabledToSingle = {"0": true, "1": true};
 	cFREQUENCY.prototype.Calculate = function (arg) {
 
 		function frequency(A, B) {
@@ -6779,6 +6806,7 @@ function (window, undefined) {
 	cFTEST.prototype.argumentsMax = 2;
 	cFTEST.prototype.arrayIndexes = {0: 1, 1: 1};
 	cFTEST.prototype.argumentsType = [argType.array, argType.array];
+	cFTEST.prototype.enabledToSingle = {"0": true, "1": true};
 	/**
 	 * An F-test returns the two-tailed probability that the variances in array1 and array2 are not significantly different
 	 * 
@@ -6823,6 +6851,7 @@ function (window, undefined) {
 	cF_TEST.prototype.constructor = cF_TEST;
 	cF_TEST.prototype.isXLFN = true;
 	cF_TEST.prototype.name = 'F.TEST';
+	cF_TEST.prototype.enabledToSingle = {"0": true, "1": true};
 
 	/**
 	 * @constructor
@@ -7125,6 +7154,7 @@ function (window, undefined) {
 	cGEOMEAN.prototype.argumentsMin = 1;
 	cGEOMEAN.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cGEOMEAN.prototype.argumentsType = [[argType.number]];
+	cGEOMEAN.prototype.enabledToSingle = {"*": true};
 	cGEOMEAN.prototype.Calculate = function (arg) {
 
 		function geommean(x) {
@@ -7210,6 +7240,7 @@ function (window, undefined) {
 		}
 		return res;
 	};
+	cGROWTH.prototype.enabledToSingle = {"*": true};
 	cGROWTH.prototype.Calculate = function (arg) {
 		let prepeareArgs = prepeareGrowthTrendCalculation(this, arg);
 		if (cElementType.error === prepeareArgs.type) {
@@ -7258,6 +7289,7 @@ function (window, undefined) {
 	cHARMEAN.prototype.argumentsMin = 1;
 	cHARMEAN.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cHARMEAN.prototype.argumentsType = [[argType.number]];
+	cHARMEAN.prototype.enabledToSingle = {"*": true};
 	cHARMEAN.prototype.Calculate = function (arg) {
 
 		function harmmean(x) {
@@ -7476,6 +7508,7 @@ function (window, undefined) {
 	cINTERCEPT.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cINTERCEPT.prototype.arrayIndexes = {0: 1, 1: 1};
 	cINTERCEPT.prototype.argumentsType = [argType.array, argType.array];
+	cINTERCEPT.prototype.enabledToSingle = {"0": true, "1": true};
 	cINTERCEPT.prototype.Calculate = function (arg) {
 		function intercept(y, x) {
 
@@ -7594,6 +7627,7 @@ function (window, undefined) {
 	cKURT.prototype.argumentsMin = 1;
 	cKURT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cKURT.prototype.argumentsType = [[argType.number]];
+	cKURT.prototype.enabledToSingle = {"*": true};
 	cKURT.prototype.Calculate = function (arg) {
 
 		function kurt(x) {
@@ -7685,6 +7719,7 @@ function (window, undefined) {
 	cLARGE.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cLARGE.prototype.arrayIndexes = {0: 1};
 	cLARGE.prototype.argumentsType = [argType.number, argType.number];
+	cLARGE.prototype.enabledToSingle = {"0": true};
 	cLARGE.prototype._getValue = function (arg0, arg1) {
 		if (cElementType.error === arg1.type) {
 			return arg1;
@@ -7766,6 +7801,7 @@ function (window, undefined) {
 	cLINEST.prototype.argumentsMax = 4;
 	cLINEST.prototype.arrayIndexes = {0: 1, 1: 1};
 	cLINEST.prototype.argumentsType = [argType.reference, argType.reference, argType.logical, argType.logical];
+	cLINEST.prototype.enabledToSingle = {"*": true};
 	cLINEST.prototype.Calculate = function (arg) {
 		arg[0] = tryNumberToArray(arg[0]);
 		if (arg[1]) {
@@ -7788,7 +7824,7 @@ function (window, undefined) {
 		//return matrix [col][row]
 		let mat = CalculateRGPRKP(pMatY, pMatX, bConstant, bStats);
 
-		//TODO далее функцию необходимо отптимизировать и сразу формировать итоговую матрицу без промежуточного транспонирования
+		//TODO further optimize the function to directly form the final matrix without intermediate transposition
 		if (mat && mat[0] && mat[0][0] !== undefined) {
 			let tMatrix = [], res = new cArray();
 
@@ -7829,6 +7865,7 @@ function (window, undefined) {
 	cLOGEST.prototype.arrayIndexes = {0: 1, 1: 1};
 	cLOGEST.prototype.argumentsType = [argType.reference, argType.reference, argType.logical, argType.logical];
 	cLOGEST.prototype.numFormat = AscCommonExcel.cNumFormatNone;
+	cLOGEST.prototype.enabledToSingle = {"*": true};
 	cLOGEST.prototype.Calculate = function (arg) {
 
 		arg[0] = tryNumberToArray(arg[0]);
@@ -7855,7 +7892,7 @@ function (window, undefined) {
 		//return matrix [col][row]
 		let mat = CalculateRGPRKP(pMatY, pMatX, bConstant, bStats, true);
 
-		//TODO далее функцию необходимо отптимизировать и сразу формировать итоговую матрицу без промежуточного транспонирования
+		//TODO further optimize the function to directly form the final matrix without intermediate transposition
 		if (mat && mat[0] && mat[0][0] !== undefined) {	
 			for (let i = 0; i < mat.length; i++) {
 				for (let j = 0; j < mat[i].length; j++) {
@@ -8118,6 +8155,7 @@ function (window, undefined) {
 	cMAX.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cMAX.prototype.inheritFormat = true;
 	cMAX.prototype.argumentsType = [[argType.number]];
+	cMAX.prototype.enabledToSingle = {"*": true};
 	cMAX.prototype.Calculate = function (arg) {
 		var v, element, argIVal, max = Number.NEGATIVE_INFINITY;
 		for (var i = 0; i < arg.length; i++) {
@@ -8199,6 +8237,7 @@ function (window, undefined) {
 	cMAXA.prototype.argumentsMin = 1;
 	cMAXA.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cMAXA.prototype.argumentsType = [[argType.number]];
+	cMAXA.prototype.enabledToSingle = {"*": true};
 	cMAXA.prototype.Calculate = function (arg) {
 		var argI, argIVal, max = Number.NEGATIVE_INFINITY, v;
 		for (var i = 0; i < arg.length; i++) {
@@ -8288,6 +8327,7 @@ function (window, undefined) {
 		}
 		return index % 2 !== 0 ? 1 : undefined;
 	};
+	cMAXIFS.prototype.enabledToSingle = {"arg0orOdd": true};
 	cMAXIFS.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 		if (cElementType.cell !== arg0.type && cElementType.cell3D !== arg0.type &&
@@ -8346,7 +8386,7 @@ function (window, undefined) {
 				}
 				for (j = 0; j < arg1Matrix[i].length; ++j) {
 					if (arg0Matrix[i][j] && !AscCommonExcel.matching(arg1Matrix[i][j], matchingInfo)) {
-						//MS считает в данном случае, что значение 0 (из диапазона условий) соответсвует условию = ""
+						//MS considers in this case that value 0 (from the criteria range) matches the condition = ""
 						if (!(null === matchingInfo.op && "" === matchingInfo.val.value && 0 ===
 							arg1Matrix[i][j].value)) {
 							arg0Matrix[i][j] = null;
@@ -8401,6 +8441,7 @@ function (window, undefined) {
 		}
 		return index % 2 !== 0 ? 1 : undefined;
 	};
+	cMINIFS.prototype.enabledToSingle = {"arg0orOdd": true};
 	cMINIFS.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 		if (cElementType.cell !== arg0.type && cElementType.cell3D !== arg0.type &&
@@ -8459,7 +8500,7 @@ function (window, undefined) {
 				}
 				for (j = 0; j < arg1Matrix[i].length; ++j) {
 					if (arg0Matrix[i][j] && !AscCommonExcel.matching(arg1Matrix[i][j], matchingInfo)) {
-						//MS считает в данном случае, что значение 0 (из диапазона условий) соответсвует условию = ""
+						//MS considers in this case that value 0 (from the criteria range) matches the condition = ""
 						if (!(null === matchingInfo.op && "" === matchingInfo.val.value && 0 ===
 							arg1Matrix[i][j].value)) {
 							arg0Matrix[i][j] = null;
@@ -8508,6 +8549,7 @@ function (window, undefined) {
 	cMEDIAN.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cMEDIAN.prototype.inheritFormat = true;
 	cMEDIAN.prototype.argumentsType = [[argType.number]];
+	cMEDIAN.prototype.enabledToSingle = {"*": true};
 	cMEDIAN.prototype.Calculate = function (arg) {
 
 		function median(x) {
@@ -8583,6 +8625,7 @@ function (window, undefined) {
 	cMIN.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cMIN.prototype.inheritFormat = true;
 	cMIN.prototype.argumentsType = [[argType.number]];
+	cMIN.prototype.enabledToSingle = {"*": true};
 	cMIN.prototype.Calculate = function (arg) {
 		var v, element, argIVal, min = Number.POSITIVE_INFINITY;
 		for (var i = 0; i < arg.length; i++) {
@@ -8665,6 +8708,7 @@ function (window, undefined) {
 	cMINA.prototype.argumentsMin = 1;
 	cMINA.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cMINA.prototype.argumentsType = [[argType.number]];
+	cMINA.prototype.enabledToSingle = {"*": true};
 	cMINA.prototype.Calculate = function (arg) {
 		var argI, argIVal, min = Number.POSITIVE_INFINITY, v;
 		for (var i = 0; i < arg.length; i++) {
@@ -8749,6 +8793,7 @@ function (window, undefined) {
 	cMODE.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cMODE.prototype.inheritFormat = true;
 	cMODE.prototype.argumentsType = [[argType.array]];
+	cMODE.prototype.enabledToSingle = {"*": true};
 	cMODE.prototype.Calculate = function (arg) {
 		function mode(x) {
 
@@ -8836,13 +8881,14 @@ function (window, undefined) {
 	}
 
 	//***array-formula***
-	//TODO другое поведение для формул массива!!!
+	//TODO different behavior for array formulas!!!
 	cMODE_MULT.prototype = Object.create(cBaseFunction.prototype);
 	cMODE_MULT.prototype.constructor = cMODE_MULT;
 	cMODE_MULT.prototype.name = 'MODE.MULT';
 	cMODE_MULT.prototype.isXLFN = true;
 	cMODE_MULT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cMODE_MULT.prototype.argumentsType = [[argType.array]];
+	cMODE_MULT.prototype.enabledToSingle = {"*": true};
 	cMODE_MULT.prototype.Calculate = function (arg) {
 		function modeMult(numArray) {
 			if (numArray.length < 1) {
@@ -8916,6 +8962,7 @@ function (window, undefined) {
 	cMODE_SNGL.prototype.name = 'MODE.SNGL';
 	cMODE_SNGL.prototype.isXLFN = true;
 	cMODE_SNGL.prototype.argumentsType = [[argType.array]];
+	cMODE_SNGL.prototype.enabledToSingle = {"*": true};
 
 	/**
 	 * @constructor
@@ -9282,24 +9329,24 @@ function (window, undefined) {
 		}
 
 		var arg0 = arg[0];
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			arg0 = arg0.cross(arguments[1]);
 		}
 		arg0 = arg0.tocNumber();
-		if (arg0 instanceof cError) {
+		if (arg0.type === cElementType.error) {
 			return arg0;
-		} else if (arg0 instanceof cArray) {
+		} else if (arg0.type === cElementType.array) {
 			arg0.foreach(function (elem, r, c) {
-				if (elem instanceof cNumber) {
+				if (elem.type === cElementType.number) {
 					var a = normsinv(elem.getValue());
-					this.array[r][c] = isNaN(a) ? new cError(cErrorType.not_available) : new cNumber(a);
+					this.array[r][c] = (a.type === cElementType.error) ? a : (isNaN(a.getValue()) ? new cError(cErrorType.not_available) : a);
 				} else {
 					this.array[r][c] = new cError(cErrorType.wrong_value_type);
 				}
 			})
 		} else {
 			var a = normsinv(arg0.getValue());
-			return isNaN(a) ? new cError(cErrorType.not_available) : new cNumber(a);
+			return (a.type === cElementType.error) ? a : (isNaN(a.getValue()) ? new cError(cErrorType.not_available) : a);
 		}
 		return arg0;
 	};
@@ -9333,6 +9380,7 @@ function (window, undefined) {
 	cPEARSON.prototype.argumentsMax = 2;
 	cPEARSON.prototype.arrayIndexes = {0: 1, 1: 1};
 	cPEARSON.prototype.argumentsType = [argType.array, argType.array];
+	cPEARSON.prototype.enabledToSingle = {"0": true, "1": true};
 	cPEARSON.prototype.Calculate = function (arg) {
 
 		function pearson(x, y) {
@@ -9417,6 +9465,7 @@ function (window, undefined) {
 	cPERCENTILE.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cPERCENTILE.prototype.arrayIndexes = {0: 1};
 	cPERCENTILE.prototype.argumentsType = [argType.number, argType.number];
+	cPERCENTILE.prototype.enabledToSingle = {"0": true};
 	cPERCENTILE.prototype.Calculate = function (arg) {
 		function percentile(argArray) {
 
@@ -9467,6 +9516,7 @@ function (window, undefined) {
 	cPERCENTILE_EXC.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cPERCENTILE_EXC.prototype.arrayIndexes = {0: 1};
 	cPERCENTILE_EXC.prototype.argumentsType = [argType.number, argType.number];
+	cPERCENTILE_EXC.prototype.enabledToSingle = {"0": true};
 	cPERCENTILE_EXC.prototype.Calculate = function (arg) {
 		function percentile(argArray) {
 
@@ -9513,6 +9563,7 @@ function (window, undefined) {
 	cPERCENTILE_INC.prototype.name = 'PERCENTILE.INC';
 	cPERCENTILE_INC.prototype.isXLFN = true;
 	cPERCENTILE_INC.prototype.argumentsType = [argType.number, argType.number];
+	cPERCENTILE_INC.prototype.enabledToSingle = {"0": true};
 
 	/**
 	 * @constructor
@@ -9529,6 +9580,7 @@ function (window, undefined) {
 	cPERCENTRANK.prototype.argumentsMax = 3;
 	cPERCENTRANK.prototype.arrayIndexes = {0: 1};
 	cPERCENTRANK.prototype.argumentsType = [argType.number, argType.number, argType.number];
+	cPERCENTRANK.prototype.enabledToSingle = {"0": true};
 	cPERCENTRANK.prototype.Calculate = function (arg) {
 
 		var oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array]);
@@ -9580,6 +9632,7 @@ function (window, undefined) {
 	cPERCENTRANK_EXC.prototype.isXLFN = true;
 	cPERCENTRANK_EXC.prototype.arrayIndexes = {0: 1};
 	cPERCENTRANK_EXC.prototype.argumentsType = [argType.number, argType.number, argType.number];
+	cPERCENTRANK_EXC.prototype.enabledToSingle = {"0": true};
 	cPERCENTRANK_EXC.prototype.Calculate = function (arg) {
 
 		var oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array]);
@@ -9628,6 +9681,7 @@ function (window, undefined) {
 	cPERCENTRANK_INC.prototype.name = 'PERCENTRANK.INC';
 	cPERCENTRANK_INC.prototype.isXLFN = true;
 	cPERCENTRANK_INC.prototype.argumentsType = [argType.number, argType.number, argType.number];
+	cPERCENTRANK_INC.prototype.enabledToSingle = {"0": true};
 
 	/**
 	 * @constructor
@@ -9828,6 +9882,7 @@ function (window, undefined) {
 	cPROB.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cPROB.prototype.arrayIndexes = {0: 1, 1: 1};
 	cPROB.prototype.argumentsType = [argType.array, argType.array, argType.number, argType.number];
+	cPROB.prototype.enabledToSingle = {"0": true, "1": true};
 	cPROB.prototype.Calculate = function (arg) {
 
 		function prob(x, p, l, u) {
@@ -9939,6 +9994,7 @@ function (window, undefined) {
 	cQUARTILE.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cQUARTILE.prototype.arrayIndexes = {0: 1};
 	cQUARTILE.prototype.argumentsType = [argType.number, argType.number];
+	cQUARTILE.prototype.enabledToSingle = {"0": true};
 	cQUARTILE.prototype.Calculate = function (arg) {
 
 		var oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array]);
@@ -10001,6 +10057,7 @@ function (window, undefined) {
 	cQUARTILE_EXC.prototype.isXLFN = true;
 	cQUARTILE_EXC.prototype.arrayIndexes = {0: 1};
 	cQUARTILE_EXC.prototype.argumentsType = [argType.number, argType.number];
+	cQUARTILE_EXC.prototype.enabledToSingle = {"0": true};
 	cQUARTILE_EXC.prototype.Calculate = function (arg) {
 
 		var oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array]);
@@ -10059,6 +10116,7 @@ function (window, undefined) {
 	cQUARTILE_INC.prototype.name = 'QUARTILE.INC';
 	cQUARTILE_INC.prototype.isXLFN = true;
 	cQUARTILE_INC.prototype.argumentsType = [argType.number, argType.number];
+	cQUARTILE_INC.prototype.enabledToSingle = {"0": true};
 
 	/**
 	 * @constructor
@@ -10074,6 +10132,7 @@ function (window, undefined) {
 	cRANK.prototype.argumentsMax = 3;
 	cRANK.prototype.arrayIndexes = {1: 1};
 	cRANK.prototype.argumentsType = [argType.number, argType.reference, argType.logical];
+	cRANK.prototype.enabledToSingle = {"1": true};
 	cRANK.prototype.Calculate = function (arg) {
 		var oArguments = this._prepareArguments(arg, arguments[1], true, [null, cElementType.array]);
 		var argClone = oArguments.args;
@@ -10131,6 +10190,7 @@ function (window, undefined) {
 	cRANK_AVG.prototype.isXLFN = true;
 	cRANK_AVG.prototype.arrayIndexes = {1: 1};
 	cRANK_AVG.prototype.argumentsType = [argType.number, argType.reference, argType.logical];
+	cRANK_AVG.prototype.enabledToSingle = {"1": true};
 	cRANK_AVG.prototype.Calculate = function (arg) {
 		var oArguments = this._prepareArguments(arg, arguments[1], true, [null, cElementType.array]);
 		var argClone = oArguments.args;
@@ -10185,6 +10245,7 @@ function (window, undefined) {
 	cRANK_EQ.prototype.name = 'RANK.EQ';
 	cRANK_EQ.prototype.isXLFN = true;
 	cRANK_EQ.prototype.argumentsType = [argType.number, argType.reference, argType.logical];
+	cRANK_EQ.prototype.enabledToSingle = {"1": true};
 
 	/**
 	 * @constructor
@@ -10200,6 +10261,7 @@ function (window, undefined) {
 	cRSQ.prototype.argumentsMax = 2;
 	cRSQ.prototype.arrayIndexes = {0: 1, 1: 1};
 	cRSQ.prototype.argumentsType = [argType.array, argType.array];
+	cRSQ.prototype.enabledToSingle = {"0": true, "1": true};
 	cRSQ.prototype.Calculate = function (arg) {
 
 		function rsq(x, y) {
@@ -10284,6 +10346,7 @@ function (window, undefined) {
 	cSKEW.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cSKEW.prototype.argumentsType = [[argType.number]];
 	cSKEW.prototype.isXLFN = true;
+	cSKEW.prototype.enabledToSingle = {"*": true};
 	cSKEW.prototype.Calculate = function (arg) {
 
 		const arr0 = [];
@@ -10343,6 +10406,7 @@ function (window, undefined) {
 	cSKEW_P.prototype.isXLFN = true;
 	cSKEW_P.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cSKEW_P.prototype.argumentsType = [[argType.number]];
+	cSKEW_P.prototype.enabledToSingle = {"*": true};
 	cSKEW_P.prototype.Calculate = function (arg) {
 
 		const arr0 = [];
@@ -10400,6 +10464,7 @@ function (window, undefined) {
 	cSLOPE.prototype.argumentsMax = 2;
 	cSLOPE.prototype.arrayIndexes = {0: 1, 1: 1};
 	cSLOPE.prototype.argumentsType = [argType.array, argType.array];
+	cSLOPE.prototype.enabledToSingle = {"0": true, "1": true};
 	cSLOPE.prototype.Calculate = function (arg) {
 
 		function slope(y, x) {
@@ -10483,6 +10548,7 @@ function (window, undefined) {
 	cSMALL.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cSMALL.prototype.arrayIndexes = {0: 1};
 	cSMALL.prototype.argumentsType = [argType.number, argType.number];
+	cSMALL.prototype.enabledToSingle = {"0": true};
 	cSMALL.prototype.Calculate = function (arg) {
 
 		function frequency(A, k) {
@@ -10635,6 +10701,7 @@ function (window, undefined) {
 	cSTDEV.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cSTDEV.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cSTDEV.prototype.argumentsType = [[argType.number]];
+	cSTDEV.prototype.enabledToSingle = {"*": true};
 	cSTDEV.prototype.Calculate = function (arg) {
 		var i, element, count = 0, sum = new cNumber(0), member = [];
 		for (i = 0; i < arg.length; i++) {
@@ -10703,6 +10770,7 @@ function (window, undefined) {
 	cSTDEV_S.prototype.name = 'STDEV.S';
 	cSTDEV_S.prototype.isXLFN = true;
 	cSTDEV_S.prototype.argumentsType = [[argType.number]];
+	cSTDEV_S.prototype.enabledToSingle = {"*": true};
 
 	/**
 	 * @constructor
@@ -10718,6 +10786,7 @@ function (window, undefined) {
 	cSTDEVA.prototype.argumentsMin = 1;
 	cSTDEVA.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cSTDEVA.prototype.argumentsType = [[argType.number]];
+	cSTDEVA.prototype.enabledToSingle = {"*": true};
 	cSTDEVA.prototype.Calculate = function (arg) {
 		var count = 0, sum = new cNumber(0), member = [], i;
 		for (i = 0; i < arg.length; i++) {
@@ -10779,6 +10848,7 @@ function (window, undefined) {
 	cSTDEVP.prototype.argumentsMin = 1;
 	cSTDEVP.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cSTDEVP.prototype.argumentsType = [[argType.number]];
+	cSTDEVP.prototype.enabledToSingle = {"*": true};
 	cSTDEVP.prototype.Calculate = function (arg) {
 		function _var(x) {
 			var i, tA = [], sumSQRDeltaX = 0, _x = 0, xLength = 0;
@@ -10865,6 +10935,7 @@ function (window, undefined) {
 	cSTDEV_P.prototype.name = 'STDEV.P';
 	cSTDEV_P.prototype.isXLFN = true;
 	cSTDEV_P.prototype.argumentsType = [[argType.number]];
+	cSTDEV_P.prototype.enabledToSingle = {"*": true};
 
 	/**
 	 * @constructor
@@ -10880,6 +10951,7 @@ function (window, undefined) {
 	cSTDEVPA.prototype.argumentsMin = 1;
 	cSTDEVPA.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cSTDEVPA.prototype.argumentsType = [[argType.number]];
+	cSTDEVPA.prototype.enabledToSingle = {"*": true};
 	cSTDEVPA.prototype.Calculate = function (arg) {
 
 		function _var(x) {
@@ -10968,6 +11040,7 @@ function (window, undefined) {
 	cSTEYX.prototype.argumentsMax = 2;
 	cSTEYX.prototype.arrayIndexes = {0: 1, 1: 1};
 	cSTEYX.prototype.argumentsType = [argType.array, argType.array];
+	cSTEYX.prototype.enabledToSingle = {"0": true, "1": true};
 	cSTEYX.prototype.Calculate = function (arg) {
 
 		function steyx(y, x) {
@@ -11302,7 +11375,7 @@ function (window, undefined) {
 			var fP = argArray[0];
 			var fDF = parseInt(argArray[1]);
 
-			//ms игнорирует услвие fP > 1. сделал как в документации
+			//ms ignores condition fP > 1. implemented as in documentation
 			if (fDF < 1.0 || fP <= 0 || fP > 1) {
 				return new cError(cErrorType.not_numeric);
 			}
@@ -11350,6 +11423,7 @@ function (window, undefined) {
 	cTREND.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1};
 	cTREND.prototype.argumentsType = [argType.reference, argType.reference, argType.reference, argType.logical];
 	cTREND.prototype.numFormat = AscCommonExcel.cNumFormatNone;
+	cTREND.prototype.enabledToSingle = {"*": true};
 	cTREND.prototype.Calculate = function (arg) {
 		let prepeareArgs = prepeareGrowthTrendCalculation(this, arg);
 		if (cElementType.error === prepeareArgs.type) {
@@ -11397,14 +11471,15 @@ function (window, undefined) {
 	cTRIMMEAN.prototype.argumentsMax = 2;
 	cTRIMMEAN.prototype.arrayIndexes = {0: 1};
 	cTRIMMEAN.prototype.argumentsType = [argType.number, argType.number];
+	cTRIMMEAN.prototype.enabledToSingle = {"0": true};
 	cTRIMMEAN.prototype.Calculate = function (arg) {
 
 		var arg2 = [arg[0], arg[1]];
-		//если первое значение строка
+		//if first value is string
 		if (cElementType.string === arg[0].type || cElementType.bool === arg[0].type) {
 			return new cError(cErrorType.wrong_value_type);
 		}
-		//если первое значение число
+		//if first value is number
 		if (cElementType.number === arg[0].type) {
 			arg2[0] = new cArray();
 			arg2[0].addElement(arg[0]);
@@ -11475,17 +11550,18 @@ function (window, undefined) {
 	cTTEST.prototype.argumentsMax = 4;
 	cTTEST.prototype.arrayIndexes = {0: 1, 1: 1};
 	cTTEST.prototype.argumentsType = [argType.array, argType.array, argType.number, argType.number];
+	cTTEST.prototype.enabledToSingle = {"0": true, "1": true};
 	cTTEST.prototype.Calculate = function (arg) {
 
 		var arg2 = [arg[0], arg[1], arg[2], arg[3]];
-		//если первое или второе значение строка
+		//if first or second value is string
 		if (cElementType.string === arg[0].type || cElementType.bool === arg[0].type) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 		if (cElementType.string === arg[1].type || cElementType.bool === arg[1].type) {
 			return new cError(cErrorType.wrong_value_type);
 		}
-		//если первое или второе значение число
+		//if first or second value is number
 		if (cElementType.number === arg[0].type) {
 			arg2[0] = new cArray();
 			arg2[0].addElement(arg[0]);
@@ -11534,6 +11610,7 @@ function (window, undefined) {
 	cT_TEST.prototype.name = 'T.TEST';
 	cT_TEST.prototype.isXLFN = true;
 	cT_TEST.prototype.argumentsType = [argType.array, argType.array, argType.number, argType.number];
+	cT_TEST.prototype.enabledToSingle = {"0": true, "1": true};
 
 	/**
 	 * @constructor
@@ -11549,6 +11626,7 @@ function (window, undefined) {
 	cVAR.prototype.argumentsMin = 1;
 	cVAR.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cVAR.prototype.argumentsType = [[argType.number]];
+	cVAR.prototype.enabledToSingle = {"*": true};
 	cVAR.prototype.Calculate = function (arg) {
 		function _var(x) {
 			if (x.length <= 1) {
@@ -11644,6 +11722,7 @@ function (window, undefined) {
 	cVARA.prototype.argumentsMin = 1;
 	cVARA.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cVARA.prototype.argumentsType = [[argType.number]];
+	cVARA.prototype.enabledToSingle = {"*": true};
 	cVARA.prototype.Calculate = function (arg) {
 
 		function _var(x) {
@@ -11736,6 +11815,7 @@ function (window, undefined) {
 	cVARP.prototype.argumentsMin = 1;
 	cVARP.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cVARP.prototype.argumentsType = [[argType.number]];
+	cVARP.prototype.enabledToSingle = {"*": true};
 	cVARP.prototype.Calculate = function (arg) {
 		function _var(x) {
 			if (x.length < 1) {
@@ -11828,6 +11908,7 @@ function (window, undefined) {
 	cVAR_P.prototype.name = 'VAR.P';
 	cVAR_P.prototype.isXLFN = true;
 	cVAR_P.prototype.argumentsType = [[argType.number]];
+	cVAR_P.prototype.enabledToSingle = {"*": true};
 
 	/**
 	 * @constructor
@@ -11844,6 +11925,7 @@ function (window, undefined) {
 	cVAR_S.prototype.isXLFN = true;
 	cVAR_S.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cVAR_S.prototype.argumentsType = [[argType.number]];
+	cVAR_S.prototype.enabledToSingle = {"*": true};
 	cVAR_S.prototype.Calculate = function (arg) {
 		function _var(x) {
 			if (x.length <= 1) {
@@ -11936,6 +12018,7 @@ function (window, undefined) {
 	cVARdotP.prototype.argumentsMin = 1;
 	cVARdotP.prototype.Calculate = cVARP.prototype.Calculate;
 	cVARdotP.prototype.argumentsType = [[argType.number]];
+	cVARdotP.prototype.enabledToSingle = {"*": true};
 
 	/**
 	 * @constructor
@@ -11951,6 +12034,7 @@ function (window, undefined) {
 	cVARPA.prototype.argumentsMin = 1;
 	cVARPA.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cVARPA.prototype.argumentsType = [[argType.number]];
+	cVARPA.prototype.enabledToSingle = {"*": true};
 	cVARPA.prototype.Calculate = function (arg) {
 
 		function _var(x) {
@@ -12106,14 +12190,15 @@ function (window, undefined) {
 	cZTEST.prototype.argumentsMax = 3;
 	cZTEST.prototype.arrayIndexes = {0: 1};
 	cZTEST.prototype.argumentsType = [argType.number, argType.number, argType.number];
+	cZTEST.prototype.enabledToSingle = {"0": true};
 	cZTEST.prototype.Calculate = function (arg) {
 
 		var arg2 = arg[2] ? [arg[0], arg[1], arg[2]] : [arg[0], arg[1]];
-		//если первое или второе значение строка
+		//if first or second value is string
 		if (cElementType.string === arg[0].type || cElementType.bool === arg[0].type) {
 			return new cError(cErrorType.wrong_value_type);
 		}
-		//если первое или второе значение число
+		//if first or second value is number
 		if (cElementType.number === arg[0].type) {
 			arg2[0] = new cArray();
 			arg2[0].addElement(arg[0]);
@@ -12192,6 +12277,7 @@ function (window, undefined) {
 	cZ_TEST.prototype.name = 'Z.TEST';
 	cZ_TEST.prototype.isXLFN = true;
 	cZ_TEST.prototype.argumentsType = [argType.number, argType.number, argType.number];
+	cZ_TEST.prototype.enabledToSingle = {"0": true};
 
 	/**
 	 * @constructor
@@ -12580,6 +12666,9 @@ function (window, undefined) {
 		}
 		if (cElementType.cell !== arg0.type && cElementType.cell3D !== arg0.type &&
 			cElementType.cellsRange !== arg0.type && cElementType.cellsRange3D !== arg0.type) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+		if (arg0.type === cElementType.cellsRange3D && !arg0.isSingleSheet()) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 		const t = this;

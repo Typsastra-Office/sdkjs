@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -68,7 +71,7 @@ var numFormat_AmPm = 19;
 var numFormat_DateSeparator = 20;
 var numFormat_TimeSeparator = 21;
 var numFormat_DecimalPointText = 22;
-//Вспомогательные типы, которые заменятюся в _prepareFormat
+//Helper types that will be replaced in _prepareFormat
 var numFormat_MonthMinute = 101;
 var numFormat_Percent = 102;
 var numFormat_General = 103;
@@ -81,12 +84,12 @@ var numFormat_DayOfWeek = 110;
 var FormatStates = {Decimal: 1, Frac: 2, Scientific: 3, Slash: 4, SlashFrac: 5};
 var SignType = {Negative: 1, Null:2, Positive: 3};
 
-var gc_nMaxDigCount = 15;//Максимальное число знаков точности
-var gc_nMaxDigCountView = 11;//Максимальное число знаков в ячейке
+var gc_nMaxDigCount = 15;//Maximum number of precision digits
+var gc_nMaxDigCountView = 11;//Maximum number of digits in a cell
 var gc_nMaxMantissa = Math.pow(10, gc_nMaxDigCount);
 var gc_aTimeFormats = ['[$-F400]h:mm:ss AM/PM', 'h:mm;@', 'h:mm AM/PM;@', 'h:mm:ss;@', 'h:mm:ss AM/PM;@', 'mm:ss.0;@',
 	'[h]:mm:ss;@'];
-var gc_aFractionFormats = ['# ?/?', '# ??/??', '# ???/???', '# ?/2', '# ?/4', '# ?/8', '# ??/16', '# ?/10', '# ??/100'];
+var gc_aFractionFormats = ['#\\ ?/?', '#\\ ??/??', '#\\ ???/???', '#\\ ?/2', '#\\ ?/4', '#\\ ?/8', '#\\ ??/16', '#\\ ?/10', '#\\ ??/100'];
 //important for shortcuts
 var gc_oParseDateOverrideFormats = {
     "d-mmm": 1,
@@ -138,8 +141,8 @@ function getNumberParts(x)
 	if(SignType.Null != sig)
 	{
 		exp = Math.floor( Math.log(x) * Math.LOG10E ) - gc_nMaxDigCount + 1;
-		//хотелось бы поставить здесь floor, чтобы не округлялось число 0.9999999999999999, но обнаружились проблемы с числом 0.999999999999999
-		//после умножения оно превращается в 999999999999998.9
+		//We would like to use floor here so that 0.9999999999999999 doesn't get rounded, but problems were found with 0.999999999999999
+		//after multiplication it becomes 999999999999998.9
 		man = Math.round(x / Math.pow(10, exp));
 		if(man >= gc_nMaxMantissa)
 		{
@@ -147,7 +150,7 @@ function getNumberParts(x)
 			man/=10;
 		}
 	}
-    return {mantissa: man, exponent: exp, sign: sig};//для 0,123 exponent == - gc_nMaxDigCount
+    return {mantissa: man, exponent: exp, sign: sig};//for 0.123 exponent == - gc_nMaxDigCount
 }
 
 	function compareNumbers(val1, val2) {
@@ -185,20 +188,20 @@ function getNumberParts(x)
 function FormatObj(type, val)
 {
     this.type = type;
-    this.val = val;//что здесь лежит определяется типом
+    this.val = val;//what is stored here is determined by the type
 }
 function FormatObjScientific(val, format, sign)
 {
     this.type = numFormat_Scientific;
-    this.val = val;//E или e
-    this.format = format;//array формата
+    this.val = val;//E or e
+    this.format = format;//format array
     this.sign = sign;
 }
 function FormatObjDecimalFrac(aLeft, aRight)
 {
     this.type = numFormat_DecimalFrac;
-    this.aLeft = aLeft;//array формата левой части
-    this.aRight = aRight;//array формата правой части
+    this.aLeft = aLeft;//left part format array
+    this.aRight = aRight;//right part format array
     this.bNumRight = false;
 	this.numerator = 0;
 	this.denominator = 0;
@@ -206,8 +209,8 @@ function FormatObjDecimalFrac(aLeft, aRight)
 function FormatObjDateVal(type, nCount, bElapsed)
 {
     this.type = type;
-    this.val = nCount;//Количество знаков подряд
-    this.bElapsed = bElapsed;//true == [hhh]; в квадратных скобках
+    this.val = nCount;//Number of consecutive characters
+    this.bElapsed = bElapsed;//true == [hhh]; in square brackets
 }
 function FormatObjBracket(sData)
 {
@@ -640,20 +643,20 @@ function ParseLocalFormatSymbol(Name)
 }
 function NumFormat(bAddMinusIfNes)
 {
-    //Stream чтения формата
+    //Format reading stream
     this.formatString = "";
     this.length = this.formatString.length;
     this.index = 0;
     this.EOF = -1;
     
-    //Формат
+    //Format
     this.aRawFormat = [];
     this.aDecFormat = [];
     this.aFracFormat = [];
     this.bDateTime = false;
 	this.bDate = false;
-	this.bTime = false;//флаг, чтобы отличить формат даты с временем, от простой даты
-	this.bDay = false;//чтобы отличать когда надо использовать MonthGenitiveNames
+	this.bTime = false;//flag to distinguish date format with time from simple date
+	this.bDay = false;//to distinguish when to use MonthGenitiveNames
     this.nPercent = 0;
     this.bScientific = false;
     this.bThousandSep = false;
@@ -671,8 +674,8 @@ function NumFormat(bAddMinusIfNes)
 	this.CurrencyString = null;
 	this.DBNum = 0;
 
-	this.bGeneralChart = false;//если в формате только один текст(например в chart "Основной")
-    this.bAddMinusIfNes = bAddMinusIfNes;//когда не задано форматирование для отрицательных чисел иногда надо вставлять минус
+	this.bGeneralChart = false;//if the format contains only one text (e.g. "General" in chart)
+    this.bAddMinusIfNes = bAddMinusIfNes;//when formatting for negative numbers is not specified, sometimes a minus sign needs to be inserted
 }
 NumFormat.prototype =
 {
@@ -788,7 +791,7 @@ NumFormat.prototype =
             }
             else
             {
-				// если больше двух tt не добавляем am/pm
+				// if more than two tt, don't add am/pm
 				if (nttCount > 2) {
 					bAmPm = false;
 				}
@@ -1115,13 +1118,13 @@ NumFormat.prototype =
         this.bRepeat = false;
         var nFormatLength = this.aRawFormat.length;
 
-        //Группируем несколько элемнтов подряд в один спецсимвол
+        //Group several consecutive elements into one special symbol
         for(var i = 0; i < nFormatLength; ++i)
         {
             var item = this.aRawFormat[i];
             if(numFormat_Repeat == item.type)
             {
-                //Оставляем только последний numFormat_Repeat
+                //Keep only the last numFormat_Repeat
                 if(false == this.bRepeat)
                     this.bRepeat = true;
                 else
@@ -1132,7 +1135,7 @@ NumFormat.prototype =
             }
             else if(numFormat_Bracket == item.type)
             {
-                //Разруливаем [hhh]
+                //Handle [hhh]
                 var oNewObj = item.dataObj;
                 if(null != oNewObj)
                 {
@@ -1150,7 +1153,7 @@ NumFormat.prototype =
             else if(numFormat_Year == item.type || numFormat_MonthMinute == item.type || numFormat_Month == item.type || numFormat_Day == item.type || numFormat_Hour == item.type || numFormat_Minute == item.type || numFormat_Second == item.type || numFormat_Thousand == item.type ||
 				numFormat_DayOfWeek == item.type)
             {
-                //Собираем в одно целое последовательности hhh
+                //Combine hhh sequences into one
                 var nStartType = item.type;
                 var nEndIndex = i;
                 for(var j = i + 1; j < nFormatLength; ++j)
@@ -1205,7 +1208,7 @@ NumFormat.prototype =
                 }
                 if(false != bAsText)
                 {
-                    //заменяем на текст
+                    //replace with text
                     item.type = numFormat_Text;
                     item.val = item.val + "+";
                 }
@@ -1213,7 +1216,7 @@ NumFormat.prototype =
             else if(numFormat_DecimalFrac == item.type)
             {
                 var bValid = false;
-                //собираем правую и левую часть дроби
+                //collect left and right parts of the fraction
                 var nLeft = i;
                 for(var j = i - 1; j >= 0; --j)
                 {
@@ -1279,14 +1282,14 @@ NumFormat.prototype =
         var nReadState = FormatStates.Decimal;
         var bDecimal = true;
         nFormatLength = this.aRawFormat.length;
-        //Разруливаем конфликтные ситуации, выставляем значения свойств
+        //Resolve conflicts, set property values
         for(var i = 0; i < nFormatLength; ++i)
         {
             var item = this.aRawFormat[i];
             if(numFormat_DecimalPoint == item.type)
             {
-                //миллисекунды
-                //Если после DecimalPoint идут numFormat_Digit, и есть формат для даты времени, то это миллисекунды
+                //milliseconds
+                //If numFormat_Digit follows DecimalPoint, and there is a date/time format, then these are milliseconds
                 if(this.bDateTime)
                 {
                     var nStartIndex = i;
@@ -1310,7 +1313,7 @@ NumFormat.prototype =
                         this.bMillisec = true;
 
                     }
-                    //преобразуем в текст все последующие
+                    //convert all subsequent to text
                     item.type = numFormat_DecimalPointText;
                     item.val = null;
                 }
@@ -1319,7 +1322,7 @@ NumFormat.prototype =
             }
             else if(numFormat_MonthMinute == item.type)
             {
-                //Разрешаем конфликты numFormat_MonthMinute
+                //Resolve numFormat_MonthMinute conflicts
                 var bRightCond = false;
                 if (item.bElapsed)
                 {
@@ -1327,7 +1330,7 @@ NumFormat.prototype =
                 }
                 else
                 {
-                    //ищем вперед первый элемент с типом datetime 
+                    //search forward for the first element with datetime type
                     for(var j = i + 1; j < nFormatLength; ++j)
                     {
                         var subItem = this.aRawFormat[j];
@@ -1343,8 +1346,8 @@ NumFormat.prototype =
                 var bLeftCond = false;
                 if(false == bRightCond)
                 {
-                    //ищем назад первый элемент с типом hh или ss
-                    var bFindSec = false;//чтобы разрулить случай mm:ss:mm должно быть Минуты:Секунды:Месяцы
+                    //search backward for the first element with type hh or ss
+                    var bFindSec = false;//to resolve the case mm:ss:mm it should be Minutes:Seconds:Months
                     for(var j = i - 1; j >= 0; --j)
                     {
                         var subItem = this.aRawFormat[j];
@@ -1356,7 +1359,7 @@ NumFormat.prototype =
                         }
                         else if(numFormat_Second == subItem.type)
                         {
-                            //продолжаем смотреть дальше, пока не встретиться следующий date time обьект
+                            //continue looking further until the next date time object is found
                             bFindSec = true;
                         }
                         else if(numFormat_Minute == subItem.type || numFormat_Month == subItem.type || numFormat_MonthMinute == subItem.type)
@@ -1389,7 +1392,7 @@ NumFormat.prototype =
             else if(numFormat_Percent == item.type)
             {
                 this.nPercent++;
-                //заменяем на текст
+                //replace with text
                 item.type = numFormat_Text;
                 item.val = "%";
             }
@@ -1434,13 +1437,13 @@ NumFormat.prototype =
 	_prepareFormatDatePDF : function()
     {
 		var nFormatLength = this.aRawFormat.length;
-        //Группируем несколько элемнтов подряд в один спецсимвол
+        //Group several consecutive elements into one special symbol
         for(var i = 0; i < nFormatLength; ++i)
         {
             var item = this.aRawFormat[i];
             if(numFormat_Year == item.type || numFormat_Month == item.type || numFormat_Day == item.type)
             {
-                //Удаляем итемы у которых val > 4 (для года удаляем если "yyy")
+                //Remove items where val > 4 (for year remove if "yyy")
 				if(item.val === 3 && numFormat_Year == item.type)
                 {
                     this.aRawFormat.splice(i, 1);
@@ -1454,7 +1457,7 @@ NumFormat.prototype =
             }
 			else if(numFormat_Hour == item.type || numFormat_Minute == item.type || numFormat_Second == item.type)
             {
-				//Удаляем итемы у которых val > 2
+				//Remove items where val > 2
                 if(item.val > 2)
                 {
                     this.aRawFormat.splice(i, 1);
@@ -1488,10 +1491,10 @@ NumFormat.prototype =
         {
 			var numberAbs = Math.abs(number);
 			res.fraction = numberAbs - Math.floor(numberAbs);
-			//Округляем
+			//Round
 			var parts = getNumberParts(number);
 			res.sign = parts.sign;
-			var nRealExp = gc_nMaxDigCount + parts.exponent;//nRealExp == 0, при 0,123
+			var nRealExp = gc_nMaxDigCount + parts.exponent;//nRealExp == 0 for 0.123
 			if(SignType.Null != parts.sign)
 			{
 				if(true == this.bScientific)
@@ -1509,7 +1512,7 @@ NumFormat.prototype =
 					for(var i = 0; i < this.nThousandScale; ++i)
 						nRealExp -= 3;		
 				}
-				//округляем после операций которые могут изменить nRealExp
+				//round after operations that may change nRealExp
 				if(false == this.bSlash)
 				{
 					var nOldRealExp = nRealExp;
@@ -1607,8 +1610,8 @@ NumFormat.prototype =
 				if(0 == res.frac && 0 == res.dec && false === this.bDateTime)
 					res.sign = SignType.Null;
 			}
-            //После округления может получиться ноль,
-            //но не стала перестаскивать проверку на знак сюда, т.к. для округления нужно неотриц число
+			//After rounding the result may be zero,
+			//but didn't move the sign check here because rounding requires a non-negative number
 
             if(this.bDateTime === true)
 				res.date = this.parseDate(number);
@@ -1675,7 +1678,7 @@ NumFormat.prototype =
 			}
 			else if (0 <= numberAbs && numberAbs < 1)
 			{
-				//TODO необходимо использовать cDate везде
+				//TODO need to use cDate everywhere
 				stDate = new Asc.cDate(Date.UTC(1899,11,31,0,0,0));
 				day = stDate.getUTCDate();
 				dayWeek = ( stDate.getUTCDay() > 0) ? stDate.getUTCDay() - 1 : 6;
@@ -1716,8 +1719,8 @@ NumFormat.prototype =
             {
 				var sNumber = number + "";
 				var nNumberLen = sNumber.length;
-				//для бага Bug 14325 - В загруженной таблице число с 30 знаками после разделителя отображается неправильно.
-				//например число "1.23456789123456e+23" и формат "0.000000000000000000000000000000"
+				//for Bug 14325 - In a loaded table, a number with 30 digits after the decimal separator displays incorrectly.
+				//for example number "1.23456789123456e+23" and format "0.000000000000000000000000000000"
 				if(exponent > nNumberLen)
 				{
 					for(var i = 0; i < exponent - nNumberLen; ++i)
@@ -1727,7 +1730,7 @@ NumFormat.prototype =
                 var bIsNUll = false;
                 if("0" == sNumber && !opt_forceNull)
                     bIsNUll = true;
-                //выравниваем длину
+                //align length
                 if(nNumberLen > nFormatLen)
                 {
                     if(false === bIsNUll)
@@ -1744,14 +1747,14 @@ NumFormat.prototype =
                 }
                 else if(nNumberLen < nFormatLen)
                 {
-                    //просто копируем, здесь будут только нули и пропуски
+                    //simply copy, here will be only zeros and spaces
                     for(var i = 0, length = nFormatLen - nNumberLen; i < length; ++i)
                     {
                         var item = format.shift();
                         aRes.push(new FormatObj(item.type));
                     }
                 }
-                //просто заполняем текстом
+                //simply fill with text
                 for(var i = 0, length = sNumber.length; i < length; ++i)
                 {
                     var sCurNumber = sNumber[i];
@@ -1770,7 +1773,7 @@ NumFormat.prototype =
                     aRes.push(new FormatObj(numFormat, sCurNumber));
                 }
                 
-                //Вставляем разделители 
+                //Insert separators
                 if(true == this.bThousandSep && FormatStates.Slash != nReadState)
                 {
 					var sThousandSep = cultureInfo.NumberGroupSeparator;
@@ -1813,7 +1816,7 @@ NumFormat.prototype =
                         }
                         else if(numFormat_DigitNoDisp != item.type)
                         {
-                            //не добавляем пробел только перед numFormat_DigitNoDisp
+                            //don't add space only before numFormat_DigitNoDisp
                             if (nCurGroupSize == nIndex)
                             {
                                 item.val = sThousandSep;
@@ -1833,13 +1836,13 @@ NumFormat.prototype =
             {
 				var val = number;
 				var exp = exponent;
-                //Считаем количество нулей в начале
+                //Count the number of leading zeros
                 var nStartNulls = 0;
 				if(exp < 0)
 					nStartNulls = Math.abs(exp);
                 var sNumber = val.toString();
                 var nNumberLen = sNumber.length;
-				//удаляем 0 на конце
+				//remove trailing zeros
 				var nLastNoNull = nNumberLen;
                 for(var i = nNumberLen - 1; i >= 0; --i)
                 {
@@ -1851,13 +1854,13 @@ NumFormat.prototype =
 					sNumber = sNumber.substring(0, nLastNoNull);
 					nNumberLen = sNumber.length;
 				}
-                //заполняем первые нули
+                //fill leading zeros
                 for(var i = 0; i < nStartNulls; ++i)
                     aRes.push(new FormatObj(numFormat_Text, "0"));
-                //просто заполняем текстом
+                //simply fill with text
                 for(var i = 0, length = nNumberLen; i < length; ++i)
                     aRes.push(new FormatObj(numFormat_Text, sNumber[i]));
-                //просто копируем, здесь будут только нули и пропуски
+                //simply copy, here will be only zeros and spaces
                 for(var i = nNumberLen + nStartNulls; i < nFormatLen; ++i)
                 {
                     var item = format[i];
@@ -1896,7 +1899,7 @@ NumFormat.prototype =
             oCurText.text += item.val;
         else if(numFormat_Digit == item.type)
         {
-            //text.val может заполниться в Thousand
+            //text.val may be filled in Thousand
             oCurText.text += "0";
             if(null != item.val)
                 oCurText.text += item.val;
@@ -2155,7 +2158,7 @@ NumFormat.prototype =
             var bNoDecFormat = false;
             if((null == aDec || 0 == aDec.length) && 0 != oParsedNumber.dec)
             {
-                //случай ".00"
+                //case ".00"
                 bNoDecFormat = true;
             }
             var hasSign = false;
@@ -2439,7 +2442,7 @@ NumFormat.prototype =
                 else if (numFormat_Milliseconds == item.type) {
                     var nMsFormatLength = item.format.length;
                     var dMs = oParsedNumber.date.ms;
-                    //Округляем
+                    //Round
                     if (nMsFormatLength < 3) {
                         var dTemp = dMs / Math.pow(10, 3 - nMsFormatLength);
                         dTemp = Math.round(dTemp);
@@ -2481,8 +2484,8 @@ NumFormat.prototype =
             }
 
 			if (true == this.bAddMinusIfNes && SignType.Negative == oParsedNumber.sign && !hasSign) {
-				//todo разобраться с минусами
-				//Добавляем в самое начало знак минус
+				//todo figure out the minus signs
+				//Add minus sign at the very beginning
 				res.unshift({text: "-"});
 			}
             this._CommitText(res, oCurText, null, null);
@@ -2494,7 +2497,7 @@ NumFormat.prototype =
             if(0 == res.length)
                 res = [{text: number.toString()}];
         }
-		//длина результирующей строки не должна быть длиннее c_oAscMaxColumnWidth
+		//the length of the resulting string should not exceed c_oAscMaxColumnWidth
 		var nLen = 0;
 		for(var i = 0; i < res.length; ++i){
 			var elem = res[i];
@@ -2821,8 +2824,21 @@ NumFormatCache.prototype =
         return res;
     }
 };
-//кеш структур по строке формата
+//cache of structures by format string
 var oNumFormatCache = new NumFormatCache();
+
+// Strip \x escaping and "text" quoting from a format string.
+// '#\ ?/?' and '#" "?/?' and '# ?/?' all normalize to '# ?/?'.
+function stripFormatEscaping(s) {
+	var r = '';
+	for (var i = 0; i < s.length; i++) {
+		var c = s[i];
+		if (c === '\\' && i + 1 < s.length) { r += s[++i]; }
+		else if (c === '"') { for (++i; i < s.length && s[i] !== '"'; i++) { r += s[i]; } }
+		else { r += c; }
+	}
+	return r;
+}
 
 function CellFormat(format, formatType, useLocaleFormat)
 {
@@ -2837,7 +2853,7 @@ function CellFormat(format, formatType, useLocaleFormat)
 	for(var i = 0; i < aFormats.length; ++i)
 	{
     var sNewFormat = aFormats[i];
-    //если sNewFormat заканчивается на нечетное число '\', значит ';' был экранирован и это текст
+    //if sNewFormat ends with an odd number of '\', it means ';' was escaped and this is text
     while(true){
       var formatTail = sNewFormat.match(/\\+$/g);
       if (formatTail && formatTail.length > 0 && 1 === formatTail[0].length % 2 && i + 1 < aFormats.length) {
@@ -2905,8 +2921,8 @@ function CellFormat(format, formatType, useLocaleFormat)
 	{
 		this.oTextFormat = new NumFormat(false);
 		this.oTextFormat.setFormat("@", undefined, undefined, useLocaleFormat);
-		//по результатам опытов, если оператор сравнения проходит через 0, то надо добавлять знак минус в зависимости от значения
-		//пример [<100] надо добавлять знак, [<-100] знак добавлять не надо
+		//based on experiments, if the comparison operator crosses 0, then the minus sign needs to be added depending on the value
+		//example [<100] needs to add sign, [<-100] no need to add sign
 		for (let i = 0; i < aParsedFormats.length && i < 2; ++i) {
 			let oCurFormat = aParsedFormats[i];
 			if (oCurFormat.ComporationOperator) {
@@ -3283,12 +3299,18 @@ CellFormat.prototype =
 				c_oAscNumFormatType.Number, c_oAscNumFormatType.Fraction, c_oAscNumFormatType.Currency,
 				c_oAscNumFormatType.Accounting
 			];
+			var normalized = stripFormatEscaping(this.sFormat);
 			for (var i = 0; i < types.length; ++i) {
 				var type = types[i];
 				info.asc_setType(type);
 				var formats = getFormatCells(info);
-				if (-1 != formats.indexOf(this.sFormat)) {
-					nType = type;
+				for (var j = 0; j < formats.length; j++) {
+					if (stripFormatEscaping(formats[j]) === normalized) {
+						nType = type;
+						break;
+					}
+				}
+				if (nType !== c_oAscNumFormatType.Custom) {
 					break;
 				}
 			}
@@ -3365,23 +3387,23 @@ function DecodeGeneralFormat_Raw(val, nValType, dDigitsCount)
     if(null == dDigitsCount || dDigitsCount > gc_nMaxDigCountView)
         nDigitsCount = gc_nMaxDigCountView;
     else
-        nDigitsCount = parseInt(dDigitsCount);//пока не подключена измерялся не используем нецелые метрики
+        nDigitsCount = parseInt(dDigitsCount);//while measurer is not connected, we don't use non-integer metrics
     if(number < 0)
     {
-        //todo возможно нужно nDigitsCount--
-        //nDigitsCount--;//на знак '-'
+        //todo maybe need nDigitsCount--
+        //nDigitsCount--;//for '-' sign
         number = -number;
     }
     if(nDigitsCount < 1)
-        return "0";//можно возвращать любой числовой формат, все равно при nDigitsCount < 1 он учитываться не будет
+        return "0";//can return any numeric format, it won't be considered anyway when nDigitsCount < 1
 	var bContinue = true;
 	var parts = getNumberParts(number);
 	while(bContinue)
 	{
 		bContinue = false;
-		var nRealExp = gc_nMaxDigCount + parts.exponent;//nRealExp == 0, при 0,123
+		var nRealExp = gc_nMaxDigCount + parts.exponent;//nRealExp == 0 for 0.123
 		var nRealExpAbs = Math.abs(nRealExp);
-		var nExpMinDigitsCount;//число знаков в формате 'E+00'
+		var nExpMinDigitsCount;//number of digits in 'E+00' format
 		if(nRealExpAbs < 100)
 			nExpMinDigitsCount = 4;
 		else
@@ -3392,7 +3414,7 @@ function DecodeGeneralFormat_Raw(val, nValType, dDigitsCount)
 		{
 			if(nRealExp > nDigitsCount)
 			{
-				if(nDigitsCount >= nExpMinDigitsCount + 1)//1 на еще один символ перед E (*E+00)
+				if(nDigitsCount >= nExpMinDigitsCount + 1)//1 for one more character before E (*E+00)
 				{
 					suffix = "E+";
 					for(var i = 2; i < nExpMinDigitsCount; ++i)
@@ -3400,22 +3422,22 @@ function DecodeGeneralFormat_Raw(val, nValType, dDigitsCount)
 					nDigitsCount -= nExpMinDigitsCount;
 				}
 				else
-					return "0";//можно возвращать любой числовой формат, все равно будут решетки
+					return "0";//can return any numeric format, there will be hashes anyway
 			}
 		}
 		else
 		{
-			var nVarian1 = nDigitsCount - 2 + nRealExp;//без E+00, 2 на знаки "0."
-			var nVarian2 = nDigitsCount - nExpMinDigitsCount;// с E+00
+			var nVarian1 = nDigitsCount - 2 + nRealExp;//without E+00, 2 for "0." characters
+			var nVarian2 = nDigitsCount - nExpMinDigitsCount;// with E+00
 			if(nVarian2 > 2)
-				nVarian2--;//на знак '.'
+				nVarian2--;//for '.' character
 			else if(nVarian2 > 0)
 				nVarian2 = 1;
 			if(nVarian1 <= 0 && nVarian2 <= 0)
 				return "0";
 			if(nVarian1 < nVarian2)
 			{
-				//если в nVarian1 число помещается полностью, то применяем nVarian1
+				//if the number fits completely in nVarian1, then use nVarian1
 				var bUseVarian1 = false;
 				if(nVarian1 > 0 && 0 == (parts.mantissa % Math.pow(10, gc_nMaxDigCount - nVarian1)))
 					bUseVarian1 = true;
@@ -3429,18 +3451,18 @@ function DecodeGeneralFormat_Raw(val, nValType, dDigitsCount)
 						nDigitsCount -= nExpMinDigitsCount;
 					}
 					else
-						return "0";//можно возвращать любой числовой формат, все равно будут решетки
+						return "0";//can return any numeric format, there will be hashes anyway
 				}
 			}
 		}
 		var dec_num_digits = nRealExp;
 		if(suffix)
 			dec_num_digits = 1;
-		//округляем мантиссу, чтобы правильно обрабатывать ситуацию 0,999, когда nDigitsCount = 4
+		//round the mantissa to correctly handle the situation 0.999 when nDigitsCount = 4
 		var nRoundDigCount = 0;
 		if(dec_num_digits <= 0)
 		{
-			//2 на знаки '0.'
+			//2 for '0.' characters
 			var nTemp = nDigitsCount + dec_num_digits - 2;
 			if(nTemp > 0)
 				nRoundDigCount = nTemp;
@@ -3449,7 +3471,7 @@ function DecodeGeneralFormat_Raw(val, nValType, dDigitsCount)
 		{
 			if(dec_num_digits <= nDigitsCount)
 			{
-				//1 на знаки '.'
+				//1 for '.' character
 				if(dec_num_digits + 1 < nDigitsCount)
 					nRoundDigCount = nDigitsCount - 1;
 				else
@@ -3462,7 +3484,7 @@ function DecodeGeneralFormat_Raw(val, nValType, dDigitsCount)
 			number = Math.round(parts.mantissa / nTemp) * nTemp * Math.pow(10, parts.exponent);
 			
 			var oNewParts = getNumberParts(number);
-			//если в результате округления изменилось число разрядов, надо начинать заново
+			//if the number of digits changed as a result of rounding, need to start over
 			if(oNewParts.exponent != parts.exponent)
 				bContinue = true;
 			else
@@ -3473,11 +3495,11 @@ function DecodeGeneralFormat_Raw(val, nValType, dDigitsCount)
 	
     var frac_num_digits;
     if(dec_num_digits > 0)
-        frac_num_digits = nDigitsCount - 1 - dec_num_digits;//1 на знак '.'
+        frac_num_digits = nDigitsCount - 1 - dec_num_digits;//1 for '.' character
     else
-        frac_num_digits = nDigitsCount - 2 + dec_num_digits;//2 на знаки '0.' 
-        
-    //считаем необходимое число знаков после запятой
+        frac_num_digits = nDigitsCount - 2 + dec_num_digits;//2 for '0.' characters
+
+    //calculate the required number of digits after decimal point
     if(frac_num_digits > 0)
     {
 		var sTempNumber = parts.mantissa.toString();
@@ -3502,7 +3524,7 @@ function DecodeGeneralFormat_Raw(val, nValType, dDigitsCount)
     if(frac_num_digits <= 0)
         return "0" + suffix;
 
-    //собираем формат
+    //build the format
     var number_format_string = "0" + gc_sFormatDecimalPoint;
     for(var i = 0; i < frac_num_digits; ++i)
         number_format_string += "0";
@@ -3522,7 +3544,7 @@ GeneralEditFormatCache.prototype =
     {
         if (null == cultureInfo)
             cultureInfo = g_oDefaultCultureInfo;
-        //преобразуем число так чтобы в строке было только 15 значящих цифр.
+        //convert the number so that the string contains only 15 significant digits.
         var value = this.oCache[number];
         if(null == value)
         {
@@ -3532,7 +3554,7 @@ GeneralEditFormatCache.prototype =
 			{
 				var sRes = "";
 				var parts = getNumberParts(number);
-				var nRealExp = gc_nMaxDigCount + parts.exponent;//nRealExp == 0, при 0,123
+				var nRealExp = gc_nMaxDigCount + parts.exponent;//nRealExp == 0 for 0.123
 				if(parts.exponent >= 0)//nRealExp >= -gc_nMaxDigCount
 				{
 					if(nRealExp <= 21)
@@ -3639,10 +3661,10 @@ FormatParser.prototype =
             cultureInfo = g_oDefaultCultureInfo;
         //javascript decimal separator is '.'
         if ("." != cultureInfo.NumberDecimalSeparator) {
-            val = val.replace(".", "q");//заменяем на символ с которым не распознается, как в Excel
+            val = val.replace(".", "q");//replace with a character that is not recognized, like in Excel
             val = val.replace(cultureInfo.NumberDecimalSeparator, ".");
         }
-        //parseNum исключаем запись числа в 16-ричной форме из числа.
+        //parseNum excludes hexadecimal number notation from the number.
         return AscCommonExcel.parseNum(val) && Asc.isNumberInfinity(val);
     },
     parseLocaleNumber: function (val, cultureInfo) {
@@ -3650,7 +3672,7 @@ FormatParser.prototype =
             cultureInfo = g_oDefaultCultureInfo;
         //javascript decimal separator is '.'
         if ("." != cultureInfo.NumberDecimalSeparator) {
-            val = val.replace(".", "q");//заменяем на символ с которым не распознается, как в Excel
+            val = val.replace(".", "q");//replace with a character that is not recognized, like in Excel
             val = val.replace(cultureInfo.NumberDecimalSeparator, ".");
         }
         return val - 0;
@@ -4024,7 +4046,7 @@ FormatParser.prototype =
         return res;
     },
     _parseStringLetters: function (sVal, currencySymbol, bBefore, oRes) {
-        //отдельно обрабатываем 'р.' и currencySymbol потому что они могут быть не односимвольными
+        //separately handle 'р.' and currencySymbol because they may not be single characters
         var aTemp = ["р.", currencySymbol];
         for (var i = 0, length = aTemp.length; i < length; i++){
             var sChar = aTemp[i];
@@ -4123,7 +4145,7 @@ FormatParser.prototype =
         }
         if (!bError) {
             if (0 != nPrevIndex) {
-                //чтобы не распознавалось 0,001
+                //so that 0,001 is not recognized
                 if (nPrevIndex < val.length && parseInt(val.substr(0, val.length - nPrevIndex)) > 0) {
                     val = val.replace(new RegExp(escapeRegExp(cultureInfo.NumberGroupSeparator), "g"), '');
                     bThouthand = true;
@@ -4149,7 +4171,7 @@ FormatParser.prototype =
 	{
         var res = null;
         var bError = false;
-        //в первый проход разделяем date и time с помощью delimiter
+        //in the first pass, separate date and time using delimiter
         for (var i = 0, length = match.length; i < length; i++) {
             var elem = match[i];
             if (elem.type == oDataTypes.delimiter) {
@@ -4175,7 +4197,7 @@ FormatParser.prototype =
                     }
                 }
                 else if (i - 1 >= 0 && i + 1 == length) {
-                    //случай "10:"
+                    //case "10:"
                     var prev = match[i - 1];
                     if (prev.type != oDataTypes.delimiter) {
                         if (cultureInfo.TimeSeparator == elem.val || (":" == elem.val && cultureInfo.DateSeparator != elem.val)) {
@@ -4191,7 +4213,7 @@ FormatParser.prototype =
             }
         }
         if(!bError){
-            //разделяем date и time с помощью Am/Pm и имена месяцев
+            //separate date and time using Am/Pm and month names
             for (var i = 0, length = match.length; i < length; i++) {
                 var elem = match[i];
                 if (elem.type == oDataTypes.letter){
@@ -4203,7 +4225,7 @@ FormatParser.prototype =
                                 prev.time = true;
                             }
                         }
-                        //AmPm должна быть последней записью
+                        //AmPm should be the last entry
                         if (i + 1 != length) {
                             bError = true;
                         }
@@ -4266,7 +4288,7 @@ FormatParser.prototype =
                         bError = true;
                 }
                 else if (oDataTypes.digit == elem.type)
-                    bError = true;//случай "1-2-3 10"
+                    bError = true;//case "1-2-3 10"
             }
             var nDateLength = aDate.length;
             if (nDateLength > 0 && !(2 <= nDateLength && nDateLength <= 3 && (null == nMonthIndex || (3 == nDateLength && 1 == nMonthIndex) || 2 == nDateLength || (3 == nDateLength && 0 == nMonthIndex))))
@@ -4284,11 +4306,11 @@ FormatParser.prototype =
                         if (2 == nDateLength) {
                             res.d = aDate[nDateLength - 1 - nMonthIndex];
                             res.m = aDate[nMonthIndex];
-                            //приоритет у формата d-mmm, но если он не подходит пробуем сделать mmm-yy
+                            //priority goes to d-mmm format, but if it doesn't fit we try mmm-yy
                             if (this.isValidDate((new Date()).getFullYear(), res.m - 1, res.d))
                                 res.sDateFormat = "d-mmm";
                             else {
-                                //не в классическом случае(!= dd/mm/yyyy) меняем местами d и m перед тем как пробовать y
+                                //in non-classic case (!= dd/mm/yyyy) swap d and m before trying y
                                 if (!isDMY(cultureInfo) && this.isValidDate((new Date()).getFullYear(), res.d - 1, res.m)) {
                                     res.sDateFormat = "d-mmm";
                                     var temp = res.d;
@@ -4296,7 +4318,7 @@ FormatParser.prototype =
                                     res.m = temp;
                                 }
                                 else {
-                                    //если текстовый месяц стоит вторым, то первый параметр может быть только днем
+                                    //if text month is second, then the first parameter can only be a day
                                     if (0 == nMonthIndex) {
                                         res.sDateFormat = "mmm-yy";
                                         res.d = null;
@@ -4322,9 +4344,9 @@ FormatParser.prototype =
                         }
                     }
                     else {
-                        //смотрим порядок в default формат
+                        //check the order in default format
                         if (2 == nDateLength) {
-                            //в приоритете d и m
+                            //d and m have priority
                             if (nIndexD < nIndexM) {
                                 res.d = aDate[0];
                                 res.m = aDate[1];
@@ -4336,7 +4358,7 @@ FormatParser.prototype =
                             if (this.isValidDate((new Date()).getFullYear(), res.m - 1, res.d))
                                 res.sDateFormat = "d-mmm";
                             else{
-                                //в обратной записи(== yyyy/mm/dd) меняем местами d и m перед тем как пробовать y
+                                //in reverse notation (== yyyy/mm/dd) swap d and m before trying y
                                 if (isYMD(cultureInfo) && this.isValidDate((new Date()).getFullYear(), res.d - 1, res.m)) {
                                     res.sDateFormat = "d-mmm";
                                     var temp = res.d;
@@ -4402,7 +4424,7 @@ FormatParser.prototype =
 	{
         var res = null;
         var bError = false;
-        //в первый проход разделяем date и time с помощью delimiter
+        //in the first pass, separate date and time using delimiter
         for (var i = 0, length = match.length; i < length; i++) {
             var elem = match[i];
             if (elem.type == oDataTypes.delimiter) {
@@ -4428,7 +4450,7 @@ FormatParser.prototype =
                     }
                 }
                 else if (i - 1 >= 0 && i + 1 == length) {
-                    //случай "10:"
+                    //case "10:"
                     var prev = match[i - 1];
                     if (prev.type != oDataTypes.delimiter) {
                         if (cultureInfo.TimeSeparator == elem.val || (":" == elem.val && cultureInfo.DateSeparator != elem.val)) {
@@ -4444,7 +4466,7 @@ FormatParser.prototype =
             }
         }
         if(!bError){
-            //разделяем date и time с помощью Am/Pm и имена месяцев
+            //separate date and time using Am/Pm and month names
             for (var i = 0, length = match.length; i < length; i++) {
                 var elem = match[i];
                 if (elem.type == oDataTypes.letter){
@@ -4456,7 +4478,7 @@ FormatParser.prototype =
                                 prev.time = true;
                             }
                         }
-                        //AmPm должна быть последней записью
+                        //AmPm should be the last entry
                         if (i + 1 != length) {
                             bError = true;
                         }
@@ -4695,7 +4717,7 @@ FormatParser.prototype =
 		                if (bFound)
 		                    break;
 		            }
-		            //ничего кроме имени месяца больше быть не может
+		            //nothing other than month name can be present
 		            if (bFound)
 		                match.push(oNewElem);
 		            else
@@ -4775,7 +4797,7 @@ FormatParser.prototype =
 						nYear = oNowDate.getFullYear();
                     }
 					
-					//проверяем дату на валидность
+					//check date validity
 					bValidDate = this.isValidDate(nYear, nMounth, nDay);
 				}
 				if(null != h)
@@ -4786,7 +4808,7 @@ FormatParser.prototype =
 					{
 						if(nHour <= 23)
 						{
-							//переводим 24
+							//convert 24
 							nHour = nHour % 12;
 							if(pm)
 								nHour += 12;
@@ -4889,7 +4911,7 @@ FormatParser.prototype =
 		    else
 		        oDataType = oDataTypes.letter;
 			    
-			// после разделителя может быть опять месяц
+			// after delimiter there can be month again
 			if (oDataType == oDataTypes.delimiter)
 				bMonth = false;
 
@@ -4914,7 +4936,7 @@ FormatParser.prototype =
 		                        if (oDataTypes.digit == oCurDataType)
 		                            oNewElem.val = oNewElem.val - 0;
 								if (oNewElem.val < 100 && sCurValue.length == 4)
-									bError = true; // год до ста лет, пример: 0001 год
+									bError = true; // year less than hundred, example: year 0001
 		                        
 								match.push(oNewElem);
 		                    }
@@ -4967,7 +4989,7 @@ FormatParser.prototype =
 		                if (bFound)
 		                    break;
 		            }
-		            //ничего кроме имени месяца больше быть не может
+		            //nothing other than month name can be present
 		            if (bFound)
 		                match.push(oNewElem);
 		            else
@@ -5047,7 +5069,7 @@ FormatParser.prototype =
 						nYear = oNowDate.getFullYear();
                     }
 					
-					//проверяем дату на валидность
+					//check date validity
 					bValidDate = this.isValidDatePDF(nYear, nMounth, nDay);
 				}
 				if(null != h)
@@ -5058,7 +5080,7 @@ FormatParser.prototype =
 					{
 						if(nHour <= 23)
 						{
-							//переводим 24
+							//convert 24
 							nHour = nHour % 12;
 							if(pm)
 								nHour += 12;

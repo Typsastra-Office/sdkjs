@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -1286,7 +1289,7 @@
  map_color_scheme["tx2"]     = 16;
  */
 
-//Типы изменений в классе CTheme
+//Types of changes in the CTheme class
 
 		function CreateFontRef(idx, color) {
 			var ret = new FontRef();
@@ -3147,7 +3150,7 @@
 			this.Mods.addMod(mod.createDuplicate());
 		};
 		CUniColor.prototype.check = function (theme, colorMap) {
-			if (this.color && this.color.check(theme, colorMap.color_map)/*возвращает был ли изменен RGBA*/) {
+			if (this.color && this.color.check(theme, colorMap.color_map)/*returns whether RGBA was changed*/) {
 				this.RGBA.R = this.color.RGBA.R;
 				this.RGBA.G = this.color.RGBA.G;
 				this.RGBA.B = this.color.RGBA.B;
@@ -5884,7 +5887,7 @@
 
 		function CGradFill() {
 			CBaseFill.call(this);
-			// пока просто front color
+			// for now just front color
 			this.colors = [];
 
 			this.lin = null;
@@ -7203,9 +7206,9 @@
 		}
 
 // LN --------------------------
-// размеры стрелок;
+// arrow sizes;
 		var lg = 500, mid = 300, sm = 200;
-//типы стрелок
+//arrow types
 		var ar_arrow = 0, ar_diamond = 1, ar_none = 2, ar_oval = 3, ar_stealth = 4, ar_triangle = 5;
 
 		var LineEndType = {
@@ -10769,13 +10772,14 @@
 							oPresentation.bNeedUpdateThemes = true;
 							let oThemedObjects = oPresentation.GetSlideObjectsWithTheme(this);
 							for(let nIdx = 0; nIdx < oThemedObjects.masters.length; ++nIdx) {
-								oThemedObjects.masters[nIdx].checkSlideTheme();
+								oThemedObjects.masters[nIdx].checkSlideColorScheme();
 							}
 							for(let nIdx = 0; nIdx < oThemedObjects.layouts.length; ++nIdx) {
-								oThemedObjects.layouts[nIdx].checkSlideTheme();
+								oThemedObjects.layouts[nIdx].checkSlideColorScheme();
 							}
 							for(let nIdx = 0; nIdx < oThemedObjects.slides.length; ++nIdx) {
-								oThemedObjects.slides[nIdx].checkSlideTheme();
+								oThemedObjects.slides[nIdx].checkSlideColorScheme();
+								oThemedObjects.slides[nIdx].addToRecalculate();
 							}
 							AscCommon.History.RecalcData_Add({Type: AscDFH.historyitem_recalctype_Drawing, Object: this});
 						}
@@ -12370,7 +12374,7 @@
 
 		function CompareBullets(bullet1, bullet2) {
 
-			//TODO: пока будем сравнивать только bulletType, т. к. эта функция используется для мержа свойств при отдаче в интерфейс, а для интерфейса bulletTyp'a достаточно. Если понадобится нужно сделать полное сравнение.
+			//TODO: for now we will only compare bulletType, since this function is used for merging properties when returning to the interface, and bulletType is enough for the interface. If needed, a full comparison should be implemented.
 			//
 			if (bullet1.bulletType && bullet2.bulletType
 				&& bullet1.bulletType.type === bullet2.bulletType.type) {
@@ -16779,7 +16783,7 @@
 			return ret;
 		}
 
-// эта функция ДОЛЖНА минимизироваться
+// this function MUST be minified
 		function CreateAscStroke(ln, _canChangeArrows) {
 			if (null == ln || null == ln.Fill || ln.Fill.fill == null)
 				return new Asc.asc_CStroke();
@@ -16956,7 +16960,7 @@
 			return ret;
 		}
 
-// эта функция ДОЛЖНА минимизироваться
+// this function MUST be minified
 		function CreateAscShapeProp(shape) {
 			if (null == shape)
 				return new asc_CShapeProperty();
@@ -17102,7 +17106,7 @@
 						ret.color = new CSchemeColor();
 					}
 
-					// тут выставляется ТОЛЬКО из меню. поэтому:
+					// this is set ONLY from the menu. therefore:
 					var _index = parseInt(asc_color.value);
 					if (isNaN(_index))
 						break;
@@ -17396,11 +17400,17 @@
 			oChartSpace.setBDeleted(false);
 			oChartSpace.extX = nW;
 			oChartSpace.extY = nH;
-			if (AscFormat.isRealNumber(nStyleIndex)) {
-				oChartSpace.setStyle(nStyleIndex);
-			}
+			AscFormat.applyChartStyle(oChartSpace, nStyleIndex);
 			AscFormat.CheckSpPrXfrm(oChartSpace);
 			return oChartSpace;
+		}
+
+		function applyChartStyle(oChartSpace, nStyleIndex) {
+			if (AscFormat.isRealNumber(nStyleIndex) && nStyleIndex >= 1 && nStyleIndex <= 48) {
+				oChartSpace.setStyle(nStyleIndex);
+			} else {
+				oChartSpace.setStyle(2);
+			}
 		}
 
 		function builder_CreateGroup(aDrawings, oController) {
@@ -17592,9 +17602,18 @@
 			return null;
 		}
 
+		function builder_ApplyChartStyleToElement(oChartSpace, oElement) {
+			if (!oElement || !oChartSpace || !oChartSpace.chartStyle || !oChartSpace.chartColors) return;
+			if (typeof oElement.applyChartStyle !== "function") return;
+			var oCache = AscFormat.g_oChartStyleCache;
+			var oAdditional = oCache && oCache.getAdditionalData(oChartSpace.getChartType(), oChartSpace.chartStyle.id);
+			oElement.applyChartStyle(oChartSpace.chartStyle, oChartSpace.chartColors, oAdditional, true);
+		}
+
 		function builder_SetChartTitle(oChartSpace, sTitle, nFontSize, bIsBold) {
 			if (oChartSpace) {
 				oChartSpace.chart.setTitle(builder_CreateChartTitle(sTitle, nFontSize, bIsBold, oChartSpace.getDrawingDocument()));
+				builder_ApplyChartStyleToElement(oChartSpace, oChartSpace.chart.title);
 			}
 		}
 
@@ -17614,6 +17633,7 @@
 				var horAxis = oChartSpace.chart.plotArea.getHorizontalAxis();
 				if (horAxis) {
 					horAxis.setTitle(builder_CreateTitle(sTitle, nFontSize, bIsBold, oChartSpace));
+					builder_ApplyChartStyleToElement(oChartSpace, horAxis.title);
 				}
 			}
 		}
@@ -17633,6 +17653,7 @@
 							var _text_body = verAxis.title.txPr;
 							_text_body.setBodyPr(_body_pr);
 							verAxis.title.setOverlay(false);
+							builder_ApplyChartStyleToElement(oChartSpace, verAxis.title);
 						}
 					} else {
 						verAxis.setTitle(null);
@@ -17701,13 +17722,18 @@
 						}
 					}
 					if (null !== nLegendPos) {
+						var bNewLegend = false;
 						if (!oChartSpace.chart.legend) {
 							oChartSpace.chart.setLegend(new AscFormat.CLegend());
+							bNewLegend = true;
 						}
 						if (oChartSpace.chart.legend.legendPos !== nLegendPos)
 							oChartSpace.chart.legend.setLegendPos(nLegendPos);
 						if (oChartSpace.chart.legend.overlay !== false) {
 							oChartSpace.chart.legend.setOverlay(false);
+						}
+						if (bNewLegend) {
+							builder_ApplyChartStyleToElement(oChartSpace, oChartSpace.chart.legend);
 						}
 					}
 				}
@@ -17755,6 +17781,7 @@
 				var ser = oChart.series[nSeriesIndex];
 				if (ser) {
 					{
+						var bNewSerDLbls = false;
 						if (!ser.dLbls) {
 							if (oChart.dLbls) {
 								ser.setDLbls(oChart.dLbls.createDuplicate());
@@ -17769,9 +17796,14 @@
 									ser.dLbls.setShowPercent(false);
 								}
 								ser.dLbls.setShowBubbleSize(false);
+								bNewSerDLbls = true;
 							}
 						}
+						if (bNewSerDLbls) {
+							builder_ApplyChartStyleToElement(oChartSpace, ser.dLbls);
+						}
 						var dLbl = ser.dLbls && ser.dLbls.findDLblByIdx(nPointIndex);
+						var bNewDLbl = false;
 						if (!dLbl) {
 							dLbl = new AscFormat.CDLbl();
 							dLbl.setIdx(nPointIndex);
@@ -17779,6 +17811,7 @@
 								dLbl.merge(ser.dLbls);
 							}
 							ser.dLbls.addDLbl(dLbl);
+							bNewDLbl = true;
 						}
 						dLbl.setSeparator(",");
 						dLbl.setShowSerName(true == bShowSerName);
@@ -17789,6 +17822,9 @@
 							dLbl.setShowPercent(true === bShowPerecent);
 						}
 						dLbl.setShowBubbleSize(false);
+						if (bNewDLbl) {
+							builder_ApplyChartStyleToElement(oChartSpace, dLbl);
+						}
 					}
 				}
 			}
@@ -17803,8 +17839,10 @@
 						oChart.setDLbls(null);
 					}
 				}
+				var bNewDLbls = false;
 				if (!oChart.dLbls) {
 					oChart.setDLbls(new AscFormat.CDLbls());
+					bNewDLbls = true;
 				}
 				oChart.dLbls.setSeparator(",");
 				oChart.dLbls.setShowSerName(true == bShowSerName);
@@ -17816,6 +17854,9 @@
 				}
 
 				oChart.dLbls.setShowBubbleSize(false);
+				if (bNewDLbls) {
+					builder_ApplyChartStyleToElement(oChartSpace, oChart.dLbls);
+				}
 			}
 		}
 
@@ -20596,6 +20637,7 @@
 
 		window['AscFormat'].builder_CreateShape = builder_CreateShape;
 		window['AscFormat'].builder_CreateChart = builder_CreateChart;
+		window['AscFormat'].applyChartStyle = applyChartStyle;
 		window['AscFormat'].builder_CreateGroup = builder_CreateGroup;
 		window['AscFormat'].builder_CreateSchemeColor = builder_CreateSchemeColor;
 		window['AscFormat'].builder_CreatePresetColor = builder_CreatePresetColor;
@@ -20646,7 +20688,7 @@
 		window['AscFormat'].LineEndSize = LineEndSize;
 		window['AscFormat'].LineJoinType = LineJoinType;
 
-//типы плейсхолдеров
+//placeholder types
 		window['AscFormat']["phType_body"] = window['AscFormat'].phType_body = 0;
 		window['AscFormat']["phType_chart"] = window['AscFormat'].phType_chart = 1;
 		window['AscFormat']["phType_clipArt"] = window['AscFormat'].phType_clipArt = 2;
@@ -20846,6 +20888,7 @@
 		window['AscFormat'].CLR_IDX_MAP = CLR_IDX_MAP;
 		window['AscFormat'].MAP_AUTONUM_TYPES = MAP_AUTONUM_TYPES;
 		window['AscFormat'].CLR_NAME_MAP = CLR_NAME_MAP;
+		window['AscFormat'].map_prst_color = map_prst_color;
 		window['AscFormat'].LINE_PRESETS_MAP = LINE_PRESETS_MAP;
 		window['AscFormat'].OBJECT_MORPH_MARKER = OBJECT_MORPH_MARKER;
 

@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -5960,6 +5963,60 @@ CStyle.prototype =
             || true !== this.ParaPr.Is_Equal(oStyle.ParaPr)
             || (styletype_Table === this.Type
                 && (true !== this.TablePr.Is_Equal(oStyle.TablePr)
+                    || true !== this.TableRowPr.Is_Equal(oStyle.TableRowPr)
+                    || true !== this.TableCellPr.Is_Equal(oStyle.TableCellPr)
+                    || true !== IsEqualStyleObjects(this.TableBand1Horz , oStyle.TableBand1Horz )
+                    || true !== IsEqualStyleObjects(this.TableBand1Vert , oStyle.TableBand1Vert )
+                    || true !== IsEqualStyleObjects(this.TableBand2Horz , oStyle.TableBand2Horz )
+                    || true !== IsEqualStyleObjects(this.TableBand2Vert , oStyle.TableBand2Vert )
+                    || true !== IsEqualStyleObjects(this.TableFirstCol  , oStyle.TableFirstCol  )
+                    || true !== IsEqualStyleObjects(this.TableFirstRow  , oStyle.TableFirstRow  )
+                    || true !== IsEqualStyleObjects(this.TableLastCol   , oStyle.TableLastCol   )
+                    || true !== IsEqualStyleObjects(this.TableLastRow   , oStyle.TableLastRow   )
+                    || true !== IsEqualStyleObjects(this.TableTLCell    , oStyle.TableTLCell    )
+                    || true !== IsEqualStyleObjects(this.TableTRCell    , oStyle.TableTRCell    )
+                    || true !== IsEqualStyleObjects(this.TableBLCell    , oStyle.TableBLCell    )
+                    || true !== IsEqualStyleObjects(this.TableBRCell    , oStyle.TableBRCell    )
+                    || true !== IsEqualStyleObjects(this.TableWholeTable, oStyle.TableWholeTable)
+                    )
+                )
+            )
+            return false;
+
+        return true;
+    },
+
+	Is_Similar : function(oStyle, bSkipLink)
+    {
+		if (this.BasedOn && oStyle.BasedOn)
+		{
+			let oStyles = this.Parent;
+
+			if (!oStyles.Get(this.BasedOn).Is_Similar(oStyles.Get(oStyle.BasedOn)))
+				return false;
+		}
+		if (this.Next && oStyle.Next)
+		{
+			let oStyles = this.Parent;
+
+			if (!oStyles.Get(this.Next).Is_Similar(oStyles.Get(oStyle.Next)))
+				return false;
+		}
+		if (this.Link && oStyle.Link && bSkipLink !== true)
+		{
+			let oStyles = this.Parent;
+
+			let oLinkStyle1 = oStyles.Get(this.Link);
+			let oLinkStyle2 = oStyles.Get(oStyle.Link);
+
+			if (!oLinkStyle1.Is_Similar(oLinkStyle2, oLinkStyle1.Link == this.Id && oLinkStyle2.Link == oStyle.Id))
+				return false;
+		}
+
+        if (true !== this.TextPr.Is_Equal(oStyle.TextPr)
+            || true !== this.ParaPr.Is_Equal(oStyle.ParaPr)
+            || (styletype_Table === this.Type
+                	&& (true !== this.TablePr.Is_Equal(oStyle.TablePr)
                     || true !== this.TableRowPr.Is_Equal(oStyle.TableRowPr)
                     || true !== this.TableCellPr.Is_Equal(oStyle.TableCellPr)
                     || true !== IsEqualStyleObjects(this.TableBand1Horz , oStyle.TableBand1Horz )
@@ -15366,6 +15423,18 @@ CParaTab.prototype.GetLeader = function()
 CParaTab.prototype.IsValid = function()
 {
 	return null != this.Pos && null != this.Value;
+};
+CParaTab.prototype.GetPos = function()
+{
+	return this.Pos;
+};
+CParaTab.prototype.GetValue = function()
+{
+	return this.Value;
+};
+CParaTab.prototype.GetLeader = function()
+{
+	return this.Leader;
 };
 
 function CParaTabs()

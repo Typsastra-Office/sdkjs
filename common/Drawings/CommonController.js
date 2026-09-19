@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -2354,19 +2357,37 @@
 							let oDrawing = this.selectedObjects[i];
 							// if (oDrawing.selectStartPage === pageIndex) {
 							if (oDrawing.selectStartPage === pageIndex && !oDrawing.IsFreeText && !oDrawing.isFrameChart || (oDrawing.IsFreeText && !oDrawing.IsFreeText())) {
-								let nType = oDrawing.isForm && oDrawing.isForm() ? AscFormat.TYPE_TRACK.FORM : AscFormat.TYPE_TRACK.SHAPE
-								drawingDocument.DrawTrack(
-									nType,
-									oDrawing.getTransformMatrix(),
-									0,
-									0,
-									oDrawing.extX,
-									oDrawing.extY,
-									AscFormat.CheckObjectLine(oDrawing),
-									oDrawing.canRotate(),
-									undefined,
-									isDrawHandles && oDrawing.canEdit() && oDrawing.canResize()
-								);
+								if (oDrawing.isHorizontalRule()) {
+									let frameRect = drawingDocument.FrameRect;
+									let savedActive = frameRect.IsActive;
+									let savedRect = frameRect.Rect;
+									let savedPage = frameRect.PageIndex;
+
+									let _hrTransform = oDrawing.getTransformMatrix();
+									frameRect.IsActive = true;
+									frameRect.PageIndex = pageIndex;
+									let hrPadY = 1;
+									frameRect.Rect = {X: _hrTransform.tx, Y: _hrTransform.ty - hrPadY, R: _hrTransform.tx + oDrawing.extX, B: _hrTransform.ty + oDrawing.extY + hrPadY};
+									drawingDocument.DrawFrameTrack(drawingDocument.AutoShapesTrack.m_oOverlay);
+
+									frameRect.IsActive = savedActive;
+									frameRect.Rect = savedRect;
+									frameRect.PageIndex = savedPage;
+								} else {
+									let nType = oDrawing.isForm && oDrawing.isForm() ? AscFormat.TYPE_TRACK.FORM : AscFormat.TYPE_TRACK.SHAPE
+									drawingDocument.DrawTrack(
+										nType,
+										oDrawing.getTransformMatrix(),
+										0,
+										0,
+										oDrawing.extX,
+										oDrawing.extY,
+										AscFormat.CheckObjectLine(oDrawing),
+										oDrawing.canRotate(),
+										undefined,
+										isDrawHandles && oDrawing.canEdit() && oDrawing.canResize()
+									);
+								}
 							}
 						}
 						if (this.selectedObjects.length === 1 && this.selectedObjects[0].drawAdjustments && this.selectedObjects[0].selectStartPage === pageIndex) {
@@ -3381,7 +3402,7 @@
 					//TODO:this.checkSelectedObjectsAndCallback(this.setCellStyleCallBack, [name]);
 				},
 
-				// Увеличение размера шрифта
+				// Increase font size
 				increaseFontSize: function () {
 
 					if (this.checkSelectedObjectsProtectionText()) {
@@ -3391,7 +3412,7 @@
 
 				},
 
-				// Уменьшение размера шрифта
+				// Decrease font size
 				decreaseFontSize: function () {
 					if (this.checkSelectedObjectsProtectionText()) {
 						return;
@@ -4366,17 +4387,19 @@
 								nType === AscDFH.historyitem_type_ImageShape ||
 								nType === AscDFH.historyitem_type_GroupShape) {
 
-								if (AscFormat.isRealBool(props.flipH)) {
-									oDrawing.changeFlipH(props.flipH);
-								}
-								if (AscFormat.isRealBool(props.flipV)) {
-									oDrawing.changeFlipV(props.flipV);
-								}
-								if (props.flipHInvert) {
-									oDrawing.changeFlipH(!oDrawing.flipH);
-								}
-								if (props.flipVInvert) {
-									oDrawing.changeFlipV(!oDrawing.flipV);
+								if (!oDrawing.isHorizontalRule()) {
+									if (AscFormat.isRealBool(props.flipH)) {
+										oDrawing.changeFlipH(props.flipH);
+									}
+									if (AscFormat.isRealBool(props.flipV)) {
+										oDrawing.changeFlipV(props.flipV);
+									}
+									if (props.flipHInvert) {
+										oDrawing.changeFlipH(!oDrawing.flipH);
+									}
+									if (props.flipVInvert) {
+										oDrawing.changeFlipV(!oDrawing.flipV);
+									}
 								}
 								if(oDrawing.canRotate()) {
 									if (AscFormat.isRealNumber(props.rotAdd)) {
@@ -5086,7 +5109,7 @@
 				},
 
 				getSeriesDefault: function (type) {
-					// Обновлены тестовые данные для новой диаграммы
+					// Updated test data for new chart
 					var series = [], seria, Cat;
 					var createItem = function (value) {
 						return {numFormatStr: "General", isDateTimeFormat: false, val: value, isHidden: false};
@@ -6342,7 +6365,16 @@
 							}
 						} else {
 							const bIsWord = bIsMacOs ? oEvent.AltKey : bIsCtrl;
-							this.cursorMoveLeft(oEvent.ShiftKey, bIsWord);
+							const oContentL = this.getTargetDocContent();
+							let isRtlL = false;
+							if (oContentL) {
+								let curParaL = oContentL.GetCurrentParagraph();
+								isRtlL = !!(curParaL && curParaL.isRtlDirection());
+							}
+							if (isRtlL)
+								this.cursorMoveRight(oEvent.ShiftKey, bIsWord);
+							else
+								this.cursorMoveLeft(oEvent.ShiftKey, bIsWord);
 						}
 
 						this.updateSelectionState();
@@ -6369,7 +6401,16 @@
 							}
 						} else {
 							const bIsWord = bIsMacOs ? oEvent.AltKey : bIsCtrl;
-							this.cursorMoveRight(oEvent.ShiftKey, bIsWord);
+							const oContentR = this.getTargetDocContent();
+							let isRtlR = false;
+							if (oContentR) {
+								let curParaR = oContentR.GetCurrentParagraph();
+								isRtlR = !!(curParaR && curParaR.isRtlDirection());
+							}
+							if (isRtlR)
+								this.cursorMoveLeft(oEvent.ShiftKey, bIsWord);
+							else
+								this.cursorMoveRight(oEvent.ShiftKey, bIsWord);
 						}
 
 						this.updateSelectionState();
@@ -6426,7 +6467,7 @@
 
 					} else if (oEvent.KeyCode === 88 && bCanEdit && true === bIsCtrl) // Ctrl + X - cut
 					{
-						//не возвращаем true чтобы не было preventDefault
+						//don't return true to avoid preventDefault
 					} else if ((oEvent.KeyCode === 93 && !oEvent.MacCmdKey) || 57351 === oEvent.KeyCode/*in Opera there is such a code*/) // context menu
 					{
 						nRetValue = keydownresult_PreventDefault;
@@ -7603,8 +7644,11 @@
 					for (var i = 0; i < drawings.length; ++i) {
 						drawing = drawings[i];
 
-						// skip sticky note for pdf editor
-						if (drawing.IsAnnot && drawing.IsAnnot() && drawing.IsComment() || drawing.IsEditFieldShape && drawing.IsEditFieldShape()) {
+						if (drawing.IsDrawing && !drawing.IsDrawing()) {
+							continue;
+						}
+
+						if (drawing.isHorizontalRule()) {
 							continue;
 						}
 
@@ -8210,7 +8254,7 @@
 											chart_props.h = null;
 
 
-										if (chart_props.title !== group_drawing_props.title)
+										if (chart_props.title !== group_drawing_props.chartProps.title)
 											chart_props.title = undefined;
 										if (chart_props.description !== group_drawing_props.chartProps.description)
 											chart_props.description = undefined;
@@ -8640,7 +8684,7 @@
 						ascSelectedObjects.push(new AscCommon.asc_CSelectedObject(Asc.c_oAscTypeSelectElement.Image, new Asc.asc_CImgProperty(ret[i])));
 					}
 
-					// Текстовые свойства объекта
+					// Text properties of the object
 					var ParaPr = this.getParagraphParaPr();
 					var TextPr = this.getParagraphTextPr();
 					if (ParaPr && TextPr) {
@@ -9106,7 +9150,7 @@
 						this.setParagraphNumbering(Props.Bullet)
 					}
 
-					// TODO: как только разъединят настройки параграфа и текста переделать тут
+					// TODO: refactor here once paragraph and text settings are separated
 					var TextPr = new CTextPr();
 
 					if (true === Props.Subscript)
@@ -10344,7 +10388,7 @@
 			if (this.m_bIsBreak)
 				return;
 
-			// TODO: нужен другой метод отрисовки!!!
+			// TODO: a different rendering method is needed!!!
 			var _x = this.m_oFullTransform.TransformPointX(x, y);
 			var _y = this.m_oFullTransform.TransformPointY(x, y);
 			this.Bounds.CheckRect(_x, _y, 1, 1);
@@ -10399,7 +10443,7 @@
 			this.Bounds.CheckPoint(_x4, _y4);
 		};
 
-		// мега крутые функции для таблиц
+		// super cool functions for tables
 		CSlideBoundsChecker.prototype.drawHorLineExt = function(align, y, x, r, penW, leftMW, rightMW) {
 			this.drawHorLine(align, y, x + leftMW, r + rightMW);
 		};
@@ -10607,7 +10651,7 @@
 				var loader = AscCommon.g_font_loader;
 				var fontinfo = g_fontApplication.GetFontInfo("Cambria Math");
 				if (undefined === fontinfo) {
-					// нет Cambria Math - нет и формул
+					// no Cambria Math - no formulas
 					return;
 				}
 

@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -68,6 +71,7 @@ function (window, undefined) {
 	cAND.prototype.argumentsMin = 1;
 	cAND.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cAND.prototype.argumentsType = [[argType.logical]];
+	cAND.prototype.enabledToSingle = {"*": true};
 	cAND.prototype.Calculate = function (arg) {
 		var argResult = null;
 		for (var i = 0; i < arg.length; i++) {
@@ -180,6 +184,7 @@ function (window, undefined) {
 		}
 		return res;
 	};
+	cIF.prototype.enabledToSingle = {"1": true, "2": true};
 	cIF.prototype.Calculate = function (arg) {
 		var arg0 = arg[0], arg1 = arg[1], arg2 = arg[2];
 
@@ -219,6 +224,7 @@ function (window, undefined) {
 	cIFERROR.prototype.argumentsMin = 2;
 	cIFERROR.prototype.argumentsMax = 2;
 	cIFERROR.prototype.argumentsType = [argType.any, argType.any];
+	cIFERROR.prototype.enabledToSingle = {"1": true};
 	cIFERROR.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 		if (arg0 instanceof cArray) {
@@ -253,6 +259,7 @@ function (window, undefined) {
 	cIFNA.prototype.argumentsMax = 2;
 	cIFNA.prototype.isXLFN = true;
 	cIFNA.prototype.argumentsType = [argType.any, argType.any];
+	cIFNA.prototype.enabledToSingle = {"1": true};
 	cIFNA.prototype.Calculate = function (arg) {
 		var arg0 = arg[0];
 		if (arg0 instanceof cArray) {
@@ -286,6 +293,7 @@ function (window, undefined) {
 	cIFS.prototype.argumentsMin = 2;
 	cIFS.prototype.isXLFN = true;
 	cIFS.prototype.argumentsType = [[argType.logical, argType.any]];
+	cIFS.prototype.enabledToSingle = {"odd": true};
 	cIFS.prototype.Calculate = function (arg) {
 		var oArguments = this._prepareArguments(arg, arguments[1], true);
 		var argClone = oArguments.args;
@@ -377,6 +385,7 @@ function (window, undefined) {
 	cOR.prototype.argumentsMin = 1;
 	cOR.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cOR.prototype.argumentsType = [[argType.logical]];
+	cOR.prototype.enabledToSingle = {"*": true};
 	cOR.prototype.Calculate = function (arg) {
 		var argResult = null;
 		for (var i = 0; i < arg.length; i++) {
@@ -449,6 +458,7 @@ function (window, undefined) {
 	cSWITCH.prototype.argumentsMax = 126;
 	cSWITCH.prototype.isXLFN = true;
 	cSWITCH.prototype.argumentsType = [argType.any, argType.any, argType.any, [argType.any, argType.any]];
+	cSWITCH.prototype.enabledToSingle = {"evenFrom2": true};
 	cSWITCH.prototype.Calculate = function (arg) {
 		var oArguments = this._prepareArguments(arg, arguments[1], true);
 		var argClone = oArguments.args;
@@ -524,6 +534,7 @@ function (window, undefined) {
 	cXOR.prototype.isXLFN = true;
 	cXOR.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cXOR.prototype.argumentsType = [[argType.logical]];
+	cXOR.prototype.enabledToSingle = {"*": true};
 	cXOR.prototype.Calculate = function (arg) {
 		var argResult = null;
 		var nTrueValues = 0;
@@ -553,8 +564,8 @@ function (window, undefined) {
 						allCellsEmpty = false;
 					}
 				}
-				//если диапазон пустой - выдаём ошибку
-				//если диапазон содержит хоть одну непустую ячейку(без ошибки) - результат false
+				//if the range is empty - return an error
+				//if the range contains at least one non-empty cell (without an error) - the result is false
 				if (argResult == null && !allCellsEmpty) {
 					argResult = new cBool(false);
 				} else if (allCellsEmpty) {

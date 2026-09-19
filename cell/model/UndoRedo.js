@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -57,7 +60,7 @@ function (window, undefined) {
 		this.isDrawingCollaborativeData = true;
 	}
 
-//главный обьект для пересылки изменений
+//main object for sending changes
 	function UndoRedoItemSerializable(oClass, nActionType, nSheetId, oRange, oData, LocalChange) {
 		AscDFH.CChangesBase.call(this, this);
 
@@ -132,7 +135,7 @@ function (window, undefined) {
 			var oThis = this;
 			if (oData.getType) {
 				var nDataType = oData.getType();
-				//не далаем копию oData, а сдвигаем в ней, потому что все равно после сериализации изменения потруться
+				//we don't make a copy of oData, but shift in it, because the changes will be erased after serialization anyway
 				// if (null != oData.applyCollaborative) {
 				// 	oData.applyCollaborative(nSheetId, collaborativeEditing);
 				// }
@@ -465,7 +468,7 @@ function (window, undefined) {
 	};
 	UndoRedoItemSerializable.prototype.CommuteRelated = function (oActionToUndo, oActionOther) {
 		if (oActionToUndo.oClass && oActionToUndo.oClass.CommuteRelated) {
-			//ничего не делаем если есть изменения на удаленном листе
+			//do nothing if there are changes on a deleted sheet
 			if (!AscCommonExcel.g_oUndoRedoWorkbook.CommuteRelatedRemoveSheet(oActionToUndo.nSheetId, oActionOther)) {
 				return false;
 			}
@@ -479,7 +482,7 @@ function (window, undefined) {
 			}
 			return oActionToUndo.oClass.CommuteRelated(oActionToUndo, oActionOther);
 		} else if (oActionToUndo.oClass.WriteToBinary) {
-			//todo просмотреть измнения автофигур которые зависят от сдвигов
+			//todo review autoshape changes that depend on shifts
 			return true;
 		}
 		return false;
@@ -520,7 +523,7 @@ function (window, undefined) {
 
 	function CChangesPointChange(Class, Point, snapshot)
 	{
-		//todo наследование от CChangesTableIdDescription
+		//todo inheritance from CChangesTableIdDescription
 		AscDFH.CChangesBase.call(this, Class);
 		this.Point = Point;
 		this.snapshot = snapshot;
@@ -566,7 +569,7 @@ function (window, undefined) {
 	}
 	window['AscDFH'].CChangesPointChange = CChangesPointChange;
 
-//для сохранения в историю и пересылки изменений
+//for saving to history and sending changes
 	var UndoRedoDataTypes = new function () {
 		this.Unknown = -1;
 		this.CellSimpleData = 0;
@@ -1952,7 +1955,7 @@ function (window, undefined) {
 		this.opt_sheet = opt_sheet;
 		this.opt_sheetidToAdd = opt_sheetidToAdd;
 
-		//Эти поля заполняются после Undo/Redo
+		//These fields are filled after Undo/Redo
 		this.sheet = null;
 
 		this.tableNames = tableNames;
@@ -2329,7 +2332,7 @@ function (window, undefined) {
 			case this.Properties.tablePart: {
 				var table;
 				if (value) {
-					//TODO длину скорее всего нужно записывать
+					//TODO the length most likely needs to be written
 					var dstLen = 0;
 					dstLen += value.length;
 
@@ -2911,7 +2914,7 @@ function (window, undefined) {
 		}
 	};
 
-	//для применения изменений
+	//for applying changes
 	var UndoRedoClassTypes = new function () {
 		this.aTypes = [];
 		this.offset = 0;
@@ -3035,8 +3038,8 @@ function (window, undefined) {
 			if (bUndo) {
 				var outputParams = {sheet: null};
 				wb.removeWorksheet(Data.insertBefore, outputParams);
-				//сохраняем тот sheet который удалили, иначе может возникнуть ошибка, если какой-то обьект запоминал ссылку на sheet(например):
-				//Добавляем лист  -> Добавляем ссылку -> undo -> undo -> redo -> redo
+				//save the deleted sheet, otherwise an error may occur if some object remembered a reference to the sheet (example):
+				//Add sheet -> Add reference -> undo -> undo -> redo -> redo
 				Data.sheet = outputParams.sheet;
 			} else {
 				if (Data.opt_sheet) {
@@ -3060,7 +3063,7 @@ function (window, undefined) {
 
 					//wb.copyWorksheet(0, Data.insertBefore, Data.name, Data.sheetid, true, Data.tableNames, tempWorkbook.aWorksheets[0]);
 				} else if (null != Data.sheet) {
-					//сюда заходим только если до этого было сделано Undo
+					//we only enter here if Undo was done before this
 					wb.insertWorksheet(Data.insertBefore, Data.sheet);
 				} else if (null != Data.opt_sheetidToAdd) {
 					let ws = AscCommon.g_oTableId.Get_ById(Data.opt_sheetidToAdd);
@@ -3139,7 +3142,7 @@ function (window, undefined) {
 			var to = bUndo ? Data.to : Data.from;
 			var externalReferenceIndex;
 
-			if (from && !to) {//удаление
+			if (from && !to) {//deletion
 				from.initExternalReference();
 				/* the first call is a search by referenceData, if we get null, we make a second call to search by Id below and then add or re-assign the link */
 				externalReferenceIndex = wb.getExternalReferenceByReferenceData(from.referenceData, true);
@@ -3152,7 +3155,7 @@ function (window, undefined) {
 				} else {
 					wb.externalReferences.push(from);
 				}
-			} else if (!from && to) { //добавление
+			} else if (!from && to) { //addition
 				/* the first call is a search by referenceData, if we get null, we make a second call to search by Id below and then delete the link */
 				externalReferenceIndex = wb.getExternalReferenceByReferenceData(to.referenceData, true);
 				if (!externalReferenceIndex) {
@@ -3162,8 +3165,8 @@ function (window, undefined) {
 				if (externalReferenceIndex !== null) {
 					wb._removeExternalReference(externalReferenceIndex - 1);
 				}
-			} else if (from && to) { //изменение
-				//TODO нужно сохранить ссылки на текущий лист
+			} else if (from && to) { //modification
+				//TODO need to save references to the current sheet
 				/* the first call is a search by referenceData, if we get null, we make a second call to search by Id below and then change the link */
 				externalReferenceIndex = wb.getExternalReferenceByReferenceData(to.referenceData, true);
 				if (!externalReferenceIndex) {
@@ -3568,7 +3571,7 @@ function (window, undefined) {
 	UndoRedoWoorksheet.prototype.UndoRedo = function (Type, Data, nSheetId, bUndo, opt_wb) {
 		var wb = opt_wb ? opt_wb : this.wb;
 		var worksheetView, nRow, nCol, oLockInfo, index, from, to, range, r1, c1, r2, c2, temp, i, length, data;
-		var bInsert, operType; // ToDo избавиться от этого
+		var bInsert, operType; // ToDo get rid of this
 		var ws = wb.getWorksheetById(nSheetId);
 		if (null == ws) {
 			return;
@@ -3653,8 +3656,8 @@ function (window, undefined) {
 				}
 			});
 
-			//нужно для того, чтобы грамотно выставлялись цвета в ф/т при ручном скрытии строк, затрагивающих ф/т(undo/redo)
-			//TODO для случая скрытия строк фильтром(undo), может два раза вызываться функция setColorStyleTable - пересмотреть
+			//needed to properly set colors in formatted table when manually hiding rows affecting the formatted table (undo/redo)
+			//TODO for the case of hiding rows by filter (undo), setColorStyleTable function may be called twice - review
 			worksheetView = wb.oApi.wb.getWorksheetById(nSheetId);
 			if (worksheetView) {
 				worksheetView.model.autoFilters.reDrawFilter(null, index);
@@ -3712,12 +3715,12 @@ function (window, undefined) {
 				operType = c_oAscInsertOptions.InsertRows;
 			}
 
-			// Нужно поменять пересчетные индексы для совместного редактирования (lock-элементы), но только если это не изменения от другого пользователя
+			// Need to change recalculated indices for collaborative editing (lock elements), but only if these are not changes from another user
 			if (!wb.bCollaborativeChanges) {
 				ws.workbook.handlers.trigger("undoRedoAddRemoveRowCols", nSheetId, Type, range, bUndo);
 			}
 
-			// ToDo Так делать неправильно, нужно поправить (перенести логику в model, а отрисовку отделить)
+			// ToDo This is not the right way, need to fix (move logic to model and separate rendering)
 			worksheetView = wb.oApi.wb.getWorksheetById(nSheetId);
 			if (worksheetView) {
 				worksheetView.cellCommentator.updateCommentsDependencies(bInsert, operType, range);
@@ -3759,12 +3762,12 @@ function (window, undefined) {
 				operType = c_oAscInsertOptions.InsertColumns;
 			}
 
-			// Нужно поменять пересчетные индексы для совместного редактирования (lock-элементы), но только если это не изменения от другого пользователя
+			// Need to change recalculated indices for collaborative editing (lock elements), but only if these are not changes from another user
 			if (!wb.bCollaborativeChanges) {
 				ws.workbook.handlers.trigger("undoRedoAddRemoveRowCols", nSheetId, Type, range, bUndo);
 			}
 
-			// ToDo Так делать неправильно, нужно поправить (перенести логику в model, а отрисовку отделить)
+			// ToDo This is not the right way, need to fix (move logic to model and separate rendering)
 			worksheetView = wb.oApi.wb.getWorksheetById(nSheetId);
 			if (worksheetView) {
 				worksheetView.cellCommentator.updateCommentsDependencies(bInsert, operType, range);
@@ -3811,7 +3814,7 @@ function (window, undefined) {
 				operType = c_oAscDeleteOptions.DeleteCellsAndShiftLeft;
 			}
 
-			// ToDo Так делать неправильно, нужно поправить (перенести логику в model, а отрисовку отделить)
+			// ToDo This is not the right way, need to fix (move logic to model and separate rendering)
 			worksheetView = wb.oApi.wb.getWorksheetById(nSheetId);
 			if (worksheetView) {
 				worksheetView.cellCommentator.updateCommentsDependencies(bInsert, operType, range.bbox);
@@ -3850,7 +3853,7 @@ function (window, undefined) {
 				operType = c_oAscDeleteOptions.DeleteCellsAndShiftTop;
 			}
 
-			// ToDo Так делать неправильно, нужно поправить (перенести логику в model, а отрисовку отделить)
+			// ToDo This is not the right way, need to fix (move logic to model and separate rendering)
 			worksheetView = wb.oApi.wb.getWorksheetById(nSheetId);
 			if (worksheetView) {
 				worksheetView.cellCommentator.updateCommentsDependencies(bInsert, operType, range.bbox);
@@ -3921,7 +3924,7 @@ function (window, undefined) {
 			}
 			worksheetView = wb.oApi.wb.getWorksheetById(nSheetId);
 			if (worksheetView) {
-				if (bUndo)//если на Undo перемещается диапазон из форматированной таблицы - стиль форматированной таблицы не должен цепляться
+				if (bUndo)//if on Undo a range is moved from a formatted table - the formatted table style should not attach
 				{
 					worksheetView.model.autoFilters._cleanStyleTable(to);
 				}
@@ -4021,7 +4024,7 @@ function (window, undefined) {
 				from = to;
 				to = temp;
 			}
-			//не делаем clone потому что предполагаем, что здесь могут быть только операции изменения рзмеров, перемещение или удаления одной ссылки
+			//we don't clone because we assume only resize, move, or delete operations for a single link can be here
 			data = null;
 			if (null != from) {
 				var aHyperlinks = ws.hyperlinkManager.get(from);
@@ -4324,7 +4327,7 @@ function (window, undefined) {
 				ws.editUserProtectedRanges(Data.from, Data.to);
 			}
 		} else if (AscCH.historyitem_Worksheet_SetSheetViewType === Type) {
-			//накатываем только при открытии
+			//apply only when opening
 			/*if (this.wb.bCollaborativeChanges) {
 				ws.setTopLeftCell(Data.to ? new Asc.Range(Data.to.c1, Data.to.r1, Data.to.c2, Data.to.r2) : null);
 			}*/
@@ -4393,7 +4396,7 @@ function (window, undefined) {
 				wb.onTimelinesDelete(Data.from.name);
 			}
 		} else if (AscCH.historyitem_Worksheet_SetRightToLeft === Type) {
-			//накатываем только при открытии
+			//apply only when opening
 			if (!bUndo && this.wb.bCollaborativeChanges) {
 				ws.setRightToLeft(bUndo ? Data.from : Data.to);
 			}
@@ -4470,7 +4473,7 @@ function (window, undefined) {
 				if (index > from){
 					index -= len;
 				} else if (from <= index && index <= to) {
-					//не восстанавливаем действия внутри диапазона который уже удален. как google drive
+					//we don't restore actions inside a range that has already been deleted. like google drive
 					return false;
 				}
 
@@ -5023,7 +5026,7 @@ function (window, undefined) {
 	};
 	UndoRedoAutoFilters.prototype.CommuteRelated = function (oActionToUndo, oActionOther) {
 		if (AscCommonExcel.g_oUndoRedoAutoFilters === oActionOther.oClass) {
-			//изменения в форматированной таблице. например добавление total
+			//changes in a formatted table. for example adding total
 			return false;
 		}
 		let res = true;

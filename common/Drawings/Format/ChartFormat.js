@@ -1,33 +1,36 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 "use strict";
@@ -2388,6 +2391,12 @@
     CBaseChartObject.prototype.getScaleCoefficient = function() {
         return 1;
     };
+    CBaseChartObject.prototype.getHorizontalRule = function() {
+        return null;
+    };
+    CBaseChartObject.prototype.isControl = function() {
+        return false;
+    };
 
     function getMinMaxFromArrPoints(aPoints) {
         if(Array.isArray(aPoints) && aPoints.length > 0) {
@@ -2418,7 +2427,7 @@
 		return null;
 	}
 
-    var SCALE_INSET_COEFF = 1.016;//Возможно придется уточнять
+    var SCALE_INSET_COEFF = 1.016;//May need to be refined
     function CDLbl() {
         CBaseChartObject.call(this);
         this.bDelete = null;
@@ -2644,6 +2653,9 @@
         if(this.series && this.pt) {
             var oSeries = this.series;
             if(oSeries) {
+                if (oSeries.isChartEx && oSeries.isChartEx()) {
+                    return this;
+                }
                 var oDlbls;
                 if(!oSeries.dLbls) {
                     var oChart = oSeries.parent;
@@ -2816,12 +2828,12 @@
                         break;
                     }
                     case 2: //dist
-                    {// (Text Anchor Enum ( Distributed )) TODO: пока выравнивание  по центру. Переделать!
+                    {// (Text Anchor Enum ( Distributed )) TODO: currently center alignment. Needs to be reworked!
                         _vertical_shift = (_text_rect_height - _content_height) * 0.5;
                         break;
                     }
                     case 3: //just
-                    {// (Text Anchor Enum ( Justified )) TODO: пока выравнивание  по центру. Переделать!
+                    {// (Text Anchor Enum ( Justified )) TODO: currently center alignment. Needs to be reworked!
                         _vertical_shift = (_text_rect_height - _content_height) * 0.5;
                         break;
                     }
@@ -3313,7 +3325,7 @@
             return oChartSpace.extX / 5;
         }
         else {
-            return 20000;//надписи для осей значений не переносятся поэтому выставляем большую ширину.
+            return 20000;//value axis labels don't wrap so we set a large width.
         }
     };
     CDLbl.prototype.getBodyPr = function() {
@@ -3334,7 +3346,7 @@
         }
         ret.merge(oBaseBodyPr);
         var nVert = ret.vert;
-        //Пока не поддерживаем bodyPr.rot. Костыль под эффект_штурмовика.docx.
+        // We don't support bodyPr.rot yet. Workaround for cases where bodyPr.rot is set.
         if(AscFormat.isRealNumber(ret.rot) && 0 !== ret.rot) {
             if(Math.abs(ret.rot - 5400000) < 1000) {
                 if(ret.vert === AscFormat.nVertTTvert270) {
@@ -3385,7 +3397,7 @@
         if(this.txBody) {
             var bodyPr = this.getBodyPr();
             var max_box_width = this.getMaxWidth(bodyPr);
-            /*получено экспериментальным путем нужно уточнить*/
+            /*obtained experimentally, needs to be refined*/
             var max_content_width = max_box_width - 2 * SCALE_INSET_COEFF;
 
             var content = this.txBody.content;
@@ -5253,7 +5265,7 @@
         this.spPr = null;
         this.axId = [];
 
-        //ТоDo
+        //TODO
         this.valAx = null;
         this.catAx = null;
         this.serAx = null;
@@ -5396,7 +5408,7 @@
             }
         }
 
-        //выставим пересечения осей в копии
+        //set axis crosses in the copy
 
         for(i = 0; i < this.axId.length; ++i) {
             cur_axis = this.axId[i];
@@ -5509,7 +5521,7 @@
         return null;
     };
     CPlotArea.prototype.addAxis = function(axis) {
-        //сначала проверим не лежит ли ось уже в plotArea
+        //first check if the axis is already in plotArea
         if(!axis)
             return;
         var i;
@@ -5517,7 +5529,7 @@
             if(this.axId[i] === axis)
                 return;
         }
-        //если такой оси нет, можно добавлять.
+        //if there's no such axis, we can add it.
         AscCommon.History.CanAddChanges() && AscCommon.History.Add(new CChangesDrawingsContent(this, AscDFH.historyitem_PlotArea_AddAxis, this.axId.length, [axis], true));
         this.axId.push(axis);
         this.setParentToChild(axis);
@@ -5539,7 +5551,7 @@
             var chart = this.charts.splice(pos, 1)[0];
             AscCommon.History.CanAddChanges() && AscCommon.History.Add(new CChangesDrawingsContent(this, AscDFH.historyitem_PlotArea_RemoveChart, pos, [chart], false));
             this.onChangeDataRefs();
-            //удалим все оси этой диаграммы, проверив прежде нет ли ссылок на данные оси в других диаграммах
+            //delete all axes of this chart, first checking if there are references to these axes in other charts
             if(Array.isArray(chart.axId)) {
                 var chart_axis = chart.axId;
                 for(var i = 0; i < chart_axis.length; ++i) {
@@ -6790,9 +6802,9 @@
 		}
 	}
     CPlotArea.prototype.initPostOpen = function(aChartWithAxis) {
-        // выставляем axis в chart
-        // TODO: 1. Диаграмм может быть больше, но мы пока работаем только с одной
-        // TODO: 2. Избавиться от oIdToAxisMap, aChartWithAxis, т.к. они здесь больше не нужны
+        // set axis in chart
+        // TODO: 1. There may be more charts, but we only work with one for now
+        // TODO: 2. Get rid of oIdToAxisMap, aChartWithAxis, as they are no longer needed here
         ///  var oZeroChart = this.charts[0];
         ///  if ( oZeroChart )
         ///  {
@@ -7501,11 +7513,11 @@
                 }
             }
         }
-        if(oNewChart) {
-            this.removeSeries(this.getSeriesArrayIdx(oSeries));
-            oPlotArea.addChart(oNewChart, null);
-            nResult = Asc.c_oAscError.ID.No;
-        }
+		if (oNewChart) {
+			oPlotArea.addChart(oNewChart, null);
+			this.removeSeries(this.getSeriesArrayIdx(oSeries));
+			nResult = Asc.c_oAscError.ID.No;
+		}
         return nResult;
     };
     CChartBase.prototype.tryChangeSeriesChartType = function(oSeries, nType) {
@@ -8766,7 +8778,7 @@
 
         ret.putInvertCatOrder(this.isReversed());
 
-        //настройки пересечения с другой осью
+        //settings for crossing with another axis
 
         var crossAx = this.crossAx;
 
@@ -8811,7 +8823,7 @@
         else
             ret.putTickLabelsPos(c_oAscTickLabelsPos.TICK_LABEL_POSITION_NEXT_TO);
 
-        //настройки засечек на оси
+        //axis tick mark settings
         if(AscFormat.isRealNumber(this.majorTickMark))
             ret.putMajorTickMark(this.majorTickMark);
         else
@@ -9220,7 +9232,7 @@
         var ret = new AscCommon.asc_ValAxisSettings();
         var scaling = this.scaling;
 
-        //настройки логарифмической шкалы
+        //logarithmic scale settings
         if(scaling && AscFormat.isRealNumber(scaling.logBase)) {
             ret.putLogScale(true);
             ret.putLogBase(scaling.logBase);
@@ -9231,7 +9243,7 @@
 
 				const aPoints = this.isVertical() ? this.yPoints : this.xPoints;
         const oMinMaxOnAxis = getMinMaxFromArrPoints(aPoints);
-        //настроки максимального значения по оси
+        //maximum axis value settings
         if(scaling && AscFormat.isRealNumber(scaling.max)) {
             ret.putMaxValRule(c_oAscValAxisRule.fixed);
             ret.putMaxVal(scaling.max);
@@ -9241,7 +9253,7 @@
             ret.putMaxVal(oMinMaxOnAxis.max);
         }
 
-        //настройки минимального значения по оси
+        //minimum axis value settings
         if(scaling && AscFormat.isRealNumber(scaling.min)) {
             ret.putMinValRule(c_oAscValAxisRule.fixed);
             ret.putMinVal(scaling.min);
@@ -9251,10 +9263,10 @@
             ret.putMinVal(oMinMaxOnAxis.min);
         }
 
-        //настройка ориентации оси
+        //axis orientation setting
         ret.putInvertValOrder(this.isReversed());
 
-        //настройка множителя единиц на оси
+        //axis unit multiplier setting
         if(isRealObject(this.dispUnits)) {
             var disp_units = this.dispUnits;
             if(AscFormat.isRealNumber(disp_units.builtInUnit)) {
@@ -9276,7 +9288,7 @@
             ret.putShowUnitsOnChart(false);
         }
 
-        //настройки засечек на оси
+        //axis tick mark settings
         if(AscFormat.isRealNumber(this.majorTickMark))
             ret.putMajorTickMark(this.majorTickMark);
         else
@@ -9294,7 +9306,7 @@
 
         var crossAx = this.crossAx;
         if(crossAx) {
-            //настройки пересечения с другой осью
+            //settings for crossing with another axis
             if(AscFormat.isRealNumber(crossAx.crossesAt)) {
                 ret.putCrossesRule(c_oAscCrossesRule.value);
                 ret.putCrosses(crossAx.crossesAt);
@@ -16903,6 +16915,12 @@
     CalcLegendEntry.prototype.getScaleCoefficient = function() {
         return 1;
     };
+    CalcLegendEntry.prototype.getHorizontalRule = function() {
+        return null;
+    };
+    CalcLegendEntry.prototype.isControl = function() {
+        return false;
+    };
 
     function CompiledMarker() {
         this.spPr = new AscFormat.CSpPr();
@@ -16940,6 +16958,13 @@
     CompiledMarker.prototype.getScaleCoefficient = function() {
         return 1;
     };
+    CompiledMarker.prototype.getHorizontalRule = function() {
+        return null;
+    };
+    CompiledMarker.prototype.isControl = function() {
+        return false;
+    };
+
     function CUnionMarker() {
         this.lineMarker = null;
         this.marker = null;
@@ -16952,6 +16977,13 @@
     CUnionMarker.prototype.getScaleCoefficient = function() {
         return 1;
     };
+    CUnionMarker.prototype.getHorizontalRule = function() {
+        return null;
+    };
+    CUnionMarker.prototype.isControl = function() {
+        return false;
+    };
+
     function CreateMarkerGeometryByType(type) {
         var ret = new AscFormat.Geometry();
         var w = 43200, h = 43200;

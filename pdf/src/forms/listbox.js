@@ -1,34 +1,39 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2024
+ * Copyright (C) Ascensio System SIA, 2009-2026
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
- * version 3 as published by the Free Software Foundation. In accordance with
- * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
- * that Ascensio System SIA expressly excludes the warranty of non-infringement
- * of any third-party rights.
+ * version 3 as published by the Free Software Foundation, together with the
+ * additional terms provided in the LICENSE file.
  *
  * This program is distributed WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
- * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
+ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
- * street, Riga, Latvia, EU, LV-1050.
+ * You can contact Ascensio System SIA by email at info@onlyoffice.com
+ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
+ * LV-1050, Latvia, European Union.
  *
- * The  interactive user interfaces in modified source and object code versions
- * of the Program must display Appropriate Legal Notices, as required under
+ * The interactive user interfaces in modified versions of the Program
+ * are required to display Appropriate Legal Notices in accordance with
  * Section 5 of the GNU AGPL version 3.
  *
- * Pursuant to Section 7(b) of the License you must retain the original Product
- * logo when distributing the program. Pursuant to Section 7(e) we decline to
- * grant you any rights under trademark law for use of our trademarks.
+ * No trademark rights are granted under this License.
  *
- * All the Product's GUI elements, including illustrations and icon sets, as
- * well as technical writing content are licensed under the terms of the
- * Creative Commons Attribution-ShareAlike 4.0 International. See the License
- * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ * All non-code elements of the Product, including illustrations,
+ * icon sets, and technical writing content, are licensed under the
+ * Creative Commons Attribution-ShareAlike 4.0 International License:
+ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
+ * This license applies only to such non-code elements and does not
+ * modify or replace the licensing terms applicable to the Program's
+ * source code, which remains licensed under the GNU Affero General
+ * Public License v3.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
+
+"use strict";
 
 (function(){
     let LISTBOX_SELECTED_COLOR = {
@@ -69,8 +74,8 @@
         if (this.IsHidden() && !Asc.editor.IsEditFieldsMode())
             return;
 
-        // когда выравнивание посередине или справа, то после того
-        // как ширина параграфа будет больше чем размер формы, выравнивание становится слева, пока текста вновь не станет меньше чем размер формы
+        // when alignment is center or right, then after
+        // paragraph width becomes larger than form size, alignment becomes left, until text is smaller than form size again
         this.CheckAlignInternal();
         
         this.Recalculate();
@@ -252,7 +257,7 @@
     CListBoxField.prototype.UpdateTopIndex = function() {
         let oParaBounds     = this.content.GetElement(0).GetPageBounds(0);
         let nHeightPerPara  = oParaBounds.Bottom - oParaBounds.Top;
-        let nTopIndex       = Math.round(-this._curShiftView.y / nHeightPerPara); // количество смещений в параграфах
+        let nTopIndex       = Math.round(-this._curShiftView.y / nHeightPerPara); // number of offsets in paragraphs
         
         AscCommon.History.Add(new CChangesPDFListTopIndex(this, this.GetTopIndex(), nTopIndex));
         this._topIdx = nTopIndex;
@@ -261,7 +266,7 @@
         return this._topIdx;
     };
     CListBoxField.prototype.SetTopIndex = function(nTopIndex) {
-        // Обновляем _topIdx и добавляем изменение в историю
+        // Update _topIdx and add change to history
         AscCommon.History.Add(new CChangesPDFListTopIndex(this, this.GetTopIndex(), nTopIndex));
         this._topIdx = nTopIndex;
 
@@ -695,7 +700,7 @@
         }
 
         let oOnFocus = this.GetTrigger(AscPDF.PDF_TRIGGERS_TYPES.OnFocus);
-        // вызываем выставление курсора после onFocus. Если уже в фокусе, тогда сразу.
+        // call cursor positioning after onFocus. If already in focus, then immediately.
         if (false == isInFocus && oOnFocus && oOnFocus.Actions.length > 0)
             oActionsQueue.callbackAfterFocus = callbackAfterFocus.bind(this, x, y, e);
         else
@@ -950,7 +955,7 @@
                     docElem:        oScrollDocElm,
                     baseYPos:       parseInt(oScrollDocElm.style.top),
                     oldZoom:        oViewer.zoom,
-                    scrollCoeff:    nScrollCoeff, // проскроленная часть
+                    scrollCoeff:    nScrollCoeff, // scrolled portion
                     rot:            nRotAngle 
                 });
             }
@@ -973,7 +978,7 @@
 
         let oParaBounds     = this.content.GetElement(0).GetPageBounds(0);
         let nHeightPerPara  = oParaBounds.Bottom - oParaBounds.Top;
-        let nShiftCount     = this._curShiftView.y / nHeightPerPara; // количество смещений в длинах параграфов
+        let nShiftCount     = this._curShiftView.y / nHeightPerPara; // number of offsets in paragraph heights
         if (Math.abs(Math.round(nShiftCount) - nShiftCount) <= 0.001)
             return;
 
@@ -1001,7 +1006,7 @@
             let oParaBounds = this.content.GetElement(0).GetPageBounds(0);
             let nHeightPerPara = oParaBounds.Bottom - oParaBounds.Top;
             
-            // Устанавливаем _curShiftView.y по заданному nTopIndex
+            // Set _curShiftView.y by given nTopIndex
             this._curShiftView.y = -this.GetTopIndex() * nHeightPerPara;
 
             this.content.ResetShiftView();
@@ -1032,7 +1037,7 @@
         
         let oParagraph  = this.content.GetElement(nFirstSelectedPara);
 
-        // размеры всего контента
+        // dimensions of all content
         let oPageBounds     = this.content.GetContentBounds(0);
         let oCurParaHeight  = oParagraph.Lines[0].Bottom - oParagraph.Lines[0].Top;
 
@@ -1134,7 +1139,7 @@
             AscCommon.History.Add(new CChangesPDFListFormCurIdxs(this, this.GetParentCurIdxs(), aIdxs));
 
             AscCommon.History.StartNoHistoryMode();
-            // сначала снимаем выделение с текущих
+            // first remove selection from current ones
             let aCurIdxs = this.GetCurIdxs();
             for (let i = 0; i < aCurIdxs.length; i++) {
                 this.UnselectOption(aCurIdxs[i]);
@@ -1176,8 +1181,8 @@
         return false;
     };
     CListBoxField.prototype.CheckAlignInternal = function() {
-        // когда выравнивание посередине или справа, то после того
-        // как ширина параграфа будет больше чем размер формы, выравнивание становится слева, пока текста вновь не станет меньше чем размер формы
+        // when alignment is center or right, then after
+        // paragraph width becomes larger than form size, alignment becomes left, until text is smaller than form size again
 
         let isRTL = this.IsRTL();
         let nCurAlign = this.GetAlign();
@@ -1206,7 +1211,7 @@
     CListBoxField.prototype.WriteToBinary = function(memory) {
         memory.WriteByte(AscCommon.CommandType.ctAnnotField);
 
-        // длина комманд
+        // command length
         let nStartPos = memory.GetCurPosition();
         memory.Skip(4);
 
@@ -1219,7 +1224,7 @@
             memory.WriteString(value);
         }
 
-        // элементы списка выбора
+        // selection list elements
         let aOptions = this.GetOptions(memory.isCopyPaste);
         if (aOptions && aOptions.length !== 0) {
             memory.fieldDataFlags |= (1 << 10);
@@ -1231,7 +1236,7 @@
         }
 
         if (value != null && Array.isArray(value) == true) {
-            // флаг что значение - это массив
+            // flag that value is an array
             memory.fieldDataFlags |= (1 << 13);
             memory.WriteLong(value.length);
             for (let i = 0; i < value.length; i++) {
@@ -1239,7 +1244,7 @@
             }
         }
 
-        // массив I (выделенные значения списка)
+        // I array (selected list values)
         let curIdxs;
         if ([AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.listbox].includes(this.GetType())) {
             curIdxs = this.GetParentCurIdxs(memory.isCopyPaste);
@@ -1272,13 +1277,13 @@
 
         let nEndPos = memory.GetCurPosition();
 
-        // запись флагов
+        // write flags
         memory.Seek(memory.posForWidgetFlags);
         memory.WriteLong(memory.widgetFlags);
         memory.Seek(memory.posForFieldDataFlags);
         memory.WriteLong(memory.fieldDataFlags);
 
-        // запись длины комманд
+        // write command length
         memory.Seek(nStartPos);
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
