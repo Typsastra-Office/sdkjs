@@ -5,6 +5,12 @@ let wasm_bindgen = (function(exports) {
     }
 
     class WasmKhmerSegmenter {
+        static __wrap(ptr) {
+            const obj = Object.create(WasmKhmerSegmenter.prototype);
+            obj.__wbg_ptr = ptr;
+            WasmKhmerSegmenterFinalization.register(obj, obj.__wbg_ptr, obj);
+            return obj;
+        }
         __destroy_into_raw() {
             const ptr = this.__wbg_ptr;
             this.__wbg_ptr = 0;
@@ -119,6 +125,23 @@ let wasm_bindgen = (function(exports) {
             this.__wbg_ptr = ret[0];
             WasmKhmerSegmenterFinalization.register(this, this.__wbg_ptr, this);
             return this;
+        }
+        /**
+         * Construct with a selectable spelling authority (`official` or `community`).
+         * @param {Uint8Array} dictionary_bytes
+         * @param {string} authority
+         * @returns {WasmKhmerSegmenter}
+         */
+        static newWithAuthority(dictionary_bytes, authority) {
+            const ptr0 = passArray8ToWasm0(dictionary_bytes, wasm.__wbindgen_malloc);
+            const len0 = WASM_VECTOR_LEN;
+            const ptr1 = passStringToWasm0(authority, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len1 = WASM_VECTOR_LEN;
+            const ret = wasm.wasmkhmersegmenter_newWithAuthority(ptr0, len0, ptr1, len1);
+            if (ret[2]) {
+                throw takeFromExternrefTable0(ret[1]);
+            }
+            return WasmKhmerSegmenter.__wrap(ret[0]);
         }
         /**
          * @param {string} word

@@ -109,6 +109,24 @@
 		return null;
 	}
 
+	function getKhmerWordSegmenter()
+	{
+		let common = window["AscCommon"];
+		if (common && "function" === typeof common["getKhmerSpellchecker"])
+			return common["getKhmerSpellchecker"]();
+
+		return null;
+	}
+
+	function isKhmerViterbiLineBreakEnabled()
+	{
+		let common = window["AscCommon"];
+		if (!common || "function" !== typeof common["getKhmerLineBreakEngine"])
+			return false;
+
+		return "viterbi" === common["getKhmerLineBreakEngine"]();
+	}
+
 	function CParagraphWordBreaker()
 	{
 		this.Items = [];
@@ -143,6 +161,13 @@
 	};
 	CParagraphWordBreaker.prototype.Flush = function()
 	{
+		if (this.applyKhmerWordBreaks())
+		{
+			this.Items.length = 0;
+			this.Text = "";
+			return;
+		}
+
 		let segmenter = getWordSegmenter();
 		if (segmenter && this.Items.length)
 		{
@@ -184,6 +209,43 @@
 
 		this.Items.length = 0;
 		this.Text = "";
+	};
+	/**
+	 * Apply the Khmer Viterbi segmenter's word-break opportunities when that
+	 * line-break engine is selected. Returns false to fall back to ICU.
+	 */
+	CParagraphWordBreaker.prototype.applyKhmerWordBreaks = function()
+	{
+		if (!this.Items.length || !isKhmerViterbiLineBreakEnabled())
+			return false;
+
+		let khmer = getKhmerWordSegmenter();
+		if (!khmer || "function" !== typeof khmer.isReady || !khmer.isReady()
+			|| "function" !== typeof khmer.isKhmerText || !khmer.isKhmerText(this.Text))
+			return false;
+
+		let offsets = khmer.wordBreakOpportunities(this.Text);
+		if (!offsets || !offsets.length)
+			return false;
+
+		let itemsByEnd = {};
+		let textOffset = 0;
+		for (let itemIndex = 0; itemIndex < this.Items.length; ++itemIndex)
+		{
+			let item = this.Items[itemIndex];
+			item.SetWordBreakAfter(false);
+			textOffset += String.fromCodePoint(item.GetCodePoint()).length;
+			itemsByEnd[textOffset] = item;
+		}
+
+		for (let i = 0; i < offsets.length; ++i)
+		{
+			let item = itemsByEnd[offsets[i]];
+			if (item)
+				item.SetWordBreakAfter(true);
+		}
+
+		return true;
 	};
 
 	/**

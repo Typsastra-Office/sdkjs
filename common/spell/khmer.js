@@ -31,6 +31,10 @@
 	const DEFAULT_BASE_PATH = "../../../../sdkjs/common/spell/khmer";
 	const USER_WORDS_KEY = "euro-office.khmer-spellcheck.user-words.v1";
 	const REQUEST_ID = "khmerSpellcheckRequestId";
+	const SPELLING_AUTHORITY_OFFICIAL = "official";
+	const SPELLING_AUTHORITY_COMMUNITY = "community";
+	const LINE_BREAK_ENGINE_ICU = "icu";
+	const LINE_BREAK_ENGINE_VITERBI = "viterbi";
 
 	function resolveResourceUrl(url)
 	{
@@ -111,12 +115,51 @@
 		return word.normalize ? word.normalize("NFC") : word;
 	}
 
+	function normalizeSpellingAuthority(value)
+	{
+		return (SPELLING_AUTHORITY_COMMUNITY === value) ? SPELLING_AUTHORITY_COMMUNITY : SPELLING_AUTHORITY_OFFICIAL;
+	}
+
+	function createSegmenterEngine(bindings, dictionaryBytes, authority)
+	{
+		if (bindings && bindings["WasmKhmerSegmenter"]
+			&& "function" === typeof bindings["WasmKhmerSegmenter"]["newWithAuthority"])
+			return bindings["WasmKhmerSegmenter"]["newWithAuthority"](dictionaryBytes, authority);
+
+		if (bindings && "function" === typeof bindings["newWithAuthority"])
+			return bindings["newWithAuthority"](dictionaryBytes, authority);
+
+		return new bindings.WasmKhmerSegmenter(dictionaryBytes);
+	}
+
+	/**
+	 * Word breaks are computed while a paragraph is shaped, so a paragraph that
+	 * was laid out before the Khmer segmenter finished loading keeps ICU breaks.
+	 * Re-layout once the engine is ready.
+	 */
+	function requestKhmerRelayout()
+	{
+		let editor = window.Asc && window.Asc.editor;
+		if (editor && "function" === typeof editor.asc_Recalculate)
+		{
+			try
+			{
+				editor.asc_Recalculate(true);
+			}
+			catch (err)
+			{
+			}
+		}
+	}
+
 	function CKhmerSpellchecker(settings)
 	{
 		settings = settings || {};
 		this.basePath = settings.basePath || DEFAULT_BASE_PATH;
 		this.profile = settings.profile || "typing";
 		this.accuracy = settings.accuracy || "visual";
+		this.authority = normalizeSpellingAuthority(settings.authority);
+		this.dictionaryBytes = null;
 		this.engine = settings.engine || null;
 		this.ready = !!this.engine;
 		this.failed = false;
@@ -139,6 +182,69 @@
 	CKhmerSpellchecker.prototype.isReady = function()
 	{
 		return this.ready;
+	};
+	CKhmerSpellchecker.prototype.getSpellingPolicy = function()
+	{
+		return {"profile" : this.profile, "accuracy" : this.accuracy, "authority" : this.authority};
+	};
+	CKhmerSpellchecker.prototype.setSpellingPolicy = function(policy)
+	{
+		if (!policy || "object" !== typeof policy)
+			return false;
+
+		let changed = false;
+		if ("string" === typeof policy.profile && policy.profile !== this.profile)
+		{
+			this.profile = policy.profile;
+			changed = true;
+		}
+		if ("string" === typeof policy.accuracy && policy.accuracy !== this.accuracy)
+		{
+			this.accuracy = policy.accuracy;
+			changed = true;
+		}
+
+		let authority = normalizeSpellingAuthority(policy.authority || this.authority);
+		if (authority !== this.authority)
+		{
+			this.authority = authority;
+			changed = true;
+		}
+
+		if (changed && this.ready && this.dictionaryBytes && window["AscKhmerSegmenterWasm"])
+		{
+			try
+			{
+				this.engine = createSegmenterEngine(window["AscKhmerSegmenterWasm"], this.dictionaryBytes, this.authority);
+			}
+			catch (err)
+			{
+			}
+		}
+
+		return changed;
+	};
+	/**
+	 * Legal Khmer line-break positions (UTF-16 offsets into the source text), or
+	 * null when the engine cannot provide them.
+	 */
+	CKhmerSpellchecker.prototype.wordBreakOpportunities = function(text)
+	{
+		if (!this.ready || !this.engine || "string" !== typeof text || !text)
+			return null;
+
+		if ("function" !== typeof this.engine.wordBreakOpportunities)
+			return null;
+
+		try
+		{
+			let offsets = this.engine.wordBreakOpportunities(text);
+			return Array.isArray(offsets) ? offsets : null;
+		}
+		catch (err)
+		{
+			return null;
+		}
 	};
 	CKhmerSpellchecker.prototype.loadUserWords = function()
 	{
@@ -228,9 +334,10 @@
 		]).then(function(resources)
 		{
 			let bindings = window["AscKhmerSegmenterWasm"];
+			self.dictionaryBytes = resources[2];
 			return bindings({"module_or_path" : resources[1]}).then(function()
 			{
-				self.engine = new bindings.WasmKhmerSegmenter(resources[2]);
+				self.engine = createSegmenterEngine(bindings, resources[2], self.authority);
 				self.ready = true;
 				let callbacks = self.readyCallbacks;
 				self.readyCallbacks = [];
@@ -500,5 +607,42 @@
 		if (!khmerSpellchecker)
 			khmerSpellchecker = new CKhmerSpellchecker();
 		return khmerSpellchecker;
+	};
+
+	// Word-segmentation engine used for Khmer line breaking:
+	//   "icu"     - Intl.Segmenter / ICU word boundaries (default)
+	//   "viterbi" - Khmer Viterbi segmenter wordBreakOpportunities()
+	let khmerLineBreakEngine = LINE_BREAK_ENGINE_ICU;
+	window["AscCommon"]["getKhmerLineBreakEngine"] = function()
+	{
+		return khmerLineBreakEngine;
+	};
+	window["AscCommon"]["setKhmerLineBreakEngine"] = function(engine)
+	{
+		khmerLineBreakEngine = (LINE_BREAK_ENGINE_VITERBI === engine) ? LINE_BREAK_ENGINE_VITERBI : LINE_BREAK_ENGINE_ICU;
+
+		let spellchecker = window["AscCommon"]["getKhmerSpellchecker"]();
+		if (spellchecker)
+		{
+			// Make sure the segmenter is loaded even when spell checking is off,
+			// then re-layout so the selected engine takes effect.
+			spellchecker.init().then(function()
+			{
+				requestKhmerRelayout();
+			}, function()
+			{
+			});
+		}
+
+		requestKhmerRelayout();
+		return khmerLineBreakEngine;
+	};
+	window["AscCommon"]["KHMER_SPELLING_AUTHORITY"] = {
+		"official"  : SPELLING_AUTHORITY_OFFICIAL,
+		"community" : SPELLING_AUTHORITY_COMMUNITY
+	};
+	window["AscCommon"]["KHMER_LINE_BREAK_ENGINE"] = {
+		"icu"     : LINE_BREAK_ENGINE_ICU,
+		"viterbi" : LINE_BREAK_ENGINE_VITERBI
 	};
 })(window);
