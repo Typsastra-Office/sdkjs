@@ -14796,6 +14796,8 @@ background-repeat: no-repeat;\
 		
 		function redraw() {
 			logicDocument.SetNumeralType(type);
+			if (window["AscCommon"])
+				window["AscCommon"]["g_oNumeralType"] = type;
 			logicDocument.GetAllParagraphs().forEach(function(paragraph) {
 				paragraph.RecalcInfo.NeedShapeText();
 			});
@@ -14805,6 +14807,8 @@ background-repeat: no-repeat;\
 		let symbols = "";
 		if (Asc.c_oNumeralType.hindi === type)
 			symbols = String.fromCodePoint(0x0660, 0x0661, 0x0662, 0x0663, 0x0664, 0x0665, 0x0666, 0x0667, 0x0668, 0x0669);
+		else if (Asc.c_oNumeralType.khmer === type)
+			symbols = String.fromCodePoint(0x17E0, 0x17E1, 0x17E2, 0x17E3, 0x17E4, 0x17E5, 0x17E6, 0x17E7, 0x17E8, 0x17E9);
 		else if (Asc.c_oNumeralType.arabic === type)
 			symbols = String.fromCodePoint(0x0030, 0x0031, 0x0032, 0x0033, 0x0034, 0x0035, 0x0036, 0x0037, 0x0038, 0x0039);
 		else

@@ -10409,6 +10409,41 @@
 	 * @param [oPr] {Object}
 	 * @returns {string}
 	 */
+	/**
+	 * Rewrites Latin digits to the document's numeral system (Hindi or Khmer
+	 * numerals). Used for numbering, page numbers and numeric fields, which are
+	 * produced here rather than going through the text shaper.
+	 */
+	function ApplyNumeralSystemToDigits(sText)
+	{
+		if (!sText)
+			return sText;
+
+		let nNumeralType = window["AscCommon"] && window["AscCommon"]["g_oNumeralType"];
+		let nOffset = 0;
+		if (Asc.c_oNumeralType)
+		{
+			if (Asc.c_oNumeralType.hindi === nNumeralType)
+				nOffset = 0x0660 - 0x0030;
+			else if (Asc.c_oNumeralType.khmer === nNumeralType)
+				nOffset = 0x17E0 - 0x0030;
+		}
+
+		if (!nOffset)
+			return sText;
+
+		let sResult = "";
+		for (let i = 0, nLen = sText.length; i < nLen; ++i)
+		{
+			let nCode = sText.charCodeAt(i);
+			if (nCode >= 0x0030 && nCode <= 0x0039)
+				nCode += nOffset;
+			sResult += String.fromCharCode(nCode);
+		}
+
+		return sResult;
+	}
+
 	function IntToNumberFormat(nValue, nFormat, oPr)
 	{
 		oPr = oPr || {};
@@ -10440,7 +10475,7 @@
 
 			case Asc.c_oAscNumberingFormat.Decimal:
 			{
-				sResult = "" + nValue;
+				sResult = ApplyNumeralSystemToDigits("" + nValue);
 				break;
 			}
 
@@ -10451,6 +10486,7 @@
 				else if (sResult.length === 2) sResult = '000' + sResult;
 				else if (sResult.length === 3) sResult = '00' + sResult;
 				else if (sResult.length === 4) sResult = '0' + sResult;
+				sResult = ApplyNumeralSystemToDigits(sResult);
 				break;
 			}
 

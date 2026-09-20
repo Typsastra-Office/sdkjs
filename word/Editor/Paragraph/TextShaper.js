@@ -433,10 +433,10 @@
 				this.FlushWord();
 				this.private_HandleNBSP(oItem);
 			}
-			else if (oItem.IsDigit() && this.private_IsReplaceToHindiDigits())
+			else if (oItem.IsDigit() && this.private_GetNumeralDigitOffset())
 			{
 				this.FlushWord();
-				this.private_HandleHindiDigit(oItem);
+				this.private_HandleNumeralDigit(oItem, this.private_GetNumeralDigitOffset());
 			}
 			else
 			{
@@ -637,29 +637,40 @@
 		item.SetCodePointType(CODEPOINT_TYPE.BASE);
 		item.SetWidth(AscFonts.GetGraphemeWidth(grapheme));
 	};
-	CParagraphTextShaper.prototype.private_IsReplaceToHindiDigits = function()
+	/**
+	 * Offset added to a Latin digit's code point to render it with the document's
+	 * numeral system (0 = keep Latin digits).
+	 */
+	CParagraphTextShaper.prototype.private_GetNumeralDigitOffset = function()
 	{
 		if (this.MaskSymbol)
-			return false;
+			return 0;
 
 		if (Asc.editor.isPdfEditor())
 		{
 			let oParent = this.Paragraph.GetParent();
 			if (oParent.ParentPDF && oParent.ParentPDF.IsForm())
-				return oParent.ParentPDF.IsHindiDigits();
+				return oParent.ParentPDF.IsHindiDigits() ? (0x0660 - 0x0030) : 0;
 
-			return false;
+			return 0;
 		}
 
 		let logicDocument = this.Paragraph ? this.Paragraph.GetLogicDocument() : undefined;
-		return (logicDocument
-			&& logicDocument.IsDocumentEditor()
-			&& Asc.c_oNumeralType.hindi === logicDocument.GetNumeralType());
+		if (logicDocument && logicDocument.IsDocumentEditor())
+		{
+			let nNumeralType = logicDocument.GetNumeralType();
+			if (Asc.c_oNumeralType.hindi === nNumeralType)
+				return 0x0660 - 0x0030;
+			if (Asc.c_oNumeralType.khmer === nNumeralType)
+				return 0x17E0 - 0x0030;
+		}
+
+		return 0;
 	};
-	CParagraphTextShaper.prototype.private_HandleHindiDigit = function(oItem)
+	CParagraphTextShaper.prototype.private_HandleNumeralDigit = function(oItem, nOffset)
 	{
 		let oFontInfo = this.TextPr.GetFontInfo(AscWord.fontslot_ASCII);
-		let nGrapheme = AscCommon.g_oTextMeasurer.GetGraphemeByUnicode(oItem.GetCodePoint() + (0x0660 - 0x0030), oFontInfo.Name, oFontInfo.Style);
+		let nGrapheme = AscCommon.g_oTextMeasurer.GetGraphemeByUnicode(oItem.GetCodePoint() + nOffset, oFontInfo.Name, oFontInfo.Style);
 		this.private_HandleItem(oItem, nGrapheme, AscFonts.GetGraphemeWidth(nGrapheme), oFontInfo.Size, AscWord.fontslot_ASCII, false, false, false);
 	};
 	CParagraphTextShaper.prototype.SetMaskSymbol = function(maskSymbol)
