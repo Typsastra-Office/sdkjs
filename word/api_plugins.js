@@ -1608,6 +1608,55 @@
 			catch (e) {}
 			result.paragraphs.push(rec);
 		}
+
+		// Page geometry (mm) from the current section properties.
+		try
+		{
+			var oSectPr = (typeof oLogicDocument.GetCurrentSectPr === "function") ? oLogicDocument.GetCurrentSectPr() : null;
+			if (oSectPr)
+			{
+				result.page = {
+					width: oSectPr.GetPageWidth(),
+					height: oSectPr.GetPageHeight(),
+					marginLeft: oSectPr.GetPageMarginLeft(),
+					marginRight: oSectPr.GetPageMarginRight(),
+					marginTop: oSectPr.GetPageMarginTop(),
+					marginBottom: oSectPr.GetPageMarginBottom(),
+					contentWidth: (typeof oSectPr.GetContentFrameWidth === "function") ? oSectPr.GetContentFrameWidth() : null,
+					contentHeight: (typeof oSectPr.GetContentFrameHeight === "function") ? oSectPr.GetContentFrameHeight() : null
+				};
+			}
+		}
+		catch (e) {}
+
+		// Table geometry (mm).
+		try
+		{
+			var aTables = oLogicDocument.GetAllTables({ All: true });
+			result.tables = [];
+			for (var t = 0; t < aTables.length; t++)
+			{
+				var tb = aTables[t];
+				var trec = {
+					pagesCount: (typeof tb.GetPagesCount === "function") ? tb.GetPagesCount() : null
+				};
+				try
+				{
+					var tbb = (typeof tb.Get_PageBounds === "function") ? tb.Get_PageBounds(0) : null;
+					if (tbb)
+					{
+						trec.top = tbb.Top;
+						trec.bottom = tbb.Bottom;
+						trec.left = tbb.Left;
+						trec.right = tbb.Right;
+					}
+				}
+				catch (e) {}
+				result.tables.push(trec);
+			}
+		}
+		catch (e) {}
+
 		return JSON.stringify(result);
 	};
 
