@@ -1606,6 +1606,23 @@
 				}
 			}
 			catch (e) {}
+			try
+			{
+				if (p.Pages && p.Pages.length)
+				{
+					var pageLines = [];
+					for (var pg = 0; pg < p.Pages.length; pg++)
+					{
+						var pgInfo = p.Pages[pg];
+						pageLines.push({
+							absPage: (typeof p.GetAbsolutePage === "function") ? p.GetAbsolutePage(pg) : null,
+							lines: (pgInfo && pgInfo.EndLine !== undefined && pgInfo.StartLine !== undefined) ? (pgInfo.EndLine - pgInfo.StartLine + 1) : null
+						});
+					}
+					rec.pageLines = pageLines;
+				}
+			}
+			catch (e) {}
 			result.paragraphs.push(rec);
 		}
 
