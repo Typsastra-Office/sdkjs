@@ -1629,6 +1629,42 @@
 		}
 		catch (e) {}
 
+		// Header / footer geometry (mm).
+		try
+		{
+			var oSectPr2 = (typeof oLogicDocument.GetCurrentSectPr === "function") ? oLogicDocument.GetCurrentSectPr() : null;
+			result.headerDebug = { sectPr: !!oSectPr2 };
+			if (oSectPr2)
+			{
+				var oHdr = (typeof oSectPr2.Get_Header_Default === "function") ? oSectPr2.Get_Header_Default() : null;
+				var oHdrContent = (oHdr && typeof oHdr.GetContent === "function") ? oHdr.GetContent() : null;
+				result.headerDebug.hdr = !!oHdr;
+				result.headerDebug.hdrContent = !!oHdrContent;
+				result.headerDebug.boundsFn = (oHdrContent && typeof oHdrContent.GetContentBounds === "function") ? "content" : ((oHdr && typeof oHdr.GetContentBounds === "function") ? "hdr" : "none");
+				if (oHdrContent && typeof oHdrContent.GetContentBounds === "function")
+				{
+					var hb = oHdrContent.GetContentBounds(0);
+					if (hb)
+						result.header = {
+							distance: (typeof oSectPr2.GetPageMarginHeader === "function") ? oSectPr2.GetPageMarginHeader() : null,
+							top: hb.Top, bottom: hb.Bottom, left: hb.Left, right: hb.Right
+						};
+				}
+				var oFtr = (typeof oSectPr2.Get_Footer_Default === "function") ? oSectPr2.Get_Footer_Default() : null;
+				var oFtrContent = (oFtr && typeof oFtr.GetContent === "function") ? oFtr.GetContent() : null;
+				if (oFtrContent && typeof oFtrContent.GetContentBounds === "function")
+				{
+					var fb = oFtrContent.GetContentBounds(0);
+					if (fb)
+						result.footer = {
+							distance: (typeof oSectPr2.GetPageMarginFooter === "function") ? oSectPr2.GetPageMarginFooter() : null,
+							top: fb.Top, bottom: fb.Bottom, left: fb.Left, right: fb.Right
+						};
+				}
+			}
+		}
+		catch (e) { result.headerDebug = { error: String(e) }; }
+
 		// Table geometry (mm).
 		try
 		{
