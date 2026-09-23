@@ -11622,6 +11622,19 @@
 		});
 	};
 	/**
+	 * Returns the durable paragraph identifier (survives edits), or null when
+	 * the paragraph has none. Used by agent tooling for stable node identity.
+	 * @memberof ApiParagraph
+	 * @typeofeditors ["CDE"]
+	 * @return {?number}
+	 */
+	ApiParagraph.prototype.GetParaId = function()
+	{
+		return this.Paragraph && typeof this.Paragraph.GetParaId === "function"
+			? this.Paragraph.GetParaId()
+			: null;
+	};
+	/**
 	 * Replaces the paragraph content with the specified text.
 	 * @memberof ApiParagraph
 	 * @param {string} text - The text to set.
@@ -30779,6 +30792,7 @@
 	ApiParagraph.prototype["GetParentTable"]         = ApiParagraph.prototype.GetParentTable;
 	ApiParagraph.prototype["GetParentTableCell"]     = ApiParagraph.prototype.GetParentTableCell;
 	ApiParagraph.prototype["GetText"]                = ApiParagraph.prototype.GetText;
+	ApiParagraph.prototype["GetParaId"]              = ApiParagraph.prototype.GetParaId;
 	ApiParagraph.prototype["SetText"]                = ApiParagraph.prototype.SetText;
 	ApiParagraph.prototype["GetTextPr"]              = ApiParagraph.prototype.GetTextPr;
 	ApiParagraph.prototype["SetTextPr"]              = ApiParagraph.prototype.SetTextPr;
