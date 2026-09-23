@@ -11635,6 +11635,41 @@
 			: null;
 	};
 	/**
+	 * Clears the direct character formatting of the paragraph's runs so the
+	 * named paragraph style applies. With keepEmphasis (default true) bold,
+	 * italic and underline are preserved - i.e. pasted formatting is merged
+	 * into the style instead of overriding it.
+	 * @memberof ApiParagraph
+	 * @typeofeditors ["CDE"]
+	 * @param {boolean} [keepEmphasis=true]
+	 * @returns {boolean}
+	 */
+	ApiParagraph.prototype.ClearDirectFormatting = function(keepEmphasis)
+	{
+		var bKeep = (false === keepEmphasis) ? false : true;
+		var count = this.GetElementsCount();
+		var cleared = 0;
+		for (var i = 0; i < count; i++)
+		{
+			var el = this.GetElement(i);
+			if (!el || typeof el.GetClassType !== "function" || "run" !== el.GetClassType())
+				continue;
+			if (!el.Run || typeof el.Run.Set_Pr !== "function")
+				continue;
+			var old = el.Run.Pr;
+			var np = new AscCommonWord.CTextPr();
+			if (bKeep && old)
+			{
+				np.Bold      = old.Bold;
+				np.Italic    = old.Italic;
+				np.Underline = old.Underline;
+			}
+			el.Run.Set_Pr(np);
+			cleared++;
+		}
+		return cleared > 0;
+	};
+	/**
 	 * Replaces the paragraph content with the specified text.
 	 * @memberof ApiParagraph
 	 * @param {string} text - The text to set.
@@ -30736,6 +30771,7 @@
 	ApiParagraph.prototype["GetClassType"]           = ApiParagraph.prototype.GetClassType;
 	ApiParagraph.prototype["SetParaId"]              = ApiParagraph.prototype.SetParaId;
 	ApiParagraph.prototype["GetParaId"]              = ApiParagraph.prototype.GetParaId;
+	ApiParagraph.prototype["ClearDirectFormatting"]  = ApiParagraph.prototype.ClearDirectFormatting;
 	ApiParagraph.prototype["GetInternalId"]          = ApiParagraph.prototype.GetInternalId;
 	ApiParagraph.prototype["AddText"]                = ApiParagraph.prototype.AddText;
 	ApiParagraph.prototype["AddPageBreak"]           = ApiParagraph.prototype.AddPageBreak;
@@ -30793,6 +30829,7 @@
 	ApiParagraph.prototype["GetParentTableCell"]     = ApiParagraph.prototype.GetParentTableCell;
 	ApiParagraph.prototype["GetText"]                = ApiParagraph.prototype.GetText;
 	ApiParagraph.prototype["GetParaId"]              = ApiParagraph.prototype.GetParaId;
+	ApiParagraph.prototype["ClearDirectFormatting"]  = ApiParagraph.prototype.ClearDirectFormatting;
 	ApiParagraph.prototype["SetText"]                = ApiParagraph.prototype.SetText;
 	ApiParagraph.prototype["GetTextPr"]              = ApiParagraph.prototype.GetTextPr;
 	ApiParagraph.prototype["SetTextPr"]              = ApiParagraph.prototype.SetTextPr;
