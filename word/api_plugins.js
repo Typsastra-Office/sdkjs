@@ -1691,6 +1691,7 @@
 			{
 				var tb = aTables[t];
 				var trec = {
+					id: (typeof tb.GetId === "function") ? tb.GetId() : null,
 					pagesCount: (typeof tb.GetPagesCount === "function") ? tb.GetPagesCount() : null
 				};
 				try
