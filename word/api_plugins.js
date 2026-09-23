@@ -1566,6 +1566,51 @@
 		return logicDocument.IsEditingOFormMode();
 	};
 
+	/**
+	 * Agent tooling: returns read-only document geometry - the page count and,
+	 * for every paragraph, its durable id, absolute page, pages/lines count and
+	 * page bounds. Used by the agent feedback snapshot (tysastra.agent.doc).
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias GetAgentDocumentSnapshot
+	 * @returns {string} - JSON string.
+	 */
+	Api.prototype["pluginMethod_GetAgentDocumentSnapshot"] = function()
+	{
+		var oLogicDocument = this.private_GetLogicDocument();
+		if (!oLogicDocument)
+			return JSON.stringify({ error: "no document" });
+
+		var result = { pageCount: 0, paragraphs: [] };
+		try { result.pageCount = oLogicDocument.GetPagesCount(); } catch (e) {}
+
+		var aParagraphs = oLogicDocument.GetAllParagraphs({ All: true });
+		for (var i = 0; i < aParagraphs.length; i++)
+		{
+			var p = aParagraphs[i];
+			var rec = {
+				paraId: (typeof p.GetParaId === "function") ? p.GetParaId() : null,
+				absPage: (typeof p.GetAbsolutePage === "function") ? p.GetAbsolutePage(0) : null,
+				pagesCount: (typeof p.GetPagesCount === "function") ? p.GetPagesCount() : null,
+				linesCount: (typeof p.GetLinesCount === "function") ? p.GetLinesCount() : null
+			};
+			try
+			{
+				var b = (typeof p.Get_PageBounds === "function") ? p.Get_PageBounds(0) : null;
+				if (b)
+				{
+					rec.top = b.Top;
+					rec.bottom = b.Bottom;
+					rec.left = b.Left;
+					rec.right = b.Right;
+				}
+			}
+			catch (e) {}
+			result.paragraphs.push(rec);
+		}
+		return JSON.stringify(result);
+	};
+
 	window["AscCommon"] = window["AscCommon"] || {};
 	window["AscCommon"].readContentControlCommonPr = readContentControlCommonPr;
 
