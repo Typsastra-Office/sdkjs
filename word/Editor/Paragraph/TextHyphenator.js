@@ -112,7 +112,7 @@
 			else
 			{
 				if (!this.word)
-					this.updateLang(run, item.GetFontSlot(run.Get_CompiledPr(false)));
+					this.updateLang(run, item.GetFontSlot(run.Get_CompiledPr(false)), item.GetCodePoint());
 				
 				this.appendToWord(item);
 				
@@ -126,7 +126,7 @@
 		this.buffer.length = 0;
 		AscHyphenation.clear();
 	};
-	TextHyphenator.prototype.updateLang = function(run, fontSlot)
+	TextHyphenator.prototype.updateLang = function(run, fontSlot, codePoint)
 	{
 		let textPr = run.Get_CompiledPr(false);
 		let lang;
@@ -149,6 +149,15 @@
 		{
 			lang     = textPr.Lang.Bidi;
 			fontSlot = fontslot_CS;
+		}
+		else if (0x0453 === lang && (fontslot_ASCII === fontSlot || fontslot_HAnsi === fontSlot)
+			&& ((codePoint >= 0x0041 && codePoint <= 0x005A)
+				|| (codePoint >= 0x0061 && codePoint <= 0x007A)
+				|| (codePoint >= 0x00C0 && codePoint <= 0x024F)
+				|| (codePoint >= 0x1E00 && codePoint <= 0x1EFF)))
+		{
+			// Latin words in a Khmer-language run need a Latin hyphenation dictionary.
+			lang = DEFAULT_LANG;
 		}
 		
 		this.lang     = lang;

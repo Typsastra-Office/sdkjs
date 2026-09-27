@@ -127,6 +127,21 @@
 		return "viterbi" === common["getKhmerLineBreakEngine"]();
 	}
 
+	function getWordBreakScript(codePoint)
+	{
+		if ((codePoint >= 0x1780 && codePoint <= 0x17D3)
+			|| (codePoint >= 0x19E0 && codePoint <= 0x19FF))
+			return 1; // Khmer letters and combining marks
+
+		if ((codePoint >= 0x0041 && codePoint <= 0x005A)
+			|| (codePoint >= 0x0061 && codePoint <= 0x007A)
+			|| (codePoint >= 0x00C0 && codePoint <= 0x024F)
+			|| (codePoint >= 0x1E00 && codePoint <= 0x1EFF))
+			return 2; // Latin letters
+
+		return 0;
+	}
+
 	function CParagraphWordBreaker()
 	{
 		this.Items = [];
@@ -137,10 +152,11 @@
 		this.Items.length = 0;
 		this.Text = "";
 
-		if (!getWordSegmenter())
+		if (!getWordSegmenter() && !isKhmerViterbiLineBreakEnabled())
 			return;
 
 		let wordBreaker = this;
+		let currentScript = 0;
 		paragraph.CheckRunContent(function(run, startPos, endPos)
 		{
 			for (let pos = startPos; pos < endPos; ++pos)
@@ -148,12 +164,23 @@
 				let item = run.GetElement(pos);
 				if (item.IsText() && !item.IsPdfText() && !item.IsNBSP())
 				{
+					let script = getWordBreakScript(item.GetCodePoint());
+					if (script && currentScript && script !== currentScript)
+					{
+						let previousItem = wordBreaker.Items[wordBreaker.Items.length - 1];
+						wordBreaker.Flush();
+						if (previousItem)
+							previousItem.SetWordBreakAfter(true);
+					}
+					if (script)
+						currentScript = script;
 					wordBreaker.Items.push(item);
 					wordBreaker.Text += String.fromCodePoint(item.GetCodePoint());
 				}
 				else
 				{
 					wordBreaker.Flush();
+					currentScript = 0;
 				}
 			}
 		});
@@ -225,7 +252,7 @@
 			return false;
 
 		let offsets = khmer.wordBreakOpportunities(this.Text);
-		if (!offsets || !offsets.length)
+		if (!offsets)
 			return false;
 
 		let itemsByEnd = {};
