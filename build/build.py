@@ -49,6 +49,7 @@ OTHER_FILES = [
             'Native/*.js',
             'libfont/engine/*',
             'spell/spell/*',
+            'spell/khmer/*',
             'hash/hash/*',
             'zlib/engine/*',
             'serviceworker/*',

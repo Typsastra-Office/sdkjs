@@ -3898,12 +3898,16 @@ window.AscCommon.g_cIsBeta = "false";
 	const c_oNumeralType = {
 		arabic  : 0,
 		hindi   : 1,
-		context : 2
+		context : 2,
+		khmer   : 3
 	};
 	window['Asc']['c_oNumeralType'] = window['Asc'].c_oNumeralType = c_oNumeralType;
 	c_oNumeralType["arabic"]  = c_oNumeralType.arabic;
 	c_oNumeralType["hindi"]   = c_oNumeralType.hindi;
 	c_oNumeralType["context"] = c_oNumeralType.context;
+	c_oNumeralType["khmer"]   = c_oNumeralType.khmer;
+	window['AscCommon'] = window['AscCommon'] || {};
+	window['AscCommon']['g_oNumeralType'] = c_oNumeralType.arabic;
 	
 	
 	var c_oAscDateTimeFormat = {};

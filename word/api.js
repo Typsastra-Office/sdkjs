@@ -7149,6 +7149,8 @@ background-repeat: no-repeat;\
     };
     asc_docs_api.prototype.asc_spellCheckClearDictionary = function()
     {
+		if (window["AscCommon"]["getKhmerSpellchecker"])
+			window["AscCommon"]["getKhmerSpellchecker"]().clearUserWords();
         if (window["AscDesktopEditor"])
             window["AscDesktopEditor"]["SpellCheck"]("{\"type\":\"clear\"}");
     };
@@ -7166,6 +7168,72 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.asc_getDefaultLanguage = function()
 	{
 		return editor.WordControl.m_oLogicDocument.GetDefaultLanguage();
+	};
+
+	/**
+	 * Enables/disables automatic document-language detection on load.
+	 * @param {boolean} isOn
+	 */
+	asc_docs_api.prototype.asc_setAutoDetectDocumentLanguage = function(isOn)
+	{
+		this.AutoDetectDocumentLanguage = (false !== isOn);
+	};
+
+	/**
+	 * Detects the dominant script of the document and switches the document
+	 * default language to Khmer when Khmer text dominates it, so the language
+	 * matches the document instead of the interface default. Runs only when the
+	 * user has not explicitly chosen a document language.
+	 */
+	asc_docs_api.prototype.private_DetectDocumentLanguage = function()
+	{
+		if (false === this.AutoDetectDocumentLanguage)
+			return;
+
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument || "function" !== typeof logicDocument.GetDefaultLanguage)
+			return;
+
+		if (!window["AscBuilder"] || !AscBuilder.Word || !AscBuilder.Word.Api)
+			return;
+
+		let nKhmer = 0;
+		let nLatin = 0;
+		const nTarget = 4000;
+		const KHMER_LANG = 0x0453; // km-KH
+
+		try
+		{
+			let apiDocument = AscBuilder.Word.Api.GetDocument();
+			let paragraphs = (apiDocument && apiDocument.GetAllParagraphs) ? apiDocument.GetAllParagraphs() : [];
+			for (let i = 0, nCount = paragraphs.length; i < nCount && (nKhmer + nLatin) < nTarget; ++i)
+			{
+				let oParagraph = paragraphs[i];
+				let sText = (oParagraph && oParagraph.GetText) ? oParagraph.GetText() : "";
+				for (let j = 0, nLen = sText.length; j < nLen; ++j)
+				{
+					let nCode = sText.charCodeAt(j);
+					if ((nCode >= 0x1780 && nCode <= 0x17FF) || (nCode >= 0x19E0 && nCode <= 0x19FF))
+						++nKhmer;
+					else if ((nCode >= 0x41 && nCode <= 0x5A) || (nCode >= 0x61 && nCode <= 0x7A))
+						++nLatin;
+
+					if ((nKhmer + nLatin) >= nTarget)
+						break;
+				}
+			}
+		}
+		catch (error)
+		{
+			return;
+		}
+
+		// Need a meaningful sample, and Khmer must clearly dominate.
+		if ((nKhmer + nLatin) < 40 || nKhmer <= nLatin)
+			return;
+
+		if (logicDocument.GetDefaultLanguage() !== KHMER_LANG)
+			this.asc_setDefaultLanguage(KHMER_LANG);
 	};
 
 	asc_docs_api.prototype.asc_getKeyboardLanguage = function()
@@ -8197,6 +8265,9 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.onDocumentContentReady = function()
 	{
 		AscCommon.baseEditorsApi.prototype.onDocumentContentReady.call(this);
+
+		let oSelf = this;
+		setTimeout(function() { oSelf.private_DetectDocumentLanguage(); }, 0);
 		let logicDocument = this.private_GetLogicDocument();
 		let oform = logicDocument ? logicDocument.GetOFormDocument() : null;
 		if (oform && oform.isAllRolesFilled())
@@ -14780,6 +14851,8 @@ background-repeat: no-repeat;\
 		
 		function redraw() {
 			logicDocument.SetNumeralType(type);
+			if (window["AscCommon"])
+				window["AscCommon"]["g_oNumeralType"] = type;
 			logicDocument.GetAllParagraphs().forEach(function(paragraph) {
 				paragraph.RecalcInfo.NeedShapeText();
 			});
@@ -14789,6 +14862,8 @@ background-repeat: no-repeat;\
 		let symbols = "";
 		if (Asc.c_oNumeralType.hindi === type)
 			symbols = String.fromCodePoint(0x0660, 0x0661, 0x0662, 0x0663, 0x0664, 0x0665, 0x0666, 0x0667, 0x0668, 0x0669);
+		else if (Asc.c_oNumeralType.khmer === type)
+			symbols = String.fromCodePoint(0x17E0, 0x17E1, 0x17E2, 0x17E3, 0x17E4, 0x17E5, 0x17E6, 0x17E7, 0x17E8, 0x17E9);
 		else if (Asc.c_oNumeralType.arabic === type)
 			symbols = String.fromCodePoint(0x0030, 0x0031, 0x0032, 0x0033, 0x0034, 0x0035, 0x0036, 0x0037, 0x0038, 0x0039);
 		else

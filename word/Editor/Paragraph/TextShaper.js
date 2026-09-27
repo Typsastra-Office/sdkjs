@@ -44,6 +44,210 @@
 		COMBINING_MARK    : 3
 	};
 
+	let intlWordSegmenter;
+
+	function getNativeWordSegments(text)
+	{
+		let native = window.native;
+		if (!native || !native.GetUnicodeWordSegments)
+			return null;
+
+		let nativeSegments;
+		try
+		{
+			nativeSegments = native.GetUnicodeWordSegments(text);
+		}
+		catch (e)
+		{
+			return null;
+		}
+
+		if (!nativeSegments || 0 !== nativeSegments.length % 3)
+			return null;
+
+		let segments = [];
+		let previousEnd = 0;
+		for (let index = 0; index < nativeSegments.length; index += 3)
+		{
+			let start = nativeSegments[index];
+			let end = nativeSegments[index + 1];
+			if (!Number.isInteger(start) || !Number.isInteger(end)
+				|| start !== previousEnd || end <= start || end > text.length)
+				return null;
+
+			segments.push({
+				segment    : text.slice(start, end),
+				index      : start,
+				isWordLike : !!nativeSegments[index + 2]
+			});
+			previousEnd = end;
+		}
+
+		return previousEnd === text.length ? segments : null;
+	}
+
+	function getWordSegmenter()
+	{
+		if (intlWordSegmenter && window.Intl && window.Intl.Segmenter)
+			return intlWordSegmenter;
+
+		if (window.Intl && window.Intl.Segmenter)
+		{
+			try
+			{
+				intlWordSegmenter = new window.Intl.Segmenter(undefined, {granularity : "word"});
+				return intlWordSegmenter;
+			}
+			catch (e)
+			{
+			}
+		}
+
+		if (window.native && window.native.GetUnicodeWordSegments)
+			return {segment : getNativeWordSegments};
+
+		return null;
+	}
+
+	function getKhmerWordSegmenter()
+	{
+		let common = window["AscCommon"];
+		if (common && "function" === typeof common["getKhmerSpellchecker"])
+			return common["getKhmerSpellchecker"]();
+
+		return null;
+	}
+
+	function isKhmerViterbiLineBreakEnabled()
+	{
+		let common = window["AscCommon"];
+		if (!common || "function" !== typeof common["getKhmerLineBreakEngine"])
+			return false;
+
+		return "viterbi" === common["getKhmerLineBreakEngine"]();
+	}
+
+	function CParagraphWordBreaker()
+	{
+		this.Items = [];
+		this.Text  = "";
+	}
+	CParagraphWordBreaker.prototype.Update = function(paragraph)
+	{
+		this.Items.length = 0;
+		this.Text = "";
+
+		if (!getWordSegmenter())
+			return;
+
+		let wordBreaker = this;
+		paragraph.CheckRunContent(function(run, startPos, endPos)
+		{
+			for (let pos = startPos; pos < endPos; ++pos)
+			{
+				let item = run.GetElement(pos);
+				if (item.IsText() && !item.IsPdfText() && !item.IsNBSP())
+				{
+					wordBreaker.Items.push(item);
+					wordBreaker.Text += String.fromCodePoint(item.GetCodePoint());
+				}
+				else
+				{
+					wordBreaker.Flush();
+				}
+			}
+		});
+		this.Flush();
+	};
+	CParagraphWordBreaker.prototype.Flush = function()
+	{
+		if (this.applyKhmerWordBreaks())
+		{
+			this.Items.length = 0;
+			this.Text = "";
+			return;
+		}
+
+		let segmenter = getWordSegmenter();
+		if (segmenter && this.Items.length)
+		{
+			let segmentedText = segmenter.segment(this.Text);
+			if (!segmentedText)
+			{
+				this.Items.length = 0;
+				this.Text = "";
+				return;
+			}
+
+			let itemsByEnd = {};
+			let textOffset = 0;
+			for (let itemIndex = 0; itemIndex < this.Items.length; ++itemIndex)
+			{
+				let item = this.Items[itemIndex];
+				item.SetWordBreakAfter(false);
+				textOffset += String.fromCodePoint(item.GetCodePoint()).length;
+				itemsByEnd[textOffset] = item;
+			}
+
+			let segments = Array.from(segmentedText);
+			for (let segmentIndex = 0; segmentIndex < segments.length; ++segmentIndex)
+			{
+				let segment = segments[segmentIndex];
+				if (!segment.isWordLike)
+					continue;
+
+				let segmentEnd = segment.index + segment.segment.length;
+				let nextSegment = segments[segmentIndex + 1];
+				if (nextSegment && (!nextSegment.isWordLike || nextSegment.index !== segmentEnd))
+					continue;
+
+				let item = itemsByEnd[segmentEnd];
+				if (item)
+					item.SetWordBreakAfter(true);
+			}
+		}
+
+		this.Items.length = 0;
+		this.Text = "";
+	};
+	/**
+	 * Apply the Khmer Viterbi segmenter's word-break opportunities when that
+	 * line-break engine is selected. Returns false to fall back to ICU.
+	 */
+	CParagraphWordBreaker.prototype.applyKhmerWordBreaks = function()
+	{
+		if (!this.Items.length || !isKhmerViterbiLineBreakEnabled())
+			return false;
+
+		let khmer = getKhmerWordSegmenter();
+		if (!khmer || "function" !== typeof khmer.isReady || !khmer.isReady()
+			|| "function" !== typeof khmer.isKhmerText || !khmer.isKhmerText(this.Text))
+			return false;
+
+		let offsets = khmer.wordBreakOpportunities(this.Text);
+		if (!offsets || !offsets.length)
+			return false;
+
+		let itemsByEnd = {};
+		let textOffset = 0;
+		for (let itemIndex = 0; itemIndex < this.Items.length; ++itemIndex)
+		{
+			let item = this.Items[itemIndex];
+			item.SetWordBreakAfter(false);
+			textOffset += String.fromCodePoint(item.GetCodePoint()).length;
+			itemsByEnd[textOffset] = item;
+		}
+
+		for (let i = 0; i < offsets.length; ++i)
+		{
+			let item = itemsByEnd[offsets[i]];
+			if (item)
+				item.SetWordBreakAfter(true);
+		}
+
+		return true;
+	};
+
 	/**
 	 *
 	 * @constructor
@@ -120,6 +324,7 @@
 	};
 	CParagraphTextShaper.prototype.Shape = function(oParagraph)
 	{
+		paragraphWordBreaker.Update(oParagraph);
 		this.Init(false);
 		let oThis = this;
 		oParagraph.CheckRunContent(function(oRun, nStartPos, nEndPos)
@@ -162,15 +367,19 @@
 				if (oItem.IsSpace())
 					this.private_HandleSpace(oItem);
 			}
+			else if (oItem.IsZeroWidthBreak())
+			{
+				this.FlushWord();
+			}
 			else if (oItem.IsNBSP())
 			{
 				this.FlushWord();
 				this.private_HandleNBSP(oItem);
 			}
-			else if (oItem.IsDigit() && this.private_IsReplaceToHindiDigits())
+			else if (oItem.IsDigit() && this.private_GetNumeralDigitOffset())
 			{
 				this.FlushWord();
-				this.private_HandleHindiDigit(oItem);
+				this.private_HandleNumeralDigit(oItem, this.private_GetNumeralDigitOffset());
 			}
 			else
 			{
@@ -358,29 +567,40 @@
 		item.SetCodePointType(CODEPOINT_TYPE.BASE);
 		item.SetWidth(AscFonts.GetGraphemeWidth(grapheme));
 	};
-	CParagraphTextShaper.prototype.private_IsReplaceToHindiDigits = function()
+	/**
+	 * Offset added to a Latin digit's code point to render it with the document's
+	 * numeral system (0 = keep Latin digits).
+	 */
+	CParagraphTextShaper.prototype.private_GetNumeralDigitOffset = function()
 	{
 		if (this.MaskSymbol)
-			return false;
+			return 0;
 
 		if (Asc.editor.isPdfEditor())
 		{
 			let oParent = this.Paragraph.GetParent();
 			if (oParent.ParentPDF && oParent.ParentPDF.IsForm())
-				return oParent.ParentPDF.IsHindiDigits();
+				return oParent.ParentPDF.IsHindiDigits() ? (0x0660 - 0x0030) : 0;
 
-			return false;
+			return 0;
 		}
 
 		let logicDocument = this.Paragraph ? this.Paragraph.GetLogicDocument() : undefined;
-		return (logicDocument
-			&& logicDocument.IsDocumentEditor()
-			&& Asc.c_oNumeralType.hindi === logicDocument.GetNumeralType());
+		if (logicDocument && logicDocument.IsDocumentEditor())
+		{
+			let nNumeralType = logicDocument.GetNumeralType();
+			if (Asc.c_oNumeralType.hindi === nNumeralType)
+				return 0x0660 - 0x0030;
+			if (Asc.c_oNumeralType.khmer === nNumeralType)
+				return 0x17E0 - 0x0030;
+		}
+
+		return 0;
 	};
-	CParagraphTextShaper.prototype.private_HandleHindiDigit = function(oItem)
+	CParagraphTextShaper.prototype.private_HandleNumeralDigit = function(oItem, nOffset)
 	{
 		let oFontInfo = this.TextPr.GetFontInfo(AscWord.fontslot_ASCII);
-		let nGrapheme = AscCommon.g_oTextMeasurer.GetGraphemeByUnicode(oItem.GetCodePoint() + (0x0660 - 0x0030), oFontInfo.Name, oFontInfo.Style);
+		let nGrapheme = AscCommon.g_oTextMeasurer.GetGraphemeByUnicode(oItem.GetCodePoint() + nOffset, oFontInfo.Name, oFontInfo.Style);
 		this.private_HandleItem(oItem, nGrapheme, AscFonts.GetGraphemeWidth(nGrapheme), oFontInfo.Size, AscWord.fontslot_ASCII, false, false, false);
 	};
 	CParagraphTextShaper.prototype.SetMaskSymbol = function(maskSymbol)
@@ -446,6 +666,7 @@
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};
 	window['AscWord'].CODEPOINT_TYPE      = CODEPOINT_TYPE;
+	let paragraphWordBreaker = new CParagraphWordBreaker();
 	window['AscWord'].ParagraphTextShaper = new CParagraphTextShaper();
 	window['AscWord'].stringShaper        = new AscFonts.StringShaper();
 	window['AscWord'].getEastAsiaEnWidth  = getEastAsiaEnWidth;
