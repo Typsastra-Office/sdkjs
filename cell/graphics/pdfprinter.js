@@ -59,6 +59,8 @@ function CPdfPrinter(fontManager, font)
     vector_koef /= AscCommon.AscBrowser.retinaPixelRatio;
 
     this.DocumentRenderer = new AscCommon.CDocumentRenderer();
+	this.DocumentRenderer.LogicalUnitsEnabled = !!AscCommon.PdfLogicalUnitsEnabled;
+	this.LogicalUnitsEnabled = this.DocumentRenderer.LogicalUnitsEnabled;
     if (!window['IS_NATIVE_EDITOR']) {
 	   this.DocumentRenderer.InitPicker(fontManager);
     }
@@ -346,9 +348,18 @@ CPdfPrinter.prototype =
         }
         return this;
     },
-	tg : function(gid, x, y, codePoints)
+	tg : function(gid, x, y, codePoints, advance)
 	{
-		this.DocumentRenderer.tg(gid, x * vector_koef, y * vector_koef, codePoints);
+		this.DocumentRenderer.tg(gid, x * vector_koef, y * vector_koef, codePoints,
+			advance === undefined ? undefined : advance * vector_koef);
+	},
+	tgLogicalUnit : function(x, y, codePoints, advance, components)
+	{
+		var scaledComponents = components.map(function(component) {
+			return {gid: component.gid, x: component.x * vector_koef, y: component.y * vector_koef};
+		});
+		return this.DocumentRenderer.tgLogicalUnit(x * vector_koef, y * vector_koef,
+			codePoints, advance * vector_koef, scaledComponents);
 	},
 
     beginPath : function()

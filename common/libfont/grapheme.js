@@ -82,9 +82,28 @@
 		oContext.SetFontInternal(sFontName, nFontSize, nStyle);
 		
 		let nKoef = COEF * nFontSize * coeff;
+		if (oGrapheme.LogicalCodePoints && oContext.LogicalUnitsEnabled && oContext.tgLogicalUnit)
+		{
+			let components = [];
+			let advanceX = 0, advanceY = 0;
+			for (let index = 0, pos = 3; index < oGrapheme[2]; ++index)
+			{
+				let gid = oGrapheme[pos++];
+				let glyphAdvanceX = oGrapheme[pos++];
+				let glyphAdvanceY = oGrapheme[pos++];
+				let offsetX = oGrapheme[pos++];
+				let offsetY = oGrapheme[pos++];
+				++pos; // per-glyph codepoints are only for the legacy drawing path
+				components.push({gid: gid, x: (advanceX + offsetX) * nKoef, y: -(advanceY + offsetY) * nKoef});
+				advanceX += glyphAdvanceX;
+				advanceY += glyphAdvanceY;
+			}
+			if (oContext.tgLogicalUnit(nX, nY, oGrapheme.LogicalCodePoints, advanceX * nKoef, components))
+				return;
+		}
 		if (1 === oGrapheme[2])
 		{
-			oContext.tg(oGrapheme[3], nX + oGrapheme[6] * nKoef, nY - oGrapheme[7] * nKoef, oGrapheme[8]);
+			oContext.tg(oGrapheme[3], nX + oGrapheme[6] * nKoef, nY - oGrapheme[7] * nKoef, oGrapheme[8], oGrapheme[4] * nKoef);
 		}
 		else
 		{
@@ -99,7 +118,7 @@
 				let nOffsetY      = oGrapheme[nPos++];
 				let arrCodePoints = oGrapheme[nPos++];
 				
-				oContext.tg(nGID, nX + nOffsetX * nKoef, nY - nOffsetY * nKoef, arrCodePoints);
+				oContext.tg(nGID, nX + nOffsetX * nKoef, nY - nOffsetY * nKoef, arrCodePoints, nAdvanceX * nKoef);
 				nX += nAdvanceX * nKoef;
 				nY += nAdvanceY * nKoef;
 			}
@@ -161,6 +180,12 @@
 		let arrBuffer = new Array(GRAPHEME_LEN);
 		for (let nIndex = 0; nIndex < GRAPHEME_LEN; ++nIndex)
 			arrBuffer[nIndex] = GRAPHEME_BUFFER[nIndex];
+		if (codePoints && codePoints.getCount() > 0)
+		{
+			arrBuffer.LogicalCodePoints = [];
+			for (let index = 0, count = codePoints.getCount(); index < count; ++index)
+				arrBuffer.LogicalCodePoints.push(codePoints.get(index));
+		}
 
 		GRAPHEMES[++GRAPHEME_INDEX] = arrBuffer;
 		return GRAPHEME_INDEX;
@@ -185,13 +210,19 @@
 			result = result[nGID];
 		}
 
-		// TODO: For speed, the match check is disabled (always matches)
-		if (!result.Grapheme)
-			result.Grapheme = GetGraphemeIndex(codePoints);
-		// else if (!CompareGraphemes(result.Buffer))
-		// 	return GetGraphemeIndex(codePoints);
-
-		return result.Grapheme;
+		// Equal outlines can have different Unicode clusters. Keep their original
+		// codepoints separate rather than reusing the first cluster's text.
+		let key = "";
+		if (codePoints)
+		{
+			for (let index = 0, count = codePoints.getCount(); index < count; ++index)
+				key += ":" + codePoints.get(index);
+		}
+		if (!result.ByText)
+			result.ByText = Object.create(null);
+		if (!result.ByText[key])
+			result.ByText[key] = GetGraphemeIndex(codePoints);
+		return result.ByText[key];
 	}
 	function GetGraphemeWidth(nGraphemeId)
 	{

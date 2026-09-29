@@ -7256,7 +7256,14 @@ var editor;
     {
       this.watermarkDraw = null;
     }
-    var _ret = this.asc_nativePrint(undefined, undefined, options);
+    var previousLogicalUnits = AscCommon.PdfLogicalUnitsEnabled;
+    var _ret;
+    try {
+      AscCommon.PdfLogicalUnitsEnabled = !!(options && options["enhancedUnicode"]);
+      _ret = this.asc_nativePrint(undefined, undefined, options);
+    } finally {
+      AscCommon.PdfLogicalUnitsEnabled = previousLogicalUnits;
+    }
 
     window["native"]["Save_End"]("", _ret.GetCurPosition());
     return _ret.data;

@@ -1692,6 +1692,7 @@
 		this.ctDrawTextEx      = 81;
 		this.ctDrawTextCode    = 82;
 		this.ctDrawTextCodeGid = 83;
+		this.ctDrawTextLogicalUnit = 84;
 
 		// pathcommands
 		this.ctPathCommandMoveTo          = 91;
@@ -2594,8 +2595,56 @@
             this.Memory.WriteDouble(x);
             this.Memory.WriteDouble(y);
 		},
-		tg           : function(gid, x, y, codepoints)
+		tgLogicalUnit : function(x, y, codepoints, advance, components)
 		{
+			if (!this.LogicalUnitsEnabled || !codepoints || !components ||
+				!codepoints.length || codepoints.length > 4096 ||
+				!components.length || components.length > 4096)
+				return false;
+			var fixed = function(value) {
+				var scaled = Math.trunc(value * 100000);
+				return Number.isFinite(scaled) && scaled >= -2147483648 && scaled <= 2147483647 ? scaled : null;
+			};
+			var width = fixed(advance), visualX = fixed(x), visualY = fixed(y);
+			if (advance < 0 || width === null || visualX === null || visualY === null ||
+				!codepoints.every(function(code) { return Number.isInteger(code) && code >= 0 && code <= 0x10FFFF && !(code >= 0xD800 && code <= 0xDFFF); }))
+				return false;
+			var positions = [];
+			for (var componentIndex = 0; componentIndex < components.length; ++componentIndex)
+			{
+				var component = components[componentIndex];
+				var relativeX = fixed(component.x), relativeY = fixed(component.y);
+				if (!Number.isInteger(component.gid) || component.gid <= 0 || component.gid > 0xFFFF ||
+					relativeX === null || relativeY === null)
+					return false;
+				positions.push({gid: component.gid, x: relativeX, y: relativeY});
+			}
+			this.Memory.WriteByte(CommandType.ctDrawTextLogicalUnit);
+			// Length includes the four-byte length field, as in LogicalUnitMetafile.cpp.
+			this.Memory.WriteLong(4 + 24 + codepoints.length * 4 + positions.length * 12);
+			this.Memory.WriteByte(1); // horizontal writing mode, version 1
+			this.Memory.WriteByte(0);
+			this.Memory.WriteByte(0);
+			this.Memory.WriteByte(0);
+			this.Memory.WriteLong(codepoints.length);
+			for (var index = 0; index < codepoints.length; ++index)
+				this.Memory.WriteLong(codepoints[index]);
+			this.Memory.WriteLong(width);
+			this.Memory.WriteLong(visualX);
+			this.Memory.WriteLong(visualY);
+			this.Memory.WriteLong(positions.length);
+			for (var i = 0; i < positions.length; ++i)
+			{
+				this.Memory.WriteLong(positions[i].gid);
+				this.Memory.WriteLong(positions[i].x);
+				this.Memory.WriteLong(positions[i].y);
+			}
+			return true;
+		},
+		tg           : function(gid, x, y, codepoints, advance)
+		{
+			if (this.tgLogicalUnit(x, y, codepoints, advance, [{gid: gid, x: 0, y: 0}]))
+				return;
 			/*
 			var _old_pos = this.Memory.pos;
 			g_fontApplication.LoadFont(this.m_oFont.Name, AscCommon.g_font_loader, AscCommon.g_oTextMeasurer.m_oManager, this.m_oFont.FontSize, Math.max(this.m_oFont.Style, 0), 72, 72);
@@ -3131,6 +3180,7 @@
 		this.m_oBaseTransform = null;
 
 		this.UseOriginImageUrl = false;
+		this.LogicalUnitsEnabled = false;
 
         this.FontPicker = null;
 
@@ -3157,6 +3207,7 @@
 		this.m_arrayPages[this.m_lPagesCount - 1].StartOffset          = this.Memory.pos;
 		this.m_arrayPages[this.m_lPagesCount - 1].VectorMemoryForPrint = this.VectorMemoryForPrint;
 		this.m_arrayPages[this.m_lPagesCount - 1].FontPicker		   = this.FontPicker;
+		this.m_arrayPages[this.m_lPagesCount - 1].LogicalUnitsEnabled = this.LogicalUnitsEnabled;
 
 		if (this.FontPicker)
 			this.m_arrayPages[this.m_lPagesCount - 1].FontPicker.Metafile  = this.m_arrayPages[this.m_lPagesCount - 1];
@@ -3363,10 +3414,15 @@
 		if (0 != this.m_lPagesCount)
 			this.m_arrayPages[this.m_lPagesCount - 1].FillTextCode(x, y, text);
 	};
-	CDocumentRenderer.prototype.tg = function(gid, x, y, codePoints)
+	CDocumentRenderer.prototype.tg = function(gid, x, y, codePoints, advance)
 	{
 		if (0 != this.m_lPagesCount)
-			this.m_arrayPages[this.m_lPagesCount - 1].tg(gid, x, y, codePoints);
+			this.m_arrayPages[this.m_lPagesCount - 1].tg(gid, x, y, codePoints, advance);
+	};
+	CDocumentRenderer.prototype.tgLogicalUnit = function(x, y, codePoints, advance, components)
+	{
+		return this.m_lPagesCount > 0 && this.m_arrayPages[this.m_lPagesCount - 1]
+			.tgLogicalUnit(x, y, codePoints, advance, components);
 	};
 	CDocumentRenderer.prototype.FillText2 = function(x, y, text)
 	{

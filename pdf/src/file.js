@@ -1992,6 +1992,7 @@ void main() {\n\
                 _lineEy = 0;
                 _linePrevCharX = 0;
                 _arrayGlyphOffsets.splice(0, _arrayGlyphOffsets.length);
+                let matchedEnd = -Infinity;
 
                 _lineX = stream.GetDouble();
                 _lineY = stream.GetDouble();
@@ -2010,11 +2011,14 @@ void main() {\n\
                         _linePrevCharX += stream.GetDouble();
                     _arrayGlyphOffsets[i] = _linePrevCharX;
                     let nChar = stream.GetLong();
-                    stream.Skip(4);
+                    let charWidth = stream.GetDouble();
                     if (i >= endChar)
                         break;
                     if (i >= startChar)
+                    {
                         _text += (nChar == 0xFFFF ? " " : String.fromCharCode(nChar));
+                        matchedEnd = Math.max(matchedEnd, _linePrevCharX + charWidth);
+                    }
                 }
 
                 let off1 = _arrayGlyphOffsets[startChar];
@@ -2023,6 +2027,8 @@ void main() {\n\
                     off1 = _lineWidth;
                 if (endChar == Infinity)
                     off2 = _lineWidth;
+                else if (matchedEnd > off2)
+                    off2 = matchedEnd;
 
                 if (off2 < off1)
                     continue;
