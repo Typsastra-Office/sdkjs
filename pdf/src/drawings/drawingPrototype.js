@@ -256,6 +256,11 @@
 
                     oInfo.quads.push([oPt1.x / nKoeff, oPt1.y / nKoeff, oPt2.x / nKoeff, oPt2.y / nKoeff, oPt4.x / nKoeff, oPt4.y / nKoeff, oPt3.x / nKoeff, oPt3.y / nKoeff]);
                 }
+				else {
+					let nKoeff = oViewer.getDrawingPageScale(nPage) * g_dKoef_pix_to_mm;
+					oInfo.quads.push([x / nKoeff, y / nKoeff, (x + w) / nKoeff, y / nKoeff,
+						x / nKoeff, (y + h) / nKoeff, (x + w) / nKoeff, (y + h) / nKoeff]);
+				}
             }
         }
 

@@ -139,6 +139,7 @@ var CPresentation = CPresentation || function(){};
         this.TextSelectTrackHandler = new AscPDF.CTextSelectTrackHandler(this.GetDrawingDocument(), Asc.editor);
         this.AnnotSelectTrackHandler= new AscPDF.CAnnotSelectTrackHandler(this, Asc.editor);
         this.SearchEngine           = new AscPDF.CPdfSearch(this);
+		this.needUpdateSearch       = false;
 
         this.theme                  = AscFormat.GenerateDefaultTheme(this);
         this.clrSchemeMap           = AscFormat.GenerateDefaultColorMap();
@@ -765,12 +766,13 @@ var CPresentation = CPresentation || function(){};
     ////////////////////////////////////
 
     CPDFDoc.prototype.Search = function(oProps) {
-        if (true === this.SearchEngine.Compare(oProps))
+		if (!this.needUpdateSearch && true === this.SearchEngine.Compare(oProps))
 		    return this.SearchEngine;
         
         this.SearchEngine.Clear();
         this.SearchEngine.Set(oProps);
         this.SearchEngine.Search();
+		this.needUpdateSearch = false;
 
         return this.SearchEngine;
     };

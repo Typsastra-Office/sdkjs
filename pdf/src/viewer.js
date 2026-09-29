@@ -2544,6 +2544,32 @@
 				this.drawSearchPlaces(dKoefX, dKoefY, pageCoords.x, pageCoords.y, searchingObj[i]);
 			}
 		};
+		this.drawSearchDrawingQuads = function(pageIndex, matches) {
+			let pageCoords = this.pageDetector.pages[pageIndex - this.startVisiblePage];
+			if (!pageCoords || !matches || !matches.length)
+				return;
+
+			let page = this.drawingPages[pageIndex];
+			let xScale = AscCommon.AscBrowser.convertToRetinaValue(page.W, true) / this.file.pages[pageIndex].W;
+			let yScale = AscCommon.AscBrowser.convertToRetinaValue(page.H, true) / this.file.pages[pageIndex].H;
+			let retina = AscCommon.AscBrowser.retinaPixelRatio;
+			let ctx = this.overlay.m_oContext;
+			for (let match of matches) {
+				for (let quad of match.quads) {
+					// Selection quads are TL, TR, BL, BR; walk their perimeter.
+					for (let i of [0, 2, 6, 4]) {
+						let x = (retina * (pageCoords.x + quad[i] * xScale)) >> 0;
+						let y = (retina * (pageCoords.y + quad[i + 1] * yScale)) >> 0;
+						this.overlay.CheckPoint(x, y);
+						if (i === 0)
+							ctx.moveTo(x, y);
+						else
+							ctx.lineTo(x, y);
+					}
+					ctx.closePath();
+				}
+			}
+		};
 
 		this.onUpdateOverlay = function() {
 			Asc.editor.checkLastWork();
@@ -2606,6 +2632,7 @@
 					oDrDoc.AutoShapesTrack.SetCurrentPage(i, true);
 					this.drawSearch(i, matches);
 				}
+				this.drawSearchDrawingQuads(i, oDoc.SearchEngine.DrawingMatchQuads[i]);
 			}
 			ctx.fill();
 			ctx.globalAlpha = 0.2;
@@ -2620,6 +2647,16 @@
 					ctx.globalAlpha = 0.2;
 					this.drawSearchCur(pageNum, this.CurrentSearchNavi);
 				}
+			}
+			else if (oDoc.SearchEngine.Show && oDoc.SearchEngine.Elements[oDoc.SearchEngine.CurId] instanceof AscWord.Paragraph) {
+				let currentId = oDoc.SearchEngine.CurId;
+				let matchesByPage = oDoc.SearchEngine.DrawingMatchQuads;
+				ctx.fillStyle = "rgba(51,102,204,255)";
+				ctx.globalAlpha = 0.2;
+				ctx.beginPath();
+				for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++)
+					this.drawSearchDrawingQuads(i, (matchesByPage[i] || []).filter(function(match) { return match.id === currentId; }));
+				ctx.fill();
 			}
 		};
 		

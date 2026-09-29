@@ -47,6 +47,7 @@
 		this.Show			= false;	// flag indicating to highlight PdfPageMatch results on the page
 		this.PagesMatches	= [];		// search results by pages
 		this.PagesLines		= [];
+		this.DrawingMatchQuads = [];
 	}
 
 	CPdfSearch.prototype.constructor = CPdfSearch;
@@ -76,6 +77,7 @@
 		this.Elements   	= {};
 		this.ReplacedId 	= [];
 		this.PagesMatches	= [];
+		this.DrawingMatchQuads = [];
 		this.CurId      	= -1;
 		this.Direction  	= true;
 
@@ -111,9 +113,17 @@
 			// to do (is search needed in forms, annotations?)
 
             this.PagesMatches[i] = [];
+			this.DrawingMatchQuads[i] = [];
             // Elements contains all search results, PagesMatches contains results by pages
             for (let j = nStartIdx; j < this.Id; j++) {
                 this.PagesMatches[i].push(this.Elements[j]);
+				if (this.Elements[j] instanceof AscWord.Paragraph) {
+					let parts = this.LogicDocument.GetSearchElementSelectionQuads(j);
+					for (let k = 0; k < parts.length; k++) {
+						if (parts[k].page === i)
+							this.DrawingMatchQuads[i].push({id: j, quads: parts[k].quads});
+					}
+				}
             }
 
 			if (oPdfPageResult) {
