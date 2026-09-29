@@ -273,24 +273,29 @@
 		return true;
 	};
 	/**
-	 * Highlights a detected OCR line while it is reviewed in a plugin panel.
+	 * Highlights a region of the current page. This is a view-only overlay that
+	 * is drawn on top of the page and is never added to the document, so calling
+	 * it does not modify the file or mark it as changed. Use
+	 * CreateHighlightAnnot instead when the highlight must be saved.
+	 *
 	 * The rectangle is in PDF points with a top-left origin, the same space used
-	 * by GoToPage. The highlight is only drawn on the overlay and is never added
-	 * to the document. Passing no rectangle clears it.
+	 * by GoToPage. Only one region can be highlighted at a time; each call
+	 * replaces the previous one. Call it without a rectangle to clear.
 	 * @memberof Api
 	 * @typeofeditors ["PDFE"]
-	 * @alias SetOcrLineHighlight
-	 * @param {number} pageIndex
-	 * @param {?Rect} [rect=undefined] - [x1, y1, x2, y2] to highlight, or nothing to clear
-	 * @returns {boolean}
+	 * @alias SetTextHighlight
+	 * @param {number} pageIndex - zero-based page index.
+	 * @param {?Rect} [rect=undefined] - [x1, y1, x2, y2] in PDF points, or nothing to clear the highlight.
+	 * @returns {boolean} - false if the page index or the rectangle is invalid.
+	 * @see office-js-api/Examples/Plugins/PDF/Api/Methods/SetTextHighlight.js
 	 */
-	Api.prototype["pluginMethod_SetOcrLineHighlight"] = function(pageIndex, rect) {
+	Api.prototype["pluginMethod_SetTextHighlight"] = function(pageIndex, rect) {
 		let viewer = this.DocumentRenderer;
 		if (!viewer || !viewer.file)
 			return false;
 
 		if (rect == null) {
-			viewer.ocrLineHighlight = null;
+			viewer.textHighlight = null;
 			viewer.onUpdateOverlay();
 			return true;
 		}
@@ -306,7 +311,7 @@
 		if (!(right > left && bottom > top))
 			return false;
 
-		viewer.ocrLineHighlight = {pageIndex: pageIndex, rect: [left, top, right, bottom]};
+		viewer.textHighlight = {pageIndex: pageIndex, rect: [left, top, right, bottom]};
 		viewer.onUpdateOverlay();
 		return true;
 	};

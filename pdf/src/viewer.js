@@ -2544,11 +2544,12 @@
 				this.drawSearchPlaces(dKoefX, dKoefY, pageCoords.x, pageCoords.y, searchingObj[i]);
 			}
 		};
-		// Transient highlight of the OCR line currently under review. The rect is in
-		// PDF points (same space as the document rects and GoToPage), and is only
-		// drawn on the overlay, never added to the document.
-		this.drawOcrLineHighlight = function() {
-			let highlight = this.ocrLineHighlight;
+		// View-only highlight of a region requested by a plugin through
+		// SetTextHighlight. The rect is in PDF points (same space as the document
+		// rects and GoToPage) and is only drawn on the overlay, never added to
+		// the document.
+		this.drawTextHighlight = function() {
+			let highlight = this.textHighlight;
 			if (!highlight || highlight.pageIndex < this.startVisiblePage ||
 				highlight.pageIndex > this.endVisiblePage)
 				return;
@@ -2602,7 +2603,7 @@
 				this.drawSearchHighlights(ctx, oDoc, oDrDoc);
 				this.drawCurrentSearchHighlight(ctx, oDoc, oDrDoc);
 			}
-			this.drawOcrLineHighlight();
+			this.drawTextHighlight();
 			
 			this.drawSelection(ctx, oDoc, oDrDoc);
 	        this.drawPlaceholders();
