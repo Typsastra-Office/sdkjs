@@ -4942,6 +4942,14 @@
 		
 		let oDoc = this.getPDFDoc();
 		oDoc.SearchEngine.Show = isShow;
+		// Editable text boxes paint search matches in their own drawing canvas.
+		// The search visibility changes after the search has run, so invalidate
+		// that canvas as well as the PDF text overlay.
+		this.DocumentRenderer.pagesInfo.pages.forEach(function(page) {
+			if (page.drawings && page.drawings.length)
+				page.needRedrawDrawings = true;
+		});
+		this.DocumentRenderer.paint();
 		this.DocumentRenderer.onUpdateOverlay();
 	};
 	PDFEditorApi.prototype.canEnterText = function()

@@ -15293,12 +15293,42 @@ Paragraph.prototype.AddSearchResult = function(nId, oStartPos, oEndPos, nType)
 		return;
 
 	var oSearchResult = new AscCommonWord.CParagraphSearchElement(oStartPos, oEndPos, nType, nId);
+	let visualRange = this.GetSearchVisualRange(oSearchResult);
+	oSearchResult.VisualStartPos = visualRange.StartPos;
+	oSearchResult.VisualEndPos = visualRange.EndPos;
 	this.SearchResults[nId] = oSearchResult;
 	oSearchResult.RegisterClass(true, this);
 	oSearchResult.RegisterClass(false, this);
 
 	this.Content[oStartPos.Get(0)].AddSearchResult(oSearchResult, true, oStartPos, 1);
 	this.Content[oEndPos.Get(0)].AddSearchResult(oSearchResult, false, oEndPos, 1);
+};
+Paragraph.prototype.GetSearchVisualRange = function(searchResult)
+{
+	let start = searchResult.StartPos.Copy();
+	let end = searchResult.EndPos.Copy();
+	let isClusterContinuation = function(item) {
+		return item && item.IsText && item.IsText()
+			&& ((item.IsLigatureContinue && item.IsLigatureContinue())
+				|| (item.IsCombiningMark && item.IsCombiningMark()));
+	};
+	let startRun = this.Get_ElementByPos(start);
+	let startDepth = start.GetDepth();
+	if (startRun && startRun.Content && startDepth > 0) {
+		let offset = start.Get(startDepth);
+		while (offset > 0 && isClusterContinuation(startRun.Content[offset]))
+			offset--;
+		start.Update2(offset, startDepth);
+	}
+	let endRun = this.Get_ElementByPos(end);
+	let endDepth = end.GetDepth();
+	if (endRun && endRun.Content && endDepth > 0) {
+		let offset = end.Get(endDepth);
+		while (offset < endRun.Content.length && isClusterContinuation(endRun.Content[offset]))
+			offset++;
+		end.Update2(offset, endDepth);
+	}
+	return {StartPos: start, EndPos: end};
 };
 Paragraph.prototype.ClearSearchResults = function()
 {

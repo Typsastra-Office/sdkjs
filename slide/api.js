@@ -2590,9 +2590,24 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.asc_findText = function(oProps, isNext, callback)
 	{
-		var SearchEngine = editor.WordControl.m_oLogicDocument.Search(oProps);
+		var oPresentation = this.WordControl.m_oLogicDocument;
+		var previousText = oPresentation.SearchEngine.Text;
+		var isRefining = previousText && oProps.GetText().indexOf(previousText) === 0
+			&& !oPresentation.SearchEngine.Compare(oProps);
+		var currentSlide = oPresentation.GetCurrentSlide();
+		var SearchEngine = oPresentation.Search(oProps);
 
-		var Id = this.WordControl.m_oLogicDocument.GetSearchElementId(isNext);
+		// A refined query may still match the currently selected grapheme. Starting
+		// after that selection would skip it and jump to a different slide.
+		var Id = null;
+		if (isRefining && currentSlide) {
+			Id = currentSlide.GetSearchElementId(isNext,
+				isNext ? 0 : currentSlide.cSld.spTree.length - 1);
+			if (Id == null && currentSlide.notesShape)
+				Id = currentSlide.notesShape.GetSearchElementId(isNext, false);
+		}
+		if (Id == null)
+			Id = oPresentation.GetSearchElementId(isNext);
 
 		if (null != Id)
 			this.WordControl.m_oLogicDocument.SelectSearchElement(Id);

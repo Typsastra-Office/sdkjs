@@ -62,6 +62,16 @@
 		});
 	};
 	CPdfSearch.prototype.Clear = function() {
+		let oViewer = Asc.editor.getDocumentRenderer();
+		let redrawDrawings = false;
+		if (oViewer && oViewer.pagesInfo) {
+			for (let i = 0; i < this.PagesMatches.length; ++i) {
+				if (this.PagesMatches[i] && this.PagesMatches[i].some(function(match) { return match instanceof AscWord.Paragraph; })) {
+					oViewer.pagesInfo.pages[i].needRedrawDrawings = true;
+					redrawDrawings = true;
+				}
+			}
+		}
 		this.Reset();
 
 		// Clear previous search elements
@@ -82,19 +92,27 @@
 		this.TextAroundUpdate = true;
 		this.StopTextAround();
 		this.SendClearAllTextAround();
+		if (redrawDrawings)
+			oViewer.paint();
 	};
 
 	CPdfSearch.prototype.Search = function() {
 		let oViewer		= Asc.editor.getDocumentRenderer();
         let oFile       = oViewer.file;
         let oPagesInfo  = oViewer.pagesInfo;
+		let hasDrawingMatches = false;
         
         for (let i = 0; i < oPagesInfo.pages.length; i++) {
             let oPageInfo = oPagesInfo.pages[i];
 
-            // first search on the page itself, if there was no conversion to shapes
             let nStartIdx = this.Id;
             let oPdfPageResult;
+			// Give live text boxes priority over previously saved PDF page content.
+			// The latter can still contain an older rendering of the same shape.
+			for (let j = 0; j < oPageInfo.drawings.length; ++j) {
+				oPageInfo.drawings[j].Search && oPageInfo.drawings[j].Search(this, search_Common);
+			}
+
             if (true != oFile.pages[i].isRecognized) {
                 oPdfPageResult = oFile.searchPage(i);
 
@@ -103,23 +121,24 @@
                 }
             }
             
-            // then search in drawings
-            for (let j = 0; j < oPageInfo.drawings.length; ++j) {
-                oPageInfo.drawings[j].Search && oPageInfo.drawings[j].Search(this, search_Common);
-            }
-
 			// to do (is search needed in forms, annotations?)
 
             this.PagesMatches[i] = [];
             // Elements contains all search results, PagesMatches contains results by pages
             for (let j = nStartIdx; j < this.Id; j++) {
                 this.PagesMatches[i].push(this.Elements[j]);
+				if (this.Elements[j] instanceof AscWord.Paragraph) {
+					oPageInfo.needRedrawDrawings = true;
+					hasDrawingMatches = true;
+				}
             }
 
 			if (oPdfPageResult) {
 				this.PagesLines[i] = oPdfPageResult.pageLines;
 			}
         }
+		if (hasDrawingMatches)
+			oViewer.paint();
 	};
 
 	CPdfSearch.prototype.Select = function(nId) {
@@ -135,11 +154,13 @@
 
 			let SearchElement = oElm.SearchResults[nId];
 			if (SearchElement) {
+				let visualStart = SearchElement.VisualStartPos || SearchElement.StartPos;
+				let visualEnd = SearchElement.VisualEndPos || SearchElement.EndPos;
 				oElm.Selection.Use   = true;
 				oElm.Selection.Start = false;
 
-				oElm.Set_SelectionContentPos(SearchElement.StartPos, SearchElement.EndPos);
-				oElm.Set_ParaContentPos(SearchElement.StartPos, false, -1, -1);
+				oElm.Set_SelectionContentPos(visualStart, visualEnd);
+				oElm.Set_ParaContentPos(visualStart, false, -1, -1);
 
 				oElm.Document_SetThisElementCurrent();
 			}
@@ -152,6 +173,17 @@
 		}
 
 		this.SetCurrent(nId);
+		if (this.Show) {
+			let redraw = false;
+			for (let i = 0; i < this.PagesMatches.length; i++) {
+				if (this.PagesMatches[i] && this.PagesMatches[i].some(function(match) { return match instanceof AscWord.Paragraph; })) {
+					oViewer.pagesInfo.pages[i].needRedrawDrawings = true;
+					redraw = true;
+				}
+			}
+			if (redraw)
+				oViewer.paint();
+		}
 	};
 
 	CPdfSearch.prototype.StartTextAround = function() {

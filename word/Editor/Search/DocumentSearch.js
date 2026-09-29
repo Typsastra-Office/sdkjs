@@ -131,11 +131,13 @@
 			var SearchElement = Paragraph.SearchResults[nId];
 			if (SearchElement)
 			{
+			let visualStart = SearchElement.VisualStartPos || SearchElement.StartPos;
+			let visualEnd = SearchElement.VisualEndPos || SearchElement.EndPos;
 				Paragraph.Selection.Use   = true;
 				Paragraph.Selection.Start = false;
 
-				Paragraph.Set_SelectionContentPos(SearchElement.StartPos, SearchElement.EndPos);
-				Paragraph.Set_ParaContentPos(SearchElement.StartPos, false, -1, -1);
+				Paragraph.Set_SelectionContentPos(visualStart, visualEnd);
+				Paragraph.Set_ParaContentPos(visualStart, false, -1, -1);
 
 				Paragraph.Document_SetThisElementCurrent(false !== bUpdateStates);
 			}
