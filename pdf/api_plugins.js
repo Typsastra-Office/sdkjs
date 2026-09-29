@@ -272,6 +272,44 @@
 		oDoc.Viewer.paint();
 		return true;
 	};
+	/**
+	 * Highlights a detected OCR line while it is reviewed in a plugin panel.
+	 * The rectangle is in PDF points with a top-left origin, the same space used
+	 * by GoToPage. The highlight is only drawn on the overlay and is never added
+	 * to the document. Passing no rectangle clears it.
+	 * @memberof Api
+	 * @typeofeditors ["PDFE"]
+	 * @alias SetOcrLineHighlight
+	 * @param {number} pageIndex
+	 * @param {?Rect} [rect=undefined] - [x1, y1, x2, y2] to highlight, or nothing to clear
+	 * @returns {boolean}
+	 */
+	Api.prototype["pluginMethod_SetOcrLineHighlight"] = function(pageIndex, rect) {
+		let viewer = this.DocumentRenderer;
+		if (!viewer || !viewer.file)
+			return false;
+
+		if (rect == null) {
+			viewer.ocrLineHighlight = null;
+			viewer.onUpdateOverlay();
+			return true;
+		}
+
+		let page = viewer.file.pages[pageIndex];
+		if (!page || !Array.isArray(rect) || rect.length !== 4 ||
+			!rect.every(Number.isFinite))
+			return false;
+		let left = Math.max(0, Math.min(page.W, rect[0]));
+		let top = Math.max(0, Math.min(page.H, rect[1]));
+		let right = Math.max(0, Math.min(page.W, rect[2]));
+		let bottom = Math.max(0, Math.min(page.H, rect[3]));
+		if (!(right > left && bottom > top))
+			return false;
+
+		viewer.ocrLineHighlight = {pageIndex: pageIndex, rect: [left, top, right, bottom]};
+		viewer.onUpdateOverlay();
+		return true;
+	};
 })(window);
 
 

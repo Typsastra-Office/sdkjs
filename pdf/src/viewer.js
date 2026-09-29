@@ -2544,6 +2544,43 @@
 				this.drawSearchPlaces(dKoefX, dKoefY, pageCoords.x, pageCoords.y, searchingObj[i]);
 			}
 		};
+		// Transient highlight of the OCR line currently under review. The rect is in
+		// PDF points (same space as the document rects and GoToPage), and is only
+		// drawn on the overlay, never added to the document.
+		this.drawOcrLineHighlight = function() {
+			let highlight = this.ocrLineHighlight;
+			if (!highlight || highlight.pageIndex < this.startVisiblePage ||
+				highlight.pageIndex > this.endVisiblePage)
+				return;
+
+			let pageIndex = highlight.pageIndex;
+			let drawingPage = this.drawingPages[pageIndex];
+			let pageCoords = this.pageDetector.pages[pageIndex - this.startVisiblePage];
+			if (!drawingPage || !pageCoords)
+				return;
+
+			let dKoef = this.getDrawingPageScale(pageIndex) *
+				AscCommon.AscBrowser.retinaPixelRatio * this.zoom;
+			let rect = highlight.rect;
+			let x = pageCoords.x + rect[0] * dKoef;
+			let y = pageCoords.y + rect[1] * dKoef;
+			let w = (rect[2] - rect[0]) * dKoef;
+			let h = (rect[3] - rect[1]) * dKoef;
+
+			let ctx = this.overlay.m_oContext;
+			ctx.save();
+			ctx.globalAlpha = 1;
+			ctx.fillStyle = "rgba(47, 111, 237, 0.28)";
+			ctx.strokeStyle = "rgba(47, 111, 237, 0.9)";
+			ctx.lineWidth = 1.5;
+			ctx.beginPath();
+			this.overlay.CheckPoint(x, y);
+			this.overlay.CheckPoint(x + w, y + h);
+			ctx.rect(x, y, w, h);
+			ctx.fill();
+			ctx.stroke();
+			ctx.restore();
+		};
 
 		this.onUpdateOverlay = function() {
 			Asc.editor.checkLastWork();
@@ -2565,6 +2602,7 @@
 				this.drawSearchHighlights(ctx, oDoc, oDrDoc);
 				this.drawCurrentSearchHighlight(ctx, oDoc, oDrDoc);
 			}
+			this.drawOcrLineHighlight();
 			
 			this.drawSelection(ctx, oDoc, oDrDoc);
 	        this.drawPlaceholders();
