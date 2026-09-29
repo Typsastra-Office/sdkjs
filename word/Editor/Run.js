@@ -6600,7 +6600,7 @@ ParaRun.prototype.Draw_HighLights = function(drawState)
 		for (let iMark = 0, nMarks = this.SearchMarks.length; iMark < nMarks; ++iMark)
 		{
 			let mark     = this.SearchMarks[iMark];
-			let markPos = mark.SearchResult.StartPos.Get(mark.Depth);
+			let markPos = (mark.SearchResult.VisualStartPos || mark.SearchResult.StartPos).Get(mark.Depth);
 			
 			if (pos === markPos && mark.Start)
 				drawState.increaseSearchCounter(mark.SearchResult.Id);
@@ -6612,7 +6612,7 @@ ParaRun.prototype.Draw_HighLights = function(drawState)
 		for (let iMark = 0, nMarks = this.SearchMarks.length; iMark < nMarks; ++iMark)
 		{
 			let mark    = this.SearchMarks[iMark];
-			let markPos = mark.SearchResult.EndPos.Get(mark.Depth);
+			let markPos = (mark.SearchResult.VisualEndPos || mark.SearchResult.EndPos).Get(mark.Depth);
 			
 			if (pos + 1 === markPos && !mark.Start)
 				drawState.decreaseSearchCounter(mark.SearchResult.Id);

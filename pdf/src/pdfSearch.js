@@ -154,11 +154,13 @@
 
 			let SearchElement = oElm.SearchResults[nId];
 			if (SearchElement) {
+				let visualStart = SearchElement.VisualStartPos || SearchElement.StartPos;
+				let visualEnd = SearchElement.VisualEndPos || SearchElement.EndPos;
 				oElm.Selection.Use   = true;
 				oElm.Selection.Start = false;
 
-				oElm.Set_SelectionContentPos(SearchElement.StartPos, SearchElement.EndPos);
-				oElm.Set_ParaContentPos(SearchElement.StartPos, false, -1, -1);
+				oElm.Set_SelectionContentPos(visualStart, visualEnd);
+				oElm.Set_ParaContentPos(visualStart, false, -1, -1);
 
 				oElm.Document_SetThisElementCurrent();
 			}
