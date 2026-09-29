@@ -6603,7 +6603,7 @@ ParaRun.prototype.Draw_HighLights = function(drawState)
 			let markPos = mark.SearchResult.StartPos.Get(mark.Depth);
 			
 			if (pos === markPos && mark.Start)
-				drawState.increaseSearchCounter();
+				drawState.increaseSearchCounter(mark.SearchResult.Id);
 		}
 		
 		let collaborationColor = this.CollaborativeMarks.Check(pos);
@@ -6615,7 +6615,7 @@ ParaRun.prototype.Draw_HighLights = function(drawState)
 			let markPos = mark.SearchResult.EndPos.Get(mark.Depth);
 			
 			if (pos + 1 === markPos && !mark.Start)
-				drawState.decreaseSearchCounter();
+				drawState.decreaseSearchCounter(mark.SearchResult.Id);
 		}
 	}
 };

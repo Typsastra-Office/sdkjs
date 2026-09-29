@@ -86,6 +86,7 @@
 		this.hyperlinks = [];
 		
 		this.searchCounter = 0;
+		this.activeSearchIds = new Set();
 		
 		this.Paragraph = undefined;
 		this.Graphics  = undefined;
@@ -121,7 +122,8 @@
 		
 		this.DrawShd            = logicDocument && logicDocument.IsDocumentEditor();
 		this.DrawColl           = !graphics.isPdf();
-		this.DrawSearch         = logicDocument && logicDocument.IsDocumentEditor() && logicDocument.SearchEngine.Selection;
+		this.DrawSearch         = logicDocument && ((logicDocument.IsDocumentEditor() && logicDocument.SearchEngine.Selection)
+			|| (logicDocument.IsPdfEditor && logicDocument.IsPdfEditor() && logicDocument.SearchEngine.Show));
 		this.DrawComments       = commentManager && commentManager.isUse();
 		this.DrawSolvedComments = commentManager && commentManager.isUseSolved();
 		this.DrawMMFields       = logicDocument && logicDocument.IsDocumentEditor() && logicDocument.isHighlightMailMergeFields();
@@ -142,6 +144,7 @@
 		this.CurPos = new AscWord.CParagraphContentPos();
 		
 		this.searchCounter = 0;
+		this.activeSearchIds.clear();
 		
 		this.comments           = [];
 		this.haveCurrentComment = false;
@@ -252,13 +255,25 @@
 				this.permRanges.splice(pos, 1);
 		}
 	};
-	ParagraphHighlightDrawState.prototype.increaseSearchCounter = function()
+	ParagraphHighlightDrawState.prototype.increaseSearchCounter = function(id)
 	{
 		++this.searchCounter;
+		this.activeSearchIds.add(id);
 	};
-	ParagraphHighlightDrawState.prototype.decreaseSearchCounter = function()
+	ParagraphHighlightDrawState.prototype.decreaseSearchCounter = function(id)
 	{
 		--this.searchCounter;
+		this.activeSearchIds.delete(id);
+	};
+	ParagraphHighlightDrawState.prototype.shouldDrawSearchHighlight = function()
+	{
+		if (!this.DrawSearch || this.searchCounter <= 0)
+			return false;
+		let doc = this.Paragraph.GetLogicDocument();
+		if (doc && doc.IsPdfEditor && doc.IsPdfEditor() && this.activeSearchIds.size === 1
+			&& this.activeSearchIds.has(doc.SearchEngine.CurId))
+			return false; // The current live PDF match is already selected in blue.
+		return true;
 	};
 	ParagraphHighlightDrawState.prototype.IsCollectFixedForms = function()
 	{
@@ -546,7 +561,7 @@
 	ParagraphHighlightDrawState.prototype.getFlags = function(element, isCollaboration)
 	{
 		let flags = 0;
-		if (this.DrawSearch && this.searchCounter > 0)
+		if (this.shouldDrawSearchHighlight())
 			flags |= FLAG_SEARCH;
 		if (this.isComplexFieldHighlight())
 			flags |= FLAG_COMPLEX_FIELD;
@@ -580,7 +595,7 @@
 				else
 					flags |= FLAG_HIGHLIGHT;
 				
-				if (this.DrawSearch && this.searchCounter > 0)
+				if (this.shouldDrawSearchHighlight())
 					flags |= FLAG_SEARCH;
 				else if (this.DrawColl && isCollaboration)
 					flags |= FLAG_COLLABORATION;
@@ -599,7 +614,7 @@
 					--this.spaces;
 				}
 				
-				if (this.DrawSearch && this.searchCounter > 0)
+				if (this.shouldDrawSearchHighlight())
 					flags |= FLAG_SEARCH;
 				else if (this.DrawColl && isCollaboration)
 					flags |= FLAG_COLLABORATION;
@@ -622,7 +637,7 @@
 					else
 						flags |= FLAG_HIGHLIGHT;
 					
-					if (this.DrawSearch && this.searchCounter > 0)
+					if (this.shouldDrawSearchHighlight())
 						flags |= FLAG_SEARCH;
 					else if (this.DrawColl && isCollaboration)
 						flags |= FLAG_COLLABORATION;
