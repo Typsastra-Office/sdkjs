@@ -1899,6 +1899,10 @@
 		{
 			let oDoc = oThis.getPDFDoc();
 			let oDrDoc = oDoc.GetDrawingDocument();
+			if (oThis.textHighlight) {
+				oThis.textHighlight = null;
+				oThis.onUpdateOverlay();
+			}
 
 			if (oThis.thumbnails && oThis.thumbnails.isInFocus) {
 				oThis.thumbnails.isInFocus = false;
@@ -2582,6 +2586,31 @@
 			ctx.stroke();
 			ctx.restore();
 		};
+		// The PDF viewer is Closure-compiled separately from api_plugins.js.
+		// Keep this entry point quoted so the plugin API can call it without
+		// depending on Closure-renamed viewer state or file.pages.
+		this["SetPluginTextHighlight"] = function(pageIndex, rect) {
+			if (!this.file) return false;
+			if (rect == null) {
+				this.textHighlight = null;
+				this.onUpdateOverlay();
+				return true;
+			}
+			let page = this.file.pages[pageIndex];
+			if (!page || !Array.isArray(rect) || rect.length !== 4 ||
+				!rect.every(Number.isFinite)) return false;
+
+			let left = Math.max(0, Math.min(page.W, rect[0]));
+			let top = Math.max(0, Math.min(page.H, rect[1]));
+			let right = Math.max(0, Math.min(page.W, rect[2]));
+			let bottom = Math.max(0, Math.min(page.H, rect[3]));
+			if (!(right > left && bottom > top)) return false;
+
+			this.textHighlight = {pageIndex: pageIndex, rect: [left, top, right, bottom]};
+			this.onUpdateOverlay();
+			this.paint();
+			return true;
+		};
 
 		this.onUpdateOverlay = function() {
 			Asc.editor.checkLastWork();
@@ -2603,7 +2632,6 @@
 				this.drawSearchHighlights(ctx, oDoc, oDrDoc);
 				this.drawCurrentSearchHighlight(ctx, oDoc, oDrDoc);
 			}
-			this.drawTextHighlight();
 			
 			this.drawSelection(ctx, oDoc, oDrDoc);
 	        this.drawPlaceholders();
@@ -2616,6 +2644,9 @@
 			}
 			
 			this.drawForeignSelections(oDoc, oDrDoc, ctx);
+			// Draw last so document selection and placeholder overlays cannot cover
+			// a plugin-requested review highlight.
+			this.drawTextHighlight();
 		};
 		
 		this.drawPlaceholders = function() {
@@ -3485,6 +3516,10 @@
 			}
 			else if (e.KeyCode === 27) // Esc
 			{
+				if (this.textHighlight) {
+					this.textHighlight = null;
+					this.onUpdateOverlay();
+				}
 				if (this.Api.isInkDrawerOn())
 				{
 					this.Api.stopInkDrawer();

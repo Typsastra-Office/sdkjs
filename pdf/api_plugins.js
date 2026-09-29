@@ -290,30 +290,10 @@
 	 * @see office-js-api/Examples/Plugins/PDF/Api/Methods/SetTextHighlight.js
 	 */
 	Api.prototype["pluginMethod_SetTextHighlight"] = function(pageIndex, rect) {
-		let viewer = this.DocumentRenderer;
-		if (!viewer || !viewer.file)
-			return false;
-
-		if (rect == null) {
-			viewer.textHighlight = null;
-			viewer.onUpdateOverlay();
-			return true;
-		}
-
-		let page = viewer.file.pages[pageIndex];
-		if (!page || !Array.isArray(rect) || rect.length !== 4 ||
-			!rect.every(Number.isFinite))
-			return false;
-		let left = Math.max(0, Math.min(page.W, rect[0]));
-		let top = Math.max(0, Math.min(page.H, rect[1]));
-		let right = Math.max(0, Math.min(page.W, rect[2]));
-		let bottom = Math.max(0, Math.min(page.H, rect[3]));
-		if (!(right > left && bottom > top))
-			return false;
-
-		viewer.textHighlight = {pageIndex: pageIndex, rect: [left, top, right, bottom]};
-		viewer.onUpdateOverlay();
-		return true;
+		let oDoc = this.getPDFDoc();
+		let viewer = oDoc && oDoc.Viewer;
+		return !!(viewer && viewer["SetPluginTextHighlight"] &&
+			viewer["SetPluginTextHighlight"](pageIndex, rect));
 	};
 })(window);
 
