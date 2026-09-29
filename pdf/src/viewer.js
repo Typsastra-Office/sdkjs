@@ -4481,14 +4481,20 @@
         oMemory.context = new AscCommon.XmlWriterContext(AscCommon.c_oEditorId.Presentation);
         oMemory.context.docType	= AscFormat.XMLWRITER_DOC_TYPE_PPTX;
 
+		// Newly added shapes are written as logical units, so their text is stored as a
+		// real embedded Unicode-mapped font instead of legacy one-glyph-per-code text.
+		// The original page content is preserved untouched on save, so an already
+		// enhanced-unicode document keeps its own fonts and a plain document simply gains
+		// enhanced-unicode text for what the user just added.
+		oRenderer.LogicalUnitsEnabled = true;
+
         oRenderer.m_arrayPages[oRenderer.m_arrayPages.length]						= new AscCommon.CMetafile(oDoc.GetPageWidthMM(nPage), oDoc.GetPageHeightMM(nPage));
         oRenderer.m_lPagesCount														= oRenderer.m_arrayPages.length;
         oRenderer.m_arrayPages[oRenderer.m_lPagesCount - 1].Memory					= oRenderer.Memory;
         oRenderer.m_arrayPages[oRenderer.m_lPagesCount - 1].StartOffset				= oRenderer.Memory.pos;
         oRenderer.m_arrayPages[oRenderer.m_lPagesCount - 1].VectorMemoryForPrint	= oRenderer.VectorMemoryForPrint;
         oRenderer.m_arrayPages[oRenderer.m_lPagesCount - 1].FontPicker				= oRenderer.FontPicker;
-
-        oRenderer.m_arrayPages[oRenderer.m_lPagesCount - 1].FontPicker				= oRenderer.FontPicker;
+		oRenderer.m_arrayPages[oRenderer.m_lPagesCount - 1].LogicalUnitsEnabled		= oRenderer.LogicalUnitsEnabled;
 
         if (oRenderer.FontPicker)
             oRenderer.m_arrayPages[oRenderer.m_lPagesCount - 1].FontPicker.Metafile  = oRenderer.m_arrayPages[oRenderer.m_lPagesCount - 1];
