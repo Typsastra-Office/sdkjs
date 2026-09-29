@@ -67,6 +67,9 @@
     CAnnotationLink.prototype.IsLink = function() {
         return true;
     };
+	CAnnotationLink.prototype.IsUseContentAsComment = function() {
+		return false;
+	};
 	CAnnotationLink.prototype.IsNeedDrawFromStream = function() {
 		return this._bDrawFromStream && this.GetBorderWidth() !== 0;
 	};
