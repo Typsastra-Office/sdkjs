@@ -281,19 +281,24 @@
 	 * The rectangle is in PDF points with a top-left origin, the same space used
 	 * by GoToPage. Only one region can be highlighted at a time; each call
 	 * replaces the previous one. Call it without a rectangle to clear.
+	 *
+	 * By default the view scrolls to the region: when the page fits the viewport
+	 * the page is centered, and otherwise the region is centered so it is never
+	 * pinned to the top edge.
 	 * @memberof Api
 	 * @typeofeditors ["PDFE"]
 	 * @alias SetTextHighlight
 	 * @param {number} pageIndex - zero-based page index.
 	 * @param {?Rect} [rect=undefined] - [x1, y1, x2, y2] in PDF points, or nothing to clear the highlight.
+	 * @param {Object} [options=undefined] - {center=false} keeps the current scroll position.
 	 * @returns {boolean} - false if the page index or the rectangle is invalid.
 	 * @see office-js-api/Examples/Plugins/PDF/Api/Methods/SetTextHighlight.js
 	 */
-	Api.prototype["pluginMethod_SetTextHighlight"] = function(pageIndex, rect) {
+	Api.prototype["pluginMethod_SetTextHighlight"] = function(pageIndex, rect, options) {
 		let oDoc = this.getPDFDoc();
 		let viewer = oDoc && oDoc.Viewer;
 		return !!(viewer && viewer["SetPluginTextHighlight"] &&
-			viewer["SetPluginTextHighlight"](pageIndex, rect));
+			viewer["SetPluginTextHighlight"](pageIndex, rect, options));
 	};
 })(window);
 

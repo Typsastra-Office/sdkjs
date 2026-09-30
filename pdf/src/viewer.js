@@ -2586,10 +2586,44 @@
 			ctx.stroke();
 			ctx.restore();
 		};
+		// Scrolls so a plugin-requested region is visible without pinning it to the
+		// top edge. When the page fits the viewport the whole page is centered;
+		// otherwise the requested region is centered.
+		this["CenterPluginRegion"] = function(pageIndex, rect) {
+			let drawingPage = this.drawingPages[pageIndex];
+			if (!drawingPage || !this.canvas) return false;
+
+			// CSS pixels per PDF point, matching drawTextHighlight.
+			let cssPerPoint = this.getDrawingPageScale(pageIndex) * this.zoom;
+			let viewH = this.height || this.canvas.height;
+			let viewW = this.width || this.canvas.width;
+
+			let pageTop = drawingPage.Y;
+			let pageH = drawingPage.H;
+			let rectCenter = pageTop + (rect[1] + rect[3]) / 2 * cssPerPoint;
+			let posY;
+			if (pageH <= viewH) {
+				// Whole page fits: center the page itself.
+				posY = pageTop + pageH / 2 - viewH / 2;
+			} else {
+				posY = rectCenter - viewH / 2;
+			}
+			// Keep the page's left edge comfortably inside the viewport.
+			let pageLeft = drawingPage.X;
+			let posX = pageLeft - (viewW - drawingPage.W) / 2;
+
+			if (posY < 0) posY = 0;
+			else if (posY > this.scrollMaxY) posY = this.scrollMaxY;
+			if (posX < 0) posX = 0;
+			else if (posX > this.scrollMaxX) posX = this.scrollMaxX;
+
+			this.scrollToXY(posY, posX);
+			return true;
+		};
 		// The PDF viewer is Closure-compiled separately from api_plugins.js.
 		// Keep this entry point quoted so the plugin API can call it without
 		// depending on Closure-renamed viewer state or file.pages.
-		this["SetPluginTextHighlight"] = function(pageIndex, rect) {
+		this["SetPluginTextHighlight"] = function(pageIndex, rect, options) {
 			if (!this.file) return false;
 			if (rect == null) {
 				this.textHighlight = null;
@@ -2606,7 +2640,11 @@
 			let bottom = Math.max(0, Math.min(page.H, rect[3]));
 			if (!(right > left && bottom > top)) return false;
 
-			this.textHighlight = {pageIndex: pageIndex, rect: [left, top, right, bottom]};
+			let clamped = [left, top, right, bottom];
+			this.textHighlight = {pageIndex: pageIndex, rect: clamped};
+			// Navigate before repainting so the overlay lands on the scrolled view.
+			if (!options || options.center !== false)
+				this["CenterPluginRegion"](pageIndex, clamped);
 			this.onUpdateOverlay();
 			this.paint();
 			return true;

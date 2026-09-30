@@ -85,9 +85,8 @@ snapshot or plugin version; preserve unsaved documents first. Use
 `Get-CimInstance Win32_Process -Filter "name='editors.exe'" |
 Select-Object ProcessId, ExecutablePath` to check the running path. In the
 Khmer OCR panel, click a recognized line and check
-the status: `Highlight request accepted for page N.` means the API returned
-`true`; `Text highlight API result: false.` means the PDF viewer rejected the
-request. If a newly copied plugin still shows old behavior, verify its
+the status: `Highlighted line on page N.` means the API returned `true`;
+`Text highlight API result: false.` means the PDF viewer rejected the request. If a newly copied plugin still shows old behavior, verify its
 `config.json` entry URL and `index.html` script URL are cache-busted and check
 both plugin directories. Do not use the separately installed `C:\Program
 Files\Typsastra\DesktopEditors` when testing the `O:` development build.
