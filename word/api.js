@@ -13789,6 +13789,7 @@ background-repeat: no-repeat;\
 
         _renderer.InitPicker(AscCommon.g_oTextMeasurer.m_oManager);
 		_renderer.VectorMemoryForPrint = new AscCommon.CMemory();
+		_renderer.LogicalUnitsEnabled = !!(options && options["enhancedUnicode"]);
 		_renderer.DocInfo(this.asc_getCoreProps());
 		var _bOldShowMarks             = this.ShowParaMarks;
 		this.ShowParaMarks             = false;
