@@ -5876,24 +5876,30 @@ let current = contentPos.Copy();
 	}
 
 	let text = leftText.concat(rightText);
+	let joined = text.join("");
 	let positions = leftPos.concat([contentPos.Copy()], rightPos);
 	let widths = leftWidths.concat(rightWidths);
 	let offsets = [0];
 	for (let index = 0; index < text.length; ++index)
 		offsets.push(offsets[index] + text[index].length);
 	let caretOffset = offsets[leftText.length];
-	let segments = [];
-	let joined = text.join("");
-	for (let part of segmenter.segment(joined))
-		segments.push({start : part.index, end : part.index + part.segment.length});
 	// UAX #29 has no rule for Khmer, so a subscript written with Coeng
 	// (U+17D2) is left dangling before the consonant it applies to. Keep such a
 	// sequence in one cluster, otherwise the caret lands inside words like
 	// "krom" or "srok". Merge only for Coeng, so no other script changes.
-	for (let index = 1; index < segments.length; ++index)
+	// Carry the merged end forward, so Coeng separated by a base (as in a word
+	// written with two subscripts) still ends up as a single cluster.
+	let raw = [];
+	for (let part of segmenter.segment(joined))
+		raw.push({start : part.index, end : part.index + part.segment.length});
+	let segments = [];
+	for (let index = 0; index < raw.length; ++index)
 	{
-		if (0x17D2 === joined.codePointAt(segments[index - 1].end - 1))
-			segments[index - 1].end = segments[index].end;
+		let last = segments[segments.length - 1];
+		if (last && 0x17D2 === joined.codePointAt(last.end - 1))
+			last.end = raw[index].end;
+		else
+			segments.push({start : raw[index].start, end : raw[index].end});
 	}
 	for (let segment of segments)
 	{
