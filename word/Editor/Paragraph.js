@@ -5783,10 +5783,136 @@ Paragraph.prototype.SetSelectionEndContentPos = function(endPos)
 {
 	return this.Set_SelectionContentPos(this.Get_ParaContentPos(true, true, false), endPos, true);
 };
+var paragraphGraphemeSegmenter = null;
+function getParagraphGraphemeSegmenter()
+{
+	if (paragraphGraphemeSegmenter)
+		return paragraphGraphemeSegmenter;
+	if (!window.Intl || !window.Intl.Segmenter)
+		return null;
+	try
+	{
+		paragraphGraphemeSegmenter = new window.Intl.Segmenter(undefined, {granularity : "grapheme"});
+	}
+	catch (e)
+	{
+	}
+	return paragraphGraphemeSegmenter;
+}
+/**
+ * Find the two valid caret positions surrounding a position inside an extended
+ * grapheme cluster. Use paragraph positions rather than run offsets so that a
+ * cluster can cross formatting runs without merging or changing their text.
+ */
+Paragraph.prototype.private_GetGraphemeRangeAtPos = function(contentPos)
+{
+	let before = this.GetPrevRunElement(contentPos);
+	let after = this.GetNextRunElement(contentPos);
+	if (!before || !after || !before.IsText() || !after.IsText())
+		return null;
+
+	let segmenter = getParagraphGraphemeSegmenter();
+	if (!segmenter)
+		return null;
+
+// Most Latin caret moves do not need a paragraph scan. CR LF is a single
+	// cluster (UAX #29 "CR x LF"), so that pair still needs the scan.
+	let beforeCode = before.GetCodePoint(), afterCode = after.GetCodePoint();
+	if (beforeCode < 0x80 && afterCode < 0x80
+		&& !(0x0D === beforeCode && 0x0A === afterCode))
+		return null;
+
+	// Grapheme clusters are short, so bound the scan instead of walking the
+	// whole paragraph when the caret already sits on a cluster boundary.
+	const PARAGRAPH_GRAPHEME_SCAN_LIMIT = 32;
+	let depth = contentPos.GetDepth();
+	let canCross = function(pos)
+	{
+		if (pos.GetDepth() !== depth)
+			return false;
+		for (let index = 0; index < depth - 2; ++index)
+		{
+			if (pos.Get(index) !== contentPos.Get(index))
+				return false;
+		}
+		return true;
+	};
+	let leftText = [], rightText = [];
+	let leftPos = [], rightPos = [];
+	let leftWidths = [], rightWidths = [];
+let current = contentPos.Copy();
+	let search, scanned = 0;
+	while (scanned < PARAGRAPH_GRAPHEME_SCAN_LIMIT)
+	{
+		let item = this.GetPrevRunElement(current);
+		if (!item || !item.IsText())
+			break;
+		search = new CParagraphSearchPos();
+		this.Get_LeftPos(search, current);
+		if (!search.IsFound() || !canCross(search.GetPos()) || search.GetPos().Compare(current) >= 0)
+			break;
+		leftText.unshift(String.fromCodePoint(item.GetCodePoint()));
+		leftWidths.unshift(item.GetWidthVisible());
+		current = search.GetPos().Copy();
+		leftPos.unshift(current);
+		++scanned;
+	}
+	current = contentPos.Copy();
+	scanned = 0;
+	while (scanned < PARAGRAPH_GRAPHEME_SCAN_LIMIT)
+	{
+		let item = this.GetNextRunElement(current);
+		if (!item || !item.IsText())
+			break;
+		search = new CParagraphSearchPos();
+		this.Get_RightPos(search, current, false);
+		if (!search.IsFound() || !canCross(search.GetPos()) || search.GetPos().Compare(current) <= 0)
+			break;
+		rightText.push(String.fromCodePoint(item.GetCodePoint()));
+		rightWidths.push(item.GetWidthVisible());
+		current = search.GetPos().Copy();
+		rightPos.push(current);
+		++scanned;
+	}
+
+	let text = leftText.concat(rightText);
+	let positions = leftPos.concat([contentPos.Copy()], rightPos);
+	let widths = leftWidths.concat(rightWidths);
+	let offsets = [0];
+	for (let index = 0; index < text.length; ++index)
+		offsets.push(offsets[index] + text[index].length);
+	let caretOffset = offsets[leftText.length];
+	for (let part of segmenter.segment(text.join("")))
+	{
+		let start = part.index;
+		let end = start + part.segment.length;
+		if (start < caretOffset && caretOffset < end)
+		{
+			let first = offsets.indexOf(start);
+			let last = offsets.indexOf(end);
+			if (first < 0 || last < 0)
+				return null;
+			let beforeWidth = 0, afterWidth = 0;
+			for (let index = first; index < leftText.length; ++index)
+				beforeWidth += widths[index];
+			for (let index = leftText.length; index < last; ++index)
+				afterWidth += widths[index];
+			return {start : positions[first], end : positions[last], before : beforeWidth, after : afterWidth};
+		}
+		if (start >= caretOffset)
+			break;
+	}
+	return null;
+};
 Paragraph.prototype.private_GetClosestPosInCombiningMark = function(oContentPos, nDiff)
 {
 	if (undefined === nDiff)
 		nDiff = 0;
+	if (getParagraphGraphemeSegmenter())
+	{
+		let range = this.private_GetGraphemeRangeAtPos(oContentPos);
+		return range ? (range.before + nDiff < range.after - nDiff ? range.start : range.end) : oContentPos;
+	}
 
 	let oSearchPos;
 	let oCurrentPos  = oContentPos;
@@ -5853,6 +5979,14 @@ Paragraph.prototype.private_GetClosestPosInCombiningMark = function(oContentPos,
 };
 Paragraph.prototype.private_CorrectPosInCombiningMark = function(oContentPos, isForward)
 {
+	let prevItem = this.GetPrevRunElement(oContentPos);
+	let nextItem = this.GetNextRunElement(oContentPos);
+	if (getParagraphGraphemeSegmenter() && prevItem && nextItem
+		&& prevItem.IsText() && nextItem.IsText())
+	{
+		let range = this.private_GetGraphemeRangeAtPos(oContentPos);
+		return range ? (isForward ? range.end : range.start) : oContentPos;
+	}
 	let oSearchPos;
 	let oCurrentPos  = oContentPos;
 	
