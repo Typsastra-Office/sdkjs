@@ -71,7 +71,11 @@ for (const [text, stops] of [
 	["🇰🇭!", [0, 2, 3]],
 	["क्षa", [0, 3, 4]],
 	["\r\nx", [0, 2, 3]],
-	["ab", [0, 1, 2]]
+	["ab", [0, 1, 2]],
+	// Khmer Coeng (U+17D2) subscript sequences must stay in one cluster.
+	["ករុណកើតខ្មែរ", [0, 1, 3, 4, 6, 7, 11, 12]],
+	["ខ្ម", [0, 3]],
+	["ខ្ខ", [0, 3]]
 ]) {
 	const paragraph = new Paragraph(text);
 	for (let i = 0; i + 1 < stops.length; i++) {
