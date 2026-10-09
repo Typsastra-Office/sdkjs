@@ -157,7 +157,7 @@
 		settings = settings || {};
 		this.basePath = settings.basePath || DEFAULT_BASE_PATH;
 		this.profile = settings.profile || "typing";
-		this.accuracy = settings.accuracy || "visual";
+		this.accuracy = settings.accuracy || "lexical";
 		this.authority = normalizeSpellingAuthority(settings.authority);
 		this.dictionaryBytes = null;
 		this.engine = settings.engine || null;
@@ -610,9 +610,9 @@
 	};
 
 	// Word-segmentation engine used for Khmer line breaking:
-	//   "icu"     - Intl.Segmenter / ICU word boundaries (default)
-	//   "viterbi" - Khmer Viterbi segmenter wordBreakOpportunities()
-	let khmerLineBreakEngine = LINE_BREAK_ENGINE_ICU;
+	//   "icu"     - Intl.Segmenter / ICU word boundaries
+	//   "viterbi" - Khmer Viterbi segmenter wordBreakOpportunities() (default)
+	let khmerLineBreakEngine = LINE_BREAK_ENGINE_VITERBI;
 	window["AscCommon"]["getKhmerLineBreakEngine"] = function()
 	{
 		return khmerLineBreakEngine;
