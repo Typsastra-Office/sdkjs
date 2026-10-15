@@ -67,10 +67,11 @@
 	 */
 	function SectionPageMargins()
 	{
-		this.Left   = 30; // 3 cm
-		this.Top    = 20; // 2 cm
-		this.Right  = 15; // 1.5 cm
-		this.Bottom = 20; // 2 cm
+		var isKhmer = AscCommon.g_oDefaultCultureInfo && AscCommon.g_oDefaultCultureInfo.LCID === lcid_kmKH;
+		this.Left   = isKhmer ? 25 : 30; // 2.5 cm for Khmer, 3 cm otherwise
+		this.Top    = isKhmer ? 25 : 20; // 2.5 cm for Khmer, 2 cm otherwise
+		this.Right  = isKhmer ? 25 : 15; // 2.5 cm for Khmer, 1.5 cm otherwise
+		this.Bottom = isKhmer ? 25 : 20; // 2.5 cm for Khmer, 2 cm otherwise
 		this.Gutter = 0;  // 0 cm
 		
 		this.Header = 12.5; // 1.25 cm

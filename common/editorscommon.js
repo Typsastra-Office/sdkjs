@@ -10790,7 +10790,7 @@
 				break;
 		}
 
-		return sResult;
+		return ApplyNumeralSystemToDigits(sResult);
 	}
 
 	/**

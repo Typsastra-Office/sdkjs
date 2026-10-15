@@ -12940,7 +12940,7 @@ CLang.prototype =
     {
         this.Bidi     = lcid_arSA;
         this.EastAsia = lcid_zhCN;
-        this.Val      = lcid_enUS;
+        this.Val      = AscCommon.g_oDefaultCultureInfo && AscCommon.g_oDefaultCultureInfo.LCID === lcid_kmKH ? lcid_kmKH : lcid_enUS;
     },
 
     Set_FromObject : function(Lang, isUndefinedToNull)
