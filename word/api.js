@@ -14614,6 +14614,35 @@ background-repeat: no-repeat;\
 	};
 	
 	// auto-hyphenation
+	asc_docs_api.prototype.asc_getScriptFontScripts = function()
+	{
+		let scripts = [];
+		let allScripts = window['AscFonts'] && AscFonts.HB_SCRIPT ? AscFonts.HB_SCRIPT : {};
+		Object.keys(allScripts).forEach(function(key) {
+			if (key.charAt(0) === '_' || key === 'HB_SCRIPT_COMMON' || key === 'HB_SCRIPT_INHERITED'
+				|| key === 'HB_SCRIPT_UNKNOWN' || key === 'HB_SCRIPT_INVALID')
+				return;
+			let label = key.replace('HB_SCRIPT_', '').toLowerCase().split('_').map(function(part) {
+				return part.charAt(0).toUpperCase() + part.slice(1);
+			}).join(' ');
+			scripts.push({script: key, label: label});
+		});
+		scripts.sort(function(left, right) { return left.label.localeCompare(right.label); });
+		return scripts;
+	};
+	asc_docs_api.prototype.asc_getScriptFontSettings = function()
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		return logicDocument ? logicDocument.getScriptFontSettings() : [];
+	};
+	asc_docs_api.prototype.asc_setScriptFontSettings = function(settings)
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument || logicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_TextProperties))
+			return;
+
+		logicDocument.setScriptFontSettings(settings);
+	};
 	asc_docs_api.prototype.asc_setAutoHyphenation = function(isAuto)
 	{
 		let logicDocument = this.private_GetLogicDocument();
@@ -15802,6 +15831,9 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["asc_getPageSize"] 		= asc_docs_api.prototype.asc_getPageSize;
 	
 	// auto hyphenation
+	asc_docs_api.prototype["asc_getScriptFontScripts"]      = asc_docs_api.prototype.asc_getScriptFontScripts;
+	asc_docs_api.prototype["asc_getScriptFontSettings"]      = asc_docs_api.prototype.asc_getScriptFontSettings;
+	asc_docs_api.prototype["asc_setScriptFontSettings"]      = asc_docs_api.prototype.asc_setScriptFontSettings;
 	asc_docs_api.prototype["asc_setAutoHyphenation"]         = asc_docs_api.prototype.asc_setAutoHyphenation;
 	asc_docs_api.prototype["asc_isAutoHyphenation"]          = asc_docs_api.prototype.asc_isAutoHyphenation;
 	asc_docs_api.prototype["asc_setHyphenateCaps"]           = asc_docs_api.prototype.asc_setHyphenateCaps;

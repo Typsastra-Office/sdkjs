@@ -753,7 +753,8 @@ var c_oSer_SettingsType = {
 	AutoHyphenation: 21,
 	HyphenationZone: 22,
 	DoNotHyphenateCaps: 23,
-	ConsecutiveHyphenLimit: 24
+	ConsecutiveHyphenLimit: 24,
+	ScriptFonts: 25
 };
 var c_oDocProtect = {
 	AlgorithmName: 0,
@@ -7280,6 +7281,8 @@ function BinarySettingsTableWriter(memory, doc, saveParams)
 			this.bs.WriteItem(c_oSer_SettingsType.DoNotHyphenateCaps, function() {oThis.memory.WriteBool(true);});
 		if (undefined !== settings.consecutiveHyphenLimit)
 			this.bs.WriteItem(c_oSer_SettingsType.ConsecutiveHyphenLimit, function() {oThis.memory.WriteLong(settings.consecutiveHyphenLimit);});
+		if (settings.scriptFontSettings && settings.scriptFontSettings.length)
+			this.bs.WriteItem(c_oSer_SettingsType.ScriptFonts, function() {oThis.memory.WriteString3(JSON.stringify(settings.scriptFontSettings));});
 		
 		// if (oThis.Document.Settings && null != oThis.Document.Settings.PrintTwoOnOne) {
 		// 	this.bs.WriteItem(c_oSer_SettingsType.PrintTwoOnOne, function() {oThis.memory.WriteBool(oThis.Document.Settings.PrintTwoOnOne);});
@@ -16608,6 +16611,17 @@ function Binary_SettingsTableReader(doc, oReadResult, stream)
 		else if (c_oSer_SettingsType.DoNotHyphenateCaps === type)
 		{
 			Settings.setHyphenateCaps(!this.stream.GetBool());
+		}
+		else if (c_oSer_SettingsType.ScriptFonts === type)
+		{
+			try
+			{
+				Settings.scriptFontSettings = JSON.parse(this.stream.GetString2LE(length) || '[]');
+			}
+			catch (e)
+			{
+				Settings.scriptFontSettings = [];
+			}
 		}
         else
             res = c_oSerConstants.ReadUnknown;

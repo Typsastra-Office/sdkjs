@@ -1280,6 +1280,9 @@
 			case AscDFH.historydescription_Document_SetAutoHyphenation:
 				sString = "Document_SetAutoHyphenation";
 				break;
+			case AscDFH.historydescription_Document_SetScriptFonts:
+				sString = "Document_SetScriptFonts";
+				break;
 			case AscDFH.historydescription_Document_SetConsecutiveHyphenLimit:
 				sString = "Document_SetConsecutiveHyphenLimit";
 				break;
@@ -1938,6 +1941,7 @@
 	window['AscDFH'].historyitem_Document_Settings_DoNotHyphenateCaps     = window['AscDFH'].historyitem_type_Document | 14;
 	window['AscDFH'].historyitem_Document_Settings_HyphenationZone        = window['AscDFH'].historyitem_type_Document | 15;
 	window['AscDFH'].historyitem_Document_PageColor                       = window['AscDFH'].historyitem_type_Document | 16;
+	window['AscDFH'].historyitem_Document_Settings_ScriptFonts             = window['AscDFH'].historyitem_type_Document | 17;
 
 	window['AscDFH'].historyitem_Document_DisconnectEveryone              = window['AscDFH'].historyitem_type_Document | 10000;
 	//------------------------------------------------------------------------------------------------------------------
@@ -4749,6 +4753,7 @@
 	window['AscDFH'].historydescription_Document_AddRemoveBeforeAfterParagraph      = 0x01b0;
 	window['AscDFH'].historydescription_Document_SectionPageNumFormat               = 0x01b1;
 	window['AscDFH'].historydescription_Document_SetPageColor                       = 0x01b2;
+	window['AscDFH'].historydescription_Document_SetScriptFonts                      = 0x01bc;
 	window['AscDFH'].historydescription_Document_InsertTextFromFile                 = 0x01b3;
 	window['AscDFH'].historydescription_Document_AddComplexField                    = 0x01b4;
 	window['AscDFH'].historydescription_Document_EditComplexFieldInstruction        = 0x01b5;

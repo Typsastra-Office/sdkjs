@@ -10183,6 +10183,8 @@ CDocument.prototype.EnterText = function(value)
 		return false;
 
 	this.StartAction(AscDFH.historydescription_Document_AddLetter, null, null, codePoints);
+	if (this.Settings && this.Settings.scriptFontSettings && this.Settings.scriptFontSettings.length && this.IsSelectionUse())
+		this.Remove(1, true, false, true);
 	
 	this.DrawingDocument.TargetStart();
 	this.DrawingDocument.TargetShow();
@@ -10195,12 +10197,14 @@ CDocument.prototype.EnterText = function(value)
 		{
 			let codePoint = codePoints[index];
 			this.AddToParagraph(AscCommon.IsSpace(codePoint) ? new AscWord.CRunSpace(codePoint) : new AscWord.CRunText(codePoint));
+			this.private_ApplyScriptFontForCodePoint(codePoint);
 		}
 	}
 	else
 	{
 		let codePoint = codePoints;
 		this.AddToParagraph(AscCommon.IsSpace(codePoint) ? new AscWord.CRunSpace(codePoint) : new AscWord.CRunText(codePoint));
+		this.private_ApplyScriptFontForCodePoint(codePoint);
 	}
 
 	this.CheckLanguageOnTextAdd = false;
@@ -10305,6 +10309,7 @@ CDocument.prototype.CorrectEnterText = function(oldValue, newValue)
 	{
 		let codePoint = newCodePoints[index];
 		this.AddToParagraph(AscCommon.IsSpace(codePoint) ? new AscWord.CRunSpace(codePoint) : new AscWord.CRunText(codePoint));
+		this.private_ApplyScriptFontForCodePoint(codePoint);
 	}
 
 	this.UpdateSelection();
@@ -13238,6 +13243,7 @@ CDocument.prototype.Refresh_RecalcData = function(oData)
 		case AscDFH.historyitem_Document_Settings_ConsecutiveHyphenLimit:
 		case AscDFH.historyitem_Document_Settings_DoNotHyphenateCaps:
 		case AscDFH.historyitem_Document_Settings_HyphenationZone:
+		case AscDFH.historyitem_Document_Settings_ScriptFonts:
 		{
 			this.History.RecalcData_Add({Type : AscDFH.historyitem_recalctype_FromStart});
 			break;
@@ -17130,6 +17136,222 @@ CDocument.prototype.GetDocumentSettings = function()
 CDocument.prototype.getDocumentSettings = function()
 {
 	return this.Settings;
+};
+CDocument.prototype.getScriptFontSettings = function()
+{
+	var settings = this.Settings.getScriptFontSettings();
+	for (var i = 0; i < settings.length; ++i)
+		this.private_QueueScriptFontLoad(settings[i].font);
+	return settings;
+};
+CDocument.prototype.setScriptFontSettings = function(settings)
+{
+	this.StartAction(AscDFH.historydescription_Document_SetScriptFonts);
+	this.Settings.setScriptFontSettings(settings);
+	for (var i = 0; i < this.Settings.scriptFontSettings.length; ++i)
+		this.private_QueueScriptFontLoad(this.Settings.scriptFontSettings[i].font);
+	if (this.IsSelectionUse())
+		this.private_ApplyScriptFontSettingsToSelection();
+	this.Recalculate();
+	this.UpdateInterface();
+	this.UpdateSelection();
+	this.FinalizeAction();
+};
+CDocument.prototype.private_QueueScriptFontLoad = function(fontName)
+{
+	if (!fontName)
+		return;
+	this._scriptFontsLoaded = this._scriptFontsLoaded || {};
+	this._scriptFontLoadQueue = this._scriptFontLoadQueue || [];
+	if (this._scriptFontsLoaded[fontName] || this._scriptFontLoading === fontName || this._scriptFontLoadQueue.indexOf(fontName) !== -1)
+		return;
+	this._scriptFontLoadQueue.push(fontName);
+	this.private_LoadNextScriptFont();
+};
+CDocument.prototype.private_LoadNextScriptFont = function()
+{
+	if (this._scriptFontLoading || !this._scriptFontLoadQueue || !this._scriptFontLoadQueue.length)
+		return;
+
+	var fontName = this._scriptFontLoadQueue.shift();
+	var fontInfo = AscFonts && AscFonts.g_fontApplication && AscFonts.g_fontApplication.GetFontInfo(fontName);
+	if (!fontInfo)
+	{
+		this._scriptFontsLoaded[fontName] = true;
+		this.private_LoadNextScriptFont();
+		return;
+	}
+
+	var logicDocument = this;
+	var isAsync = AscCommon.g_font_loader.LoadFont(fontInfo, function()
+	{
+		this.sync_EndAction(Asc.c_oAscAsyncActionType.Information, Asc.c_oAscAsyncAction.LoadFont);
+		logicDocument._scriptFontLoading = null;
+		logicDocument._scriptFontsLoaded[fontName] = true;
+		logicDocument.Recalculate();
+		logicDocument.UpdateInterface();
+		logicDocument.UpdateSelection();
+		logicDocument.private_LoadNextScriptFont();
+	});
+	if (isAsync)
+	{
+		this._scriptFontLoading = fontName;
+	}
+	else
+	{
+		this._scriptFontsLoaded[fontName] = true;
+		this.private_LoadNextScriptFont();
+	}
+};
+CDocument.prototype.private_ApplyScriptFontForCodePoint = function(codePoint)
+{
+	if (!this.Settings || !this.Settings.scriptFontSettings || !this.Settings.scriptFontSettings.length || AscCommon.IsSpace(codePoint))
+		return;
+
+	var scriptFont = this.Settings.getScriptFontByCodePoint(codePoint);
+	if (!scriptFont)
+		return;
+	this.private_QueueScriptFontLoad(scriptFont.font);
+
+	var paragraph = this.GetCurrentParagraph();
+	if (!paragraph)
+		return;
+	var contentPos = paragraph.Get_ParaContentPos(false, false, false);
+	var run = paragraph.Get_ElementByPos(contentPos);
+	if (!run || !run.IsRun || !run.IsRun() || !run.State || run.State.ContentPos <= 0)
+		return;
+
+	var currentPr = run.GetDirectTextPr();
+	var currentFont = currentPr && currentPr.FontFamily ? currentPr.FontFamily.Name :
+		(currentPr && currentPr.RFonts && currentPr.RFonts.Ascii ? currentPr.RFonts.Ascii.Name : null);
+	if (currentFont === scriptFont.font && currentPr.FontSize === scriptFont.size && currentPr.FontSizeCS === scriptFont.size)
+		return;
+
+	var parent = run.GetParent();
+	var runPos = run.GetPosInParent(parent);
+	if (!parent || runPos < 0)
+		return;
+
+	var endPos = run.State.ContentPos;
+	run.State.Selection.Use = true;
+	run.State.Selection.StartPos = endPos - 1;
+	run.State.Selection.EndPos = endPos;
+	var textPr = new CTextPr();
+	textPr.FontFamily = {Name: scriptFont.font, Index: -1};
+	textPr.FontSize = scriptFont.size;
+	textPr.FontSizeCS = scriptFont.size;
+	var newRuns = run.Apply_TextPr(textPr, undefined, false);
+	if (parent.Internal_ReplaceRun)
+		parent.Internal_ReplaceRun(runPos, newRuns);
+	else if (parent.private_ReplaceRun)
+		parent.private_ReplaceRun(runPos, newRuns);
+
+	var insertedRun = newRuns[1];
+	if (insertedRun)
+		insertedRun.RemoveSelection();
+};
+CDocument.prototype.private_ApplyScriptFontSettingsToSelection = function()
+{
+	var paragraphs = this.GetAllParagraphs({Selected: true});
+	var selectedRuns = [];
+	var collectSelectedRuns = function(container)
+	{
+		if (!container || !container.Content)
+			return;
+		for (var index = 0; index < container.Content.length; ++index)
+		{
+			var item = container.Content[index];
+			if (item && item.IsRun && item.IsRun())
+			{
+				if (item.State && item.State.Selection && item.State.Selection.Use)
+					selectedRuns.push(item);
+			}
+			else if (item && item.Content)
+				collectSelectedRuns(item);
+		}
+	};
+	for (var p = 0; p < paragraphs.length; ++p)
+		collectSelectedRuns(paragraphs[p]);
+	for (var selectedRunIndex = selectedRuns.length - 1; selectedRunIndex >= 0; --selectedRunIndex)
+	{
+		var run = selectedRuns[selectedRunIndex];
+		if (!run || !run.State || !run.State.Selection || !run.State.Selection.Use)
+			continue;
+
+		var initialSelection = run.State.Selection;
+		var reverseSelection = initialSelection.StartPos > initialSelection.EndPos;
+		var selectionStart = Math.min(initialSelection.StartPos, initialSelection.EndPos);
+		var selectionEnd = Math.max(initialSelection.StartPos, initialSelection.EndPos);
+		var segments = [];
+		var currentSegment = null;
+		var previousScript = null;
+		var inheritedScript = AscFonts.HB_SCRIPT.HB_SCRIPT_INHERITED;
+		var commonScript = AscFonts.HB_SCRIPT.HB_SCRIPT_COMMON;
+		for (var prevPos = 0; prevPos < selectionStart; ++prevPos)
+		{
+			var previousItem = run.Content[prevPos];
+			if (previousItem && previousItem.GetCodePoint)
+			{
+				var previousCodePointScript = AscFonts.hb_get_script_by_unicode(previousItem.GetCodePoint());
+				if (previousCodePointScript !== inheritedScript && previousCodePointScript !== commonScript)
+					previousScript = previousCodePointScript;
+			}
+		}
+		for (var charPos = selectionStart; charPos < selectionEnd; ++charPos)
+		{
+			var runItem = run.Content[charPos];
+			var scriptFont = null;
+			if (runItem && runItem.GetCodePoint)
+			{
+				var codePoint = runItem.GetCodePoint();
+				var charScript = AscFonts.hb_get_script_by_unicode(codePoint);
+				if (charScript === inheritedScript)
+					charScript = previousScript;
+				else if (charScript !== commonScript)
+					previousScript = charScript;
+				if (charScript !== commonScript && charScript !== inheritedScript)
+					scriptFont = this.Settings.getScriptFontByScript(charScript);
+			}
+			var segmentKey = scriptFont ? scriptFont.script + '|' + scriptFont.font + '|' + scriptFont.size : null;
+			if (currentSegment && currentSegment.key === segmentKey)
+			{
+				currentSegment.end = charPos + 1;
+			}
+			else
+			{
+				currentSegment = {start: charPos, end: charPos + 1, key: segmentKey, font: scriptFont};
+				segments.push(currentSegment);
+			}
+		}
+
+		for (var segmentIndex = segments.length - 1; segmentIndex >= 0; --segmentIndex)
+		{
+				var segment = segments[segmentIndex];
+				if (!segment.font || !run)
+					continue;
+			this.private_QueueScriptFontLoad(segment.font.font);
+
+			run.State.Selection.Use = true;
+			run.State.Selection.StartPos = reverseSelection ? segment.end : segment.start;
+			run.State.Selection.EndPos = reverseSelection ? segment.start : segment.end;
+
+			var textPr = new CTextPr();
+			textPr.FontFamily = {Name: segment.font.font, Index: -1};
+			textPr.FontSize = segment.font.size;
+			textPr.FontSizeCS = segment.font.size;
+			var newRuns = run.Apply_TextPr(textPr, undefined, false);
+			var parent = run.GetParent();
+			var runPos = run.GetPosInParent(parent);
+			if (parent && runPos >= 0)
+			{
+				if (parent.Internal_ReplaceRun)
+					parent.Internal_ReplaceRun(runPos, newRuns);
+				else if (parent.private_ReplaceRun)
+					parent.private_ReplaceRun(runPos, newRuns);
+			}
+			run = newRuns[0];
+		}
+	}
 };
 CDocument.prototype.GetCompatibilityMode = function()
 {

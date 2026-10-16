@@ -51,6 +51,7 @@ AscDFH.changesFactory[AscDFH.historyitem_Document_Settings_AutoHyphenation]     
 AscDFH.changesFactory[AscDFH.historyitem_Document_Settings_ConsecutiveHyphenLimit] = CChangesDocumentSettingsConsecutiveHyphenLimit;
 AscDFH.changesFactory[AscDFH.historyitem_Document_Settings_DoNotHyphenateCaps]     = CChangesDocumentSettingsDoNotHyphenateCaps;
 AscDFH.changesFactory[AscDFH.historyitem_Document_Settings_HyphenationZone]        = CChangesDocumentSettingsHyphenationZone;
+AscDFH.changesFactory[AscDFH.historyitem_Document_Settings_ScriptFonts]           = CChangesDocumentSettingsScriptFonts;
 AscDFH.changesFactory[AscDFH.historyitem_Document_PageColor]                       = CChangesDocumentPageColor;
 
 AscDFH.changesFactory[AscDFH.historyitem_Document_DisconnectEveryone]              = CChangesDocumentDisconnectEveryone;
@@ -74,6 +75,7 @@ AscDFH.changesRelationMap[AscDFH.historyitem_Document_Settings_GutterAtTop]     
 AscDFH.changesRelationMap[AscDFH.historyitem_Document_Settings_MirrorMargins]     = [AscDFH.historyitem_Document_Settings_MirrorMargins];
 AscDFH.changesRelationMap[AscDFH.historyitem_Document_SpecialFormsGlobalSettings] = [AscDFH.historyitem_Document_SpecialFormsGlobalSettings];
 AscDFH.changesRelationMap[AscDFH.historyitem_Document_Settings_TrackRevisions]    = [AscDFH.historyitem_Document_Settings_TrackRevisions];
+AscDFH.changesRelationMap[AscDFH.historyitem_Document_Settings_ScriptFonts]      = [AscDFH.historyitem_Document_Settings_ScriptFonts];
 AscDFH.changesRelationMap[AscDFH.historyitem_Document_DisconnectEveryone]         = [AscDFH.historyitem_Document_DisconnectEveryone];
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -1148,6 +1150,38 @@ CChangesDocumentSettingsHyphenationZone.prototype.private_SetValue = function(va
 {
 	this.Class.Settings.hyphenationZone = value;
 	this.Class.OnChangeAutoHyphenation();
+};
+
+function CChangesDocumentSettingsScriptFonts(Class, Old, New)
+{
+	AscDFH.CChangesBase.call(this, Class);
+	this.Old = JSON.parse(JSON.stringify(Old || []));
+	this.New = JSON.parse(JSON.stringify(New || []));
+}
+CChangesDocumentSettingsScriptFonts.prototype = Object.create(AscDFH.CChangesBase.prototype);
+CChangesDocumentSettingsScriptFonts.prototype.constructor = CChangesDocumentSettingsScriptFonts;
+CChangesDocumentSettingsScriptFonts.prototype.Type = AscDFH.historyitem_Document_Settings_ScriptFonts;
+CChangesDocumentSettingsScriptFonts.prototype.Undo = function()
+{
+	this.Class.Settings.scriptFontSettings = JSON.parse(JSON.stringify(this.Old));
+};
+CChangesDocumentSettingsScriptFonts.prototype.Redo = function()
+{
+	this.Class.Settings.scriptFontSettings = JSON.parse(JSON.stringify(this.New));
+};
+CChangesDocumentSettingsScriptFonts.prototype.WriteToBinary = function(writer)
+{
+	writer.WriteString2(JSON.stringify(this.New));
+	writer.WriteString2(JSON.stringify(this.Old));
+};
+CChangesDocumentSettingsScriptFonts.prototype.ReadFromBinary = function(reader)
+{
+	this.New = JSON.parse(reader.GetString2() || '[]');
+	this.Old = JSON.parse(reader.GetString2() || '[]');
+};
+CChangesDocumentSettingsScriptFonts.prototype.CreateReverseChange = function()
+{
+	return new CChangesDocumentSettingsScriptFonts(this.Class, this.New, this.Old);
 };
 /**
  * @constructor

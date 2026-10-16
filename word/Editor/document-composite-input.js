@@ -122,8 +122,21 @@
 	DocumentCompositeInput.prototype.replace = function(codePoints)
 	{
 		let runInput = this.compositeInput;
+		codePoints = typeof(codePoints) === "string" ? codePoints.codePointsArray() : codePoints;
+		let documentCompositeInput = this;
 		this.doAction(function()
 		{
+			if (codePoints && codePoints.length)
+			{
+				for (let index = 0; index < codePoints.length; ++index)
+				{
+					if (documentCompositeInput.document.Settings.getScriptFontByCodePoint(codePoints[index]))
+					{
+						documentCompositeInput.private_ApplyScriptFont(codePoints[index]);
+						break;
+					}
+				}
+			}
 			runInput.replace(codePoints);
 		});
 	};
@@ -138,10 +151,31 @@
 	DocumentCompositeInput.prototype.add = function(codePoint)
 	{
 		let runInput = this.compositeInput;
+		let documentCompositeInput = this;
 		this.doAction(function()
 		{
+			if (!runInput.getLength())
+				documentCompositeInput.private_ApplyScriptFont(codePoint);
 			runInput.add(codePoint);
 		});
+	};
+	DocumentCompositeInput.prototype.private_ApplyScriptFont = function(codePoint)
+	{
+		let document = this.document;
+		if (!document || !document.Settings || !document.Settings.scriptFontSettings || !document.Settings.scriptFontSettings.length)
+			return;
+
+		let scriptFont = document.Settings.getScriptFontByCodePoint(codePoint);
+		let run = this.compositeInput.getRun();
+		if (!scriptFont || !run || run.GetParentForm())
+			return;
+		document.private_QueueScriptFontLoad(scriptFont.font);
+
+		let textPr = new CTextPr();
+		textPr.FontFamily = {Name: scriptFont.font, Index: -1};
+		textPr.FontSize = scriptFont.size;
+		textPr.FontSizeCS = scriptFont.size;
+		run.Apply_Pr(textPr);
 	};
 	DocumentCompositeInput.prototype.setPos = function(pos)
 	{
