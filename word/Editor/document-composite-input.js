@@ -176,6 +176,47 @@
 		textPr.FontSize = scriptFont.size;
 		textPr.FontSizeCS = scriptFont.size;
 		run.Apply_Pr(textPr);
+
+		let runInput = this.compositeInput;
+		let parent = run.GetParent();
+		let runPos = parent ? run.GetPosInParent(parent) : -1;
+		let previousRun = runPos > 0 && parent.Content ? parent.Content[runPos - 1] : null;
+		let script = AscFonts.hb_get_script_by_unicode(codePoint);
+		let previousScript = null;
+		if (previousRun && previousRun.Content)
+		{
+			for (let index = previousRun.Content.length - 1; index >= 0; --index)
+			{
+				let item = previousRun.Content[index];
+				if (!item || !item.GetCodePoint)
+					continue;
+				previousScript = AscFonts.hb_get_script_by_unicode(item.GetCodePoint());
+				if (previousScript !== AscFonts.HB_SCRIPT.HB_SCRIPT_COMMON
+					&& previousScript !== AscFonts.HB_SCRIPT.HB_SCRIPT_INHERITED)
+					break;
+				previousScript = null;
+			}
+		}
+		// Composite input starts in a separate run; join same-script text so Khmer marks can shape with their base.
+		if (runInput.getLength() === 0
+			&& run.Content.length === 0
+			&& previousRun instanceof AscWord.CRun
+			&& previousRun.IsRun()
+			&& previousScript === script
+			&& previousRun.IsCS() === run.IsCS()
+			&& previousRun.Pr.Is_Equal(run.Pr)
+			&& parent.Internal_Content_Remove)
+		{
+			run.Set_CompositeInput(null);
+			parent.Internal_Content_Remove(runPos);
+
+			runInput.run = previousRun;
+			runInput.pos = previousRun.Content.length;
+			runInput.prevRun = null;
+			previousRun.Set_CompositeInput(runInput);
+			previousRun.State.ContentPos = runInput.pos;
+			previousRun.SetThisElementCurrentInParagraph();
+		}
 	};
 	DocumentCompositeInput.prototype.setPos = function(pos)
 	{
