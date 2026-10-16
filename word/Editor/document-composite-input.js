@@ -169,6 +169,7 @@
 		let run = this.compositeInput.getRun();
 		if (!scriptFont || !run || run.GetParentForm())
 			return;
+		document.private_QueueScriptFontFallback(codePoint, scriptFont.font);
 		document.private_QueueScriptFontLoad(scriptFont.font);
 
 		let textPr = new CTextPr();

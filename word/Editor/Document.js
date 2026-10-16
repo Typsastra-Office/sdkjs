@@ -17188,7 +17188,22 @@ CDocument.prototype.private_LoadNextScriptFont = function()
 		this.sync_EndAction(Asc.c_oAscAsyncActionType.Information, Asc.c_oAscAsyncAction.LoadFont);
 		logicDocument._scriptFontLoading = null;
 		logicDocument._scriptFontsLoaded[fontName] = true;
-		logicDocument.Recalculate();
+		var isFallbackFont = false;
+		if (logicDocument._scriptFontFallbackNames && logicDocument._scriptFontFallbackNames[fontName])
+		{
+			isFallbackFont = true;
+			delete logicDocument._scriptFontFallbackNames[fontName];
+			var paragraphs = logicDocument.GetAllParagraphs();
+			for (var paragraphIndex = 0; paragraphIndex < paragraphs.length; ++paragraphIndex)
+			{
+				if (paragraphs[paragraphIndex].RecalcInfo)
+					paragraphs[paragraphIndex].RecalcInfo.ShapeText = true;
+			}
+		}
+		if (isFallbackFont)
+			logicDocument.RecalculateFromStart();
+		else
+			logicDocument.Recalculate();
 		logicDocument.UpdateInterface();
 		logicDocument.UpdateSelection();
 		logicDocument.private_LoadNextScriptFont();
@@ -17203,6 +17218,19 @@ CDocument.prototype.private_LoadNextScriptFont = function()
 		this.private_LoadNextScriptFont();
 	}
 };
+CDocument.prototype.private_QueueScriptFontFallback = function(codePoint, primaryFont)
+{
+	if (!AscFonts || !AscFonts.FontPickerByCharacter || !AscFonts.FontPickerByCharacter.getFontBySymbol)
+		return;
+
+	var fallbackFont = AscFonts.FontPickerByCharacter.getFontBySymbol(codePoint);
+	if (fallbackFont && fallbackFont.toLowerCase() !== primaryFont.toLowerCase())
+	{
+		this._scriptFontFallbackNames = this._scriptFontFallbackNames || {};
+		this._scriptFontFallbackNames[fallbackFont] = true;
+		this.private_QueueScriptFontLoad(fallbackFont);
+	}
+};
 CDocument.prototype.private_ApplyScriptFontForCodePoint = function(codePoint)
 {
 	if (!this.Settings || !this.Settings.scriptFontSettings || !this.Settings.scriptFontSettings.length || AscCommon.IsSpace(codePoint))
@@ -17211,6 +17239,7 @@ CDocument.prototype.private_ApplyScriptFontForCodePoint = function(codePoint)
 	var scriptFont = this.Settings.getScriptFontByCodePoint(codePoint);
 	if (!scriptFont)
 		return;
+	this.private_QueueScriptFontFallback(codePoint, scriptFont.font);
 
 	var paragraph = this.GetCurrentParagraph();
 	if (!paragraph)
@@ -17395,6 +17424,8 @@ CDocument.prototype.private_ApplyScriptFontSettingsToSelection = function()
 					previousScript = charScript;
 				if (charScript !== commonScript && charScript !== inheritedScript)
 					scriptFont = this.Settings.getScriptFontByScript(charScript);
+				if (scriptFont)
+					this.private_QueueScriptFontFallback(codePoint, scriptFont.font);
 			}
 			var segmentKey = scriptFont ? scriptFont.script + '|' + scriptFont.font + '|' + scriptFont.size : null;
 			if (currentSegment && currentSegment.key === segmentKey)
