@@ -93,6 +93,68 @@ function (window, undefined) {
 	var codeEqually = 0x3D;
 	var codeUnarPlus = 0x2B;
 	var codeUnarMinus = 0x2D;
+	var unicodeDecimalDigitZeroes = [
+		0x0030, 0x0660, 0x06F0, 0x07C0, 0x0966, 0x09E6, 0x0A66, 0x0AE6, 0x0B66, 0x0BE6,
+		0x0C66, 0x0CE6, 0x0D66, 0x0DE6, 0x0E50, 0x0ED0, 0x0F20, 0x1040, 0x1090, 0x17E0,
+		0x1810, 0x1946, 0x19D0, 0x1A80, 0x1A90, 0x1B50, 0x1BB0, 0x1C40, 0x1C50, 0xA620,
+		0xA8D0, 0xA900, 0xA9D0, 0xA9F0, 0xAA50, 0xABF0, 0xFF10, 0x104A0, 0x10D30, 0x10D40,
+		0x11066, 0x110F0, 0x11136, 0x111D0, 0x112F0, 0x113D0, 0x11450, 0x114D0, 0x11650,
+		0x116C0, 0x11730, 0x118E0, 0x11950, 0x11BF0, 0x11C50, 0x11D50, 0x11DA0, 0x11DE0,
+		0x11F50, 0x16130, 0x16A60, 0x16AC0, 0x16B50, 0x16D70, 0x1D7CE, 0x1D7D8, 0x1D7E2,
+		0x1D7EC, 0x1D7F6, 0x1E140, 0x1E2F0, 0x1E4F0, 0x1E5F1, 0x1E950, 0x1FBF0
+	];
+	function convertUnicodeDecimalDigits(text, isFormula, quoteState) {
+		var result = "";
+		var quote = quoteState || 0;
+		for (var index = 0; index < text.length; ) {
+			var codePoint = text.codePointAt(index);
+			var charLength = codePoint > 0xFFFF ? 2 : 1;
+			if (isFormula && (0x22 === codePoint || 0x27 === codePoint)) {
+				if (quote === codePoint) {
+					if (text.codePointAt(index + charLength) === codePoint) {
+						result += String.fromCodePoint(codePoint) + String.fromCodePoint(codePoint);
+						index += charLength * 2;
+						continue;
+					}
+					quote = 0;
+				} else if (0 === quote) {
+					quote = codePoint;
+				}
+				result += String.fromCodePoint(codePoint);
+				index += charLength;
+				continue;
+			}
+
+			var asciiDigit = null;
+			if (!isFormula || 0 === quote) {
+				for (var digitBlock = 0; digitBlock < unicodeDecimalDigitZeroes.length; ++digitBlock) {
+					var zeroCodePoint = unicodeDecimalDigitZeroes[digitBlock];
+					if (codePoint >= zeroCodePoint && codePoint < zeroCodePoint + 10) {
+						asciiDigit = String.fromCharCode(0x30 + codePoint - zeroCodePoint);
+						break;
+					}
+				}
+			}
+			result += null === asciiDigit ? String.fromCodePoint(codePoint) : asciiDigit;
+			index += charLength;
+		}
+		return {text: result, quote: quote};
+	}
+	function normalizeCellInputDigits(fragments, isFormula) {
+		var quote = 0;
+		for (var index = 0; index < fragments.length; ++index) {
+			var fragment = fragments[index];
+			if (!fragment || !fragment.getFragmentText || !fragment.setCharCodes) {
+				continue;
+			}
+			var text = fragment.getFragmentText();
+			var converted = convertUnicodeDecimalDigits(text, isFormula, quote);
+			quote = converted.quote;
+			if (converted.text !== text) {
+				fragment.setCharCodes(AscCommon.convertUTF16toUnicode(converted.text));
+			}
+		}
+	}
 
 
 	/**
@@ -461,6 +523,10 @@ function (window, undefined) {
 					this.noUpdateMode = true;
 					this._addChars(this.sAutoComplete);
 					this.noUpdateMode = false;
+				}
+				if (this.undoList.length) {
+					var inputText = AscCommonExcel.getFragmentsText(opt.fragments);
+					normalizeCellInputDigits(opt.fragments, this.isFormula() || "=" === inputText.charAt(0));
 				}
 
 				for (var i = 0; i < opt.fragments.length; i++) {
