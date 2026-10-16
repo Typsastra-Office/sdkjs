@@ -134,6 +134,9 @@
 
 			if (undefined === _char || 0 == _char)
 				return "";
+			var khmerFallback = this.getKhmerFallbackFont(_char);
+			if (khmerFallback)
+				return khmerFallback;
 
 			if (this.LastRange)
 			{
@@ -166,6 +169,36 @@
 			}
 
 			return _range.Name;
+		},
+		getKhmerFallbackFont : function(codePoint)
+		{
+			if (!((0x1780 <= codePoint && codePoint <= 0x17FF) || (0x19E0 <= codePoint && codePoint <= 0x19FF)))
+				return null;
+
+			var fontName = "Khmer OS Battambang";
+			if (!AscFonts.g_fontApplication || !AscFonts.g_fontApplication.GetFontInfo(fontName))
+				return null;
+
+			var range = this.LastRange
+				&& this.LastRange.Start <= codePoint
+				&& codePoint <= this.LastRange.End ? this.LastRange : null;
+			if (!range)
+				range = this.getRangeBySymbol(codePoint, this.UsedRanges);
+			if (!range)
+				range = this.getRangeBySymbol(codePoint, this.Ranges);
+			if (!range)
+				return null;
+
+			if (-1 === this.UsedRanges.indexOf(range))
+				this.UsedRanges.push(range);
+			this.LastRange = range;
+			if (this.FontsByRange[range.Name] !== fontName)
+			{
+				this.FontsByRange[range.Name] = fontName;
+				this.FontsByRangeCount++;
+			}
+
+			return fontName;
 		},
 
 		getFontsByString : function(_text)
