@@ -404,16 +404,24 @@
 
 	CTextInputPrototype.onInput = function(e)
 	{
+		let type = (e.type ? ("" + e.type) : "undefined");
+		type = type.toLowerCase();
+
 		if (this.Api.isLongAction())
 		{
+			if ("compositionend" === type)
+				this.PendingCompositionEnd = true;
+
 			AscCommon.stopEvent(e);
 			return false;
 		}
 
-		this.onFocusInputTextEnd();
+		this.InputEventId = (this.InputEventId || 0) + 1;
+		let inputEventId = this.InputEventId;
+		if ("compositionstart" === type || "compositionend" === type)
+			this.PendingCompositionEnd = false;
 
-		let type = (e.type ? ("" + e.type) : "undefined");
-		type = type.toLowerCase()
+		this.onFocusInputTextEnd();
 
 		let newValue = this.getAreaValue();
 		this.log("onInput: " + newValue);
@@ -456,7 +464,7 @@
 				if (newTextLength > 0)
 					lastSymbol = codes[newTextLength - 1];
 
-				isAsyncInput = this.checkTextInput(codes);
+				isAsyncInput = this.checkTextInput(codes, undefined, inputEventId, type);
 			}
 		}
 		else
@@ -504,7 +512,7 @@
 			}
 
 			// add new items
-			isAsyncInput = this.checkTextInput(codesNew, codesRemove);
+			isAsyncInput = this.checkTextInput(codesNew, codesRemove, inputEventId, type);
 		}
 
 		if (("compositionend" === type) && this.IsComposition)
@@ -592,7 +600,7 @@
 		this.compositeEnd();
 		this.clear();
 	};
-	CTextInputPrototype.checkTextInput = function(codes, codesRemove)
+	CTextInputPrototype.checkTextInput = function(codes, codesRemove, inputEventId, inputType)
 	{
 		var isAsync = AscFonts.FontPickerByCharacter.checkTextLight(codes, true);
 
@@ -611,10 +619,16 @@
 		}
 		else
 		{
+			let inputContext = this;
 			AscFonts.FontPickerByCharacter.loadFonts(this, function ()
 			{
+				if (inputContext.InputEventId !== inputEventId)
+					return;
+				let isCompositionEnd = "compositionend" === inputType || inputContext.PendingCompositionEnd;
+				inputContext.PendingCompositionEnd = false;
+
 				this.onInput({
-					type : this.IsComposition ? "compositionupdate" : "input",
+					type : isCompositionEnd ? "compositionend" : (this.IsComposition ? "compositionupdate" : "input"),
 					preventDefault : function() {},
 					stopPropagation : function() {}
 				});
@@ -840,6 +854,8 @@
 	CTextInputPrototype.clear = function(isFromFocus)
 	{
 		this.log("clear");
+		this.InputEventId = (this.InputEventId || 0) + 1;
+		this.PendingCompositionEnd = false;
 
 		this.TextBeforeComposition = "";
 		this.Text = "";
