@@ -21086,6 +21086,12 @@
 			case Asc.c_oAscNumberingFormat.HindiConsonants:
 				sVal = "hindiConsonants";
 				break;
+			case Asc.c_oAscNumberingFormat.KhmerConsonants:
+				sVal = "khmerConsonants";
+				break;
+			case Asc.c_oAscNumberingFormat.KhmerNumbers:
+				sVal = "khmerNumbers";
+				break;
 			case Asc.c_oAscNumberingFormat.HindiCounting:
 				sVal = "hindiCounting";
 				break;
@@ -21301,6 +21307,12 @@
 				break;
 			case "hindiConsonants":
 				nVal = Asc.c_oAscNumberingFormat.HindiConsonants;
+				break;
+			case "khmerConsonants":
+				nVal = Asc.c_oAscNumberingFormat.KhmerConsonants;
+				break;
+			case "khmerNumbers":
+				nVal = Asc.c_oAscNumberingFormat.KhmerNumbers;
 				break;
 			case "hindiCounting":
 				nVal = Asc.c_oAscNumberingFormat.HindiCounting;

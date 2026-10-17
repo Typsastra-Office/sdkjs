@@ -8445,6 +8445,31 @@
 		return sResult;
 	}
 
+	function IntToKhmerConsonants(nValue)
+	{
+		var charArr = [
+			0x1780, 0x1781, 0x1782, 0x1783, 0x1784, 0x1785, 0x1786, 0x1787, 0x1788, 0x1789, 0x178A,
+			0x178B, 0x178C, 0x178D, 0x178E, 0x178F, 0x1790, 0x1791, 0x1792, 0x1793, 0x1794, 0x1795,
+			0x1796, 0x1797, 0x1798, 0x1799, 0x179A, 0x179B, 0x179C, 0x179D, 0x179E, 0x179F, 0x17A0
+		];
+		nValue = repeatNumberingLvl(nValue, charArr.length * 10);
+		var index = (nValue - 1) % charArr.length;
+		var count = Math.floor((nValue - 1) / charArr.length) + 1;
+		var sResult = '';
+		for (var i = 0; i < count; ++i)
+			sResult += String.fromCharCode(charArr[index]);
+		return sResult;
+	}
+
+	function IntToKhmerNumbers(nValue)
+	{
+		var sResult = '';
+		var strValue = String(nValue);
+		for (var i = 0; i < strValue.length; ++i)
+			sResult += String.fromCharCode(0x17E0 + parseInt(strValue[i], 10));
+		return sResult;
+	}
+
 	function IntToIdeographDigital(nValue, nFormat)
 	{
 		var sResult = '';
@@ -10634,6 +10659,18 @@
 			case Asc.c_oAscNumberingFormat.HindiConsonants:
 			{
 				sResult = IntToHindiConsonants(nValue);
+				break;
+			}
+
+			case Asc.c_oAscNumberingFormat.KhmerConsonants:
+			{
+				sResult = IntToKhmerConsonants(nValue);
+				break;
+			}
+
+			case Asc.c_oAscNumberingFormat.KhmerNumbers:
+			{
+				sResult = IntToKhmerNumbers(nValue);
 				break;
 			}
 

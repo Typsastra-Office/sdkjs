@@ -10025,6 +10025,18 @@ function BinaryPPTYLoader()
                                                     }
                                                     break;
 
+                                                case Asc.c_oAscNumberingFormat.KhmerConsonants:
+                                                    for (var i = 0x1780; i <= 0x17A0; i += 1) {
+                                                        AscFonts.FontPickerByCharacter.getFontBySymbol(i);
+                                                    }
+                                                    break;
+
+                                                case Asc.c_oAscNumberingFormat.KhmerNumbers:
+                                                    for (var i = 0x17E0; i <= 0x17E9; i += 1) {
+                                                        AscFonts.FontPickerByCharacter.getFontBySymbol(i);
+                                                    }
+                                                    break;
+
                                                 case Asc.c_oAscNumberingFormat.HindiVowels:
                                                     for (var i = 0x0915; i <= 0x0939; i += 1) {
                                                         AscFonts.FontPickerByCharacter.getFontBySymbol(i);
